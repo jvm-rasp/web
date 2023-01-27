@@ -1,0 +1,42 @@
+# Project exclude paths
+target/
+.idea/
+*.iml
+logs/
+package/
+
+# dependencies
+**/node_modules
+# roadhog-api-doc ignore
+/src/utils/request-temp.js
+_roadhog-api-doc
+
+# misc
+.DS_Store
+ui/npm-debug.log*
+ui/yarn-error.log
+
+.idea
+ui/yarn.lock
+ui/package-lock.json
+ui/pnpm-lock.yaml
+ui/*bak
+ui/node_modules
+ui/dist
+*.log
+functions/*
+.temp/**
+ui/.vscode
+ui/src/.umi
+ui/src/.umi-production
+# umi
+.umi
+
+
+# screenshot
+screenshot
+.firebase
+ui/.eslintcache
+
+build
+

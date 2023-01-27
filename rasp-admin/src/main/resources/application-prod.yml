@@ -1,0 +1,30 @@
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    type: com.zaxxer.hikari.HikariDataSource
+    url: jdbc:mysql://localhost:3306/jrasp?useSSL=false&charsetEncoding=UTF-8&allowPublicKeyRetrieval=true
+    username: root
+    password: 1234567890
+    hikari:
+      pool-name: Hikari
+      maximum-pool-size: 5
+      connection-test-query: SELECT 1
+      minimum-idle: 1
+  freemarker:
+    suffix: .html
+  kafka:
+    consumer:
+      bootstrap-servers: 106.14.26.4:9092,47.101.64.183:9092,139.224.220.2:9092
+      group-id: jrasp
+  jackson:
+    property-naming-strategy: com.fasterxml.jackson.databind.PropertyNamingStrategy.SnakeCaseStrategy
+    time-zone: GMT+8
+
+logging:
+  level:
+    root: info
+
+nacos:
+  config:
+    server-addr: 132.232.32.246:8848
+    namespace:

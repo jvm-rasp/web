@@ -1,0 +1,28 @@
+spring:
+  profiles:
+    active: prod
+
+server:
+  port: 8080
+#  servlet:
+#    context-path: /api
+
+jrasp:
+  security:
+    ignores:
+      - /login/account
+
+mybatis-plus:
+  mapper-locations: classpath:mapper/*.xml
+  global-config:
+    db-config:
+      id-type: auto
+
+knife4j:
+  enable: true
+  setting:
+    enableOpenApi: false
+
+jwt:
+  header: Authorization
+  secret: 7B794694CE83D5A360E5092D40009412
