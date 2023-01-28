@@ -302,6 +302,32 @@ const RaspdModuleList: React.FC = () => {
             />
           </ProForm.Group>
           <ProForm.Group>
+            <ProFormText
+              width="sm"
+              name="middleware_name"
+              label="目标中间件"
+              placeholder="目标中间件名称"
+              rules={[
+                {
+                  required: true,
+                  message: '目标中间件名称',
+                },
+              ]}
+            />
+            <ProFormText
+              width="sm"
+              name="middleware_version"
+              label="目标中间件版本号"
+              placeholder="目标中间件版本号"
+              rules={[
+                {
+                  required: true,
+                  message: '目标中间件版本号',
+                },
+              ]}
+            />
+          </ProForm.Group>
+          <ProForm.Group>
           <ProFormText
             name={'url'}
             width="lg"
