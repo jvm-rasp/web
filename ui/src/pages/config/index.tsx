@@ -313,8 +313,8 @@ const RaspConfigList: React.FC = () => {
                     message: '请输入阻断状态码',
                   },
                   {
-                    pattern: /^3\d{2}$/,
-                    message: '不合法的状态码！(300~399)',
+                    pattern: /^[2-5]\d{2}$/,
+                    message: '不合法的状态码！(200~599)',
                   },
                 ]}
               />
