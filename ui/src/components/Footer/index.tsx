@@ -3,11 +3,11 @@ import { DefaultFooter } from '@ant-design/pro-layout';
 
 export default () => (
   <DefaultFooter
-    copyright="2019~2022"
+    copyright="JRASP @ 2019~2023"
     links={[
       // {
       //   key: 'official website',
-      //   title: 'RASP官网 ',
+      //   title: 'JRASP官网 ',
       //   href: 'http://www.jrasp.com/',
       //   blankTarget: true,
       // },
@@ -18,8 +18,8 @@ export default () => (
       //   blankTarget: true,
       // },
       // {
-      //   key: 'RASP 安全团队',
-      //   title: 'RASP 安全团队',
+      //   key: 'JRASP 安全团队',
+      //   title: 'JRASP 安全团队',
       //   href: '',
       //   blankTarget: false,
       // },

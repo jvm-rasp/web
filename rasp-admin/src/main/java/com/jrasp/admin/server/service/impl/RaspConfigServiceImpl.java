@@ -106,6 +106,11 @@ public class RaspConfigServiceImpl extends ServiceImpl<RaspConfigMapper, RaspCon
         json.put("binFileUrl", createConfigVo.getBinFileUrl());
         json.put("binFileHash", createConfigVo.getBinFileHash());
 
+        String logPath = createConfigVo.getLogPath();
+        if (logPath != null && !"".equals(logPath.trim())) {
+            json.put("logPath", logPath);
+        }
+
         // moduleConfigs
         List<Map<String, Object>> moduleConfigMap = new ArrayList<>();
         json.put("moduleConfigs", moduleConfigMap);

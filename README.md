@@ -4,11 +4,13 @@
 
 ### 01 数据库初始化
 
-+ 创建mysql数据库(如有，请跳过) 
++ 安装mysql数据库(如有，请跳过) 
   
 + 表结构与表数据初始化
 
-工程根目录下`sql`目录下有 `table.sql` 表结构文件和`data.sql`表数据文件，分别在mysql客户端(例如：`MYSQLWorkbench`)中初始化。
+工程根目录`sql`下有 `table.sql` 表结构文件和`data.sql`表数据文件，分别在mysql客户端(例如：`MYSQLWorkbench`)中初始化。
+
+初始化之后，默认的登陆用户名称:admin 密码:123456
 
 + 修改`application-prod.yml`中数据库的ip、用户名和密码(下图中红色数字1和2处)
 

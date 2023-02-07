@@ -67,4 +67,8 @@ public class CreateConfigVo {
      */
     private String xmlBlockContent;
 
+    /**
+     * 日志文件路径
+     */
+    private String logPath;
 }

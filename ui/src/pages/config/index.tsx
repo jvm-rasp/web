@@ -364,7 +364,18 @@ const RaspConfigList: React.FC = () => {
                 },
               ]}
             />
-
+            <ProFormText
+              name={'log_path'}
+              label={'日志文件路径'}
+              width="xl"
+              placeholder={'请输入日志文件路径'}
+              rules={[
+                {
+                  required: false,
+                  message: '请输入日志文件路径',
+                },
+              ]}
+            />
             <ProForm.Group>
               <ProFormText
                 width="lg"

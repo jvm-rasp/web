@@ -6,6 +6,7 @@
 + [ui & server] 增加阻断配置页面
 + [ui & server] 增加在线状态
 + [server] 配置项优化，nacos配置自动生成
++ [server] 配置项优化，增加logPath配置
 ### Bugfix
 
 ### TODO

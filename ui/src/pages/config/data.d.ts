@@ -28,6 +28,7 @@ export type ConfigDetail = {
   json_block_content: string;
   xml_block_content: string;
   html_block_content: string;
+  log_path: string;
 };
 
 export type TableListItemResponse = {
