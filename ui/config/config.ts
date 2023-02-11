@@ -10,6 +10,9 @@ const { REACT_APP_ENV } = process.env;
 
 export default defineConfig({
   hash: true,
+  base: '/jrasp-admin',
+  publicPath: '/jrasp-admin/',
+  outputPath: './dist/jrasp-admin',
   antd: {},
   dva: {
     hmr: true,

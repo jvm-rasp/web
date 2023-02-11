@@ -29,6 +29,8 @@ functions/*
 ui/.vscode
 ui/src/.umi
 ui/src/.umi-production
+ui/Nginx/html/
+ui/Nginx/logs/
 # umi
 .umi
 

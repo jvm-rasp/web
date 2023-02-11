@@ -64,8 +64,16 @@ npm install
 npm start
 ```
 
-#### 静态文件
+#### nginx docker 部署
 ```shell
 npm run build
 ```
-输出文件在`ui/dist`下
+输出文件在`ui/dist/jrasp-admin`下
+
++ 将`ui/dist/jrasp-admin/`下的静态文件复制到`ui/Nginx/html/`下
+```java
+cp -r ./dist/jrasp-admin/** ./Nginx/html/
+```
++ 修改`ui/Nginx/conf/nginx.conf`,修改`proxy_pass`的值为后端的ip
++ 进入目录`Nginx`，执行命令：`docker-compose up -d` 即可启动
++ 访问 http://localhost/jrasp-admin,默认的登陆用户名称:admin 密码:123456
