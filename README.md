@@ -51,3 +51,7 @@ npm run dev
 ```
 npm run build:prod
 ```
+## 登陆账号
+
+admin
+123456
