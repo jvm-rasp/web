@@ -3,10 +3,10 @@ package common
 import (
 	"errors"
 	"github.com/thoas/go-funk"
+	"gorm.io/gorm"
 	"server/config"
 	"server/model"
 	"server/util"
-	"gorm.io/gorm"
 )
 
 // 初始化mysql数据
@@ -66,6 +66,9 @@ func InitData() {
 	newMenus := make([]model.Menu, 0)
 	var uint0 uint = 0
 	var uint1 uint = 1
+	var uint2 uint = 8
+	var uint3 uint = 10
+
 	componentStr := "component"
 	systemUserStr := "/system/user"
 	userStr := "user"
@@ -75,6 +78,7 @@ func InitData() {
 	exampleStr := "example"
 	logOperationStr := "/log/operation-log"
 	documentationStr := "documentation"
+	listStr := "list"
 	var uint6 uint = 6
 	menus := []model.Menu{
 		{
@@ -161,6 +165,56 @@ func InitData() {
 			Sort:      21,
 			ParentId:  &uint6,
 			Roles:     roles[:2],
+			Creator:   "系统",
+		},
+		{
+			Model:     gorm.Model{ID: 8},
+			Name:      "Config",
+			Title:     "策略配置",
+			Icon:      &componentStr,
+			Path:      "/config",
+			Component: "Layout",
+			Redirect:  &systemUserStr,
+			Sort:      22,
+			ParentId:  &uint0,
+			Roles:     roles,
+			Creator:   "系统",
+		},
+		{
+			Model:     gorm.Model{ID: 9},
+			Name:      "List",
+			Title:     "策略列表",
+			Icon:      &listStr,
+			Path:      "list",
+			Component: "/config/list/index",
+			Sort:      23,
+			ParentId:  &uint2,
+			Roles:     roles,
+			Creator:   "系统",
+		},
+		{
+			Model:     gorm.Model{ID: 10},
+			Name:      "Module",
+			Title:     "模块配置",
+			Icon:      &componentStr,
+			Path:      "/module",
+			Component: "Layout",
+			Redirect:  &systemUserStr,
+			Sort:      24,
+			ParentId:  &uint0,
+			Roles:     roles,
+			Creator:   "系统",
+		},
+		{
+			Model:     gorm.Model{ID: 11},
+			Name:      "List",
+			Title:     "模块列表",
+			Icon:      &listStr,
+			Path:      "list",
+			Component: "/module/list/index",
+			Sort:      25,
+			ParentId:  &uint3,
+			Roles:     roles,
 			Creator:   "系统",
 		},
 	}
@@ -461,6 +515,48 @@ func InitData() {
 			Path:     "/log/operation/delete/batch",
 			Category: "log",
 			Desc:     "批量删除操作日志",
+			Creator:  "系统",
+		},
+		{
+			Method:   "POST",
+			Path:     "/config/create",
+			Category: "config",
+			Desc:     "创建配置",
+			Creator:  "系统",
+		},
+		{
+			Method:   "GET",
+			Path:     "/config/list",
+			Category: "config",
+			Desc:     "获取配置列表",
+			Creator:  "系统",
+		},
+		{
+			Method:   "DELETE",
+			Path:     "/config/delete/batch",
+			Category: "config",
+			Desc:     "批量删除配置",
+			Creator:  "系统",
+		},
+		{
+			Method:   "POST",
+			Path:     "/module/create",
+			Category: "module",
+			Desc:     "创建模块",
+			Creator:  "系统",
+		},
+		{
+			Method:   "GET",
+			Path:     "/module/list",
+			Category: "module",
+			Desc:     "获取模块列表",
+			Creator:  "系统",
+		},
+		{
+			Method:   "DELETE",
+			Path:     "/module/delete/batch",
+			Category: "module",
+			Desc:     "批量模块",
 			Creator:  "系统",
 		},
 	}

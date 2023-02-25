@@ -18,7 +18,6 @@ var Conf = new(config)
 type config struct {
 	System    *SystemConfig    `mapstructure:"system" json:"system"`
 	Logs      *LogsConfig      `mapstructure:"logs" json:"logs"`
-	Mysql     *MysqlConfig     `mapstructure:"mysql" json:"mysql"`
 	Casbin    *CasbinConfig    `mapstructure:"casbin" json:"casbin"`
 	Jwt       *JwtConfig       `mapstructure:"jwt" json:"jwt"`
 	RateLimit *RateLimitConfig `mapstructure:"rate-limit" json:"rateLimit"`
@@ -80,19 +79,6 @@ type LogsConfig struct {
 	MaxBackups int           `mapstructure:"max-backups" json:"maxBackups"`
 	MaxAge     int           `mapstructure:"max-age" json:"maxAge"`
 	Compress   bool          `mapstructure:"compress" json:"compress"`
-}
-
-type MysqlConfig struct {
-	Username    string `mapstructure:"username" json:"username"`
-	Password    string `mapstructure:"password" json:"password"`
-	Database    string `mapstructure:"database" json:"database"`
-	Host        string `mapstructure:"host" json:"host"`
-	Port        int    `mapstructure:"port" json:"port"`
-	Query       string `mapstructure:"query" json:"query"`
-	LogMode     bool   `mapstructure:"log-mode" json:"logMode"`
-	TablePrefix string `mapstructure:"table-prefix" json:"tablePrefix"`
-	Charset     string `mapstructure:"charset" json:"charset"`
-	Collation   string `mapstructure:"collation" json:"collation"`
 }
 
 type CasbinConfig struct {

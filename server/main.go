@@ -3,14 +3,14 @@ package main
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"os"
+	"os/signal"
 	"server/common"
 	"server/config"
 	"server/middleware"
 	"server/repository"
 	"server/routes"
-	"net/http"
-	"os"
-	"os/signal"
 	"syscall"
 	"time"
 )
@@ -70,6 +70,7 @@ func main() {
 	// kill -2 is syscall.SIGINT
 	// kill -9 is syscall.SIGKILL but can't be catch, so don't need add it
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+
 	<-quit
 	common.Log.Info("Shutting down server...")
 

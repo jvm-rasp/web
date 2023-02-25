@@ -23,7 +23,8 @@ func NewOperationLogRepository() IOperationLogRepository {
 
 func (o OperationLogRepository) GetOperationLogs(req *vo.OperationLogListRequest) ([]model.OperationLog, int64, error) {
 	var list []model.OperationLog
-	db := common.DB.Model(&model.OperationLog{}).Order("start_time DESC")
+	// todo Scan error on column index 11, name "start_time": unsupported Scan, storing driver.Value type string into type *time.Time
+	db := common.DB.Model(&model.OperationLog{}).Order("id DESC")
 
 	username := strings.TrimSpace(req.Username)
 	if username != "" {

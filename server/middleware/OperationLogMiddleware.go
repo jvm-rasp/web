@@ -55,7 +55,7 @@ func OperationLogMiddleware() gin.HandlerFunc {
 			Path:       path,
 			Desc:       apiDesc,
 			Status:     c.Writer.Status(),
-			StartTime:  startTime,
+			StartTime:  startTime.String(),
 			TimeCost:   timeCost,
 			//UserAgent:  c.Request.UserAgent(),
 		}

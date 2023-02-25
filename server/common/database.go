@@ -2,7 +2,6 @@ package common
 
 import (
 	"fmt"
-	"server/config"
 	"server/model"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -19,10 +18,8 @@ func InitMysql() {
 		panic(fmt.Errorf("初始化mysql数据库异常: %v", err))
 	}
 
-	// 开启mysql日志
-	if config.Conf.Mysql.LogMode {
-		db.Debug()
-	}
+	//db.Debug()
+
 	// 全局DB赋值
 	DB = db
 	// 自动迁移表结构
@@ -38,5 +35,7 @@ func dbAutoMigrate() {
 		&model.Menu{},
 		&model.Api{},
 		&model.OperationLog{},
+		&model.RaspConfig{},
+		&model.RaspModule{},
 	)
 }

@@ -156,7 +156,6 @@ func (a ApiRepository) UpdateApiById(apiId uint, api *model.Api) error {
 
 // 批量删除接口
 func (a ApiRepository) BatchDeleteApiByIds(apiIds []uint) error {
-
 	apis, err := a.GetApisById(apiIds)
 	if err != nil {
 		return errors.New("根据接口ID获取接口列表失败")
