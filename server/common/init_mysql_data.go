@@ -118,7 +118,7 @@ func InitData() {
 			Component: "Layout",
 			Redirect:  &systemUserStr,
 			Sort:      moduleId,
-			ParentId:  &moduleId,
+			ParentId:  &rootId,
 			Roles:     roles,
 			Creator:   "系统",
 		},
