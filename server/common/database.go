@@ -2,9 +2,9 @@ package common
 
 import (
 	"fmt"
-	"server/model"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
+	"server/model"
 )
 
 // 全局mysql数据库变量
@@ -37,5 +37,6 @@ func dbAutoMigrate() {
 		&model.OperationLog{},
 		&model.RaspConfig{},
 		&model.RaspModule{},
+		&model.RaspHost{},
 	)
 }
