@@ -57,10 +57,6 @@ export const constantRoutes = [
     hidden: true
   },
   {
-    path: '/config',
-    component: () => import('@/views/config/list')
-  },
-  {
     path: '/401',
     component: () => import('@/views/error-page/401'),
     hidden: true

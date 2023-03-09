@@ -4,6 +4,7 @@ import store from '@/store'
 // import router from '@/router'
 import { getToken } from '@/utils/auth'
 import router from '@/router'
+import { enable, api, baseUrl } from '@/utils/apifox'
 
 // create an axios instance
 const service = axios.create({
@@ -22,6 +23,9 @@ service.interceptors.request.use(
       // please modify it according to the actual situation
       config.headers['Authorization'] = 'Bearer ' + getToken()
       // config.headers['Content-Type'] = 'application/json'
+      if (enable && api.indexOf(config.url) >= 0) {
+        config.baseURL = baseUrl
+      }
     }
     return config
   },
