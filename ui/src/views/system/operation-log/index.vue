@@ -70,8 +70,8 @@
 </template>
 
 <script>
-import { getOperationLogs, batchDeleteOperationLogByIds } from '@/api/log/operationLog'
-import { parseGoTime } from '@/utils/index'
+import { getOperationLogs, batchDeleteOperationLogByIds } from '@/api/system/operationLog'
+import { parseGoTime } from '@/utils'
 
 export default {
   name: 'OperationLog',

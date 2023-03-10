@@ -1,5 +1,5 @@
 module.exports = {
-  title: 'Go Web Mini',
+  title: 'JRASP Web Mini',
 
   /**
    * @type {boolean} true | false

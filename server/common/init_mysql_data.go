@@ -67,9 +67,9 @@ func InitData() {
 
 	var rootId uint = 0
 	var hostId uint = 10
-	var moduleId uint = 20
-	var configId uint = 30
-	var logId uint = 40
+	var attackId uint = 20
+	var moduleId uint = 30
+	var configId uint = 40
 	var systemId uint = 50
 
 	componentStr := "component"
@@ -78,8 +78,6 @@ func InitData() {
 	peoplesStr := "peoples"
 	treeTableStr := "tree-table"
 	treeStr := "tree"
-	exampleStr := "example"
-	logOperationStr := "/log/operation-log"
 	documentationStr := "documentation"
 	listStr := "list"
 
@@ -106,6 +104,31 @@ func InitData() {
 			Component: "/host/list/index",
 			Sort:      hostId + 1,
 			ParentId:  &hostId,
+			Roles:     roles,
+			Creator:   "系统",
+		},
+		{
+			Model:     gorm.Model{ID: attackId},
+			Name:      "Attack",
+			Title:     "攻击告警",
+			Icon:      &componentStr,
+			Path:      "/attack",
+			Component: "Layout",
+			Redirect:  &systemUserStr,
+			Sort:      attackId,
+			ParentId:  &rootId,
+			Roles:     roles,
+			Creator:   "系统",
+		},
+		{
+			Model:     gorm.Model{ID: attackId + 1},
+			Name:      "List",
+			Title:     "日志列表",
+			Icon:      &listStr,
+			Path:      "list",
+			Component: "/attack/list/index",
+			Sort:      attackId + 1,
+			ParentId:  &attackId,
 			Roles:     roles,
 			Creator:   "系统",
 		},
@@ -157,31 +180,6 @@ func InitData() {
 			Sort:      configId + 1,
 			ParentId:  &configId,
 			Roles:     roles,
-			Creator:   "系统",
-		},
-		{
-			Model:     gorm.Model{ID: logId},
-			Name:      "Log",
-			Title:     "日志管理",
-			Icon:      &exampleStr,
-			Path:      "/log",
-			Component: "Layout",
-			Redirect:  &logOperationStr,
-			Sort:      logId,
-			ParentId:  &rootId,
-			Roles:     roles[:2],
-			Creator:   "系统",
-		},
-		{
-			Model:     gorm.Model{ID: logId + 1},
-			Name:      "OperationLog",
-			Title:     "操作日志",
-			Icon:      &documentationStr,
-			Path:      "operation-log",
-			Component: "/log/operation-log/index",
-			Sort:      logId + 1,
-			ParentId:  &logId,
-			Roles:     roles[:2],
 			Creator:   "系统",
 		},
 		{
@@ -243,6 +241,18 @@ func InitData() {
 			Sort:      systemId + 4,
 			ParentId:  &systemId,
 			Roles:     roles[:1],
+			Creator:   "系统",
+		},
+		{
+			Model:     gorm.Model{ID: systemId + 5},
+			Name:      "OperationLog",
+			Title:     "操作日志",
+			Icon:      &documentationStr,
+			Path:      "operation-log",
+			Component: "/system/operation-log/index",
+			Sort:      systemId + 5,
+			ParentId:  &systemId,
+			Roles:     roles[:2],
 			Creator:   "系统",
 		},
 	}
@@ -601,6 +611,27 @@ func InitData() {
 			Desc:     "批量删除实例列表",
 			Creator:  "系统",
 		},
+		{
+			Method:   "GET",
+			Path:     "/attck/list",
+			Category: "attack",
+			Desc:     "获取攻击日志列表",
+			Creator:  "系统",
+		},
+		{
+			Method:   "GET",
+			Path:     "/attck/detail",
+			Category: "attack",
+			Desc:     "获取攻击日志详情",
+			Creator:  "系统",
+		},
+		{
+			Method:   "GET",
+			Path:     "/attck/delete/batch",
+			Category: "attack",
+			Desc:     "批量删除日志列表",
+			Creator:  "系统",
+		},
 	}
 	newApi := make([]model.Api, 0)
 	newRoleCasbin := make([]model.RoleCasbin, 0)
@@ -619,6 +650,7 @@ func InitData() {
 
 			// 非管理员拥有基础权限
 			basePaths := []string{
+				"/log/report",
 				"/base/login",
 				"/base/logout",
 				"/base/refreshToken",
