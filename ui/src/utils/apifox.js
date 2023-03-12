@@ -9,5 +9,8 @@ export const api = [
   '/api/config/list',
   '/api/attack/list',
   '/api/attack/delete',
-  '/api/attack/detail'
+  '/api/attack/detail',
+  '/api/dashboard/attackData',
+  '/api/dashboard/attackTrends',
+  '/api/dashboard/attackTypes'
 ]
