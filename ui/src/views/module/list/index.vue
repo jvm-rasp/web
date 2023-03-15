@@ -1,39 +1,47 @@
 <template>
   <div>
     <el-card class="container-card" shadow="always">
-
       <!-- 条件搜索框 -->
-      <el-form size="mini" :inline="true" :model="params" class="demo-form-inline">
-        <el-form-item label="名称">
-          <el-input v-model.trim="params.name" clearable placeholder="名称" @clear="search" />
-        </el-form-item>
-        <el-form-item label="状态">
-          <el-select v-model.trim="params.status" clearable placeholder="状态" @change="search" @clear="search">
-            <el-option label="正常" value="1" />
-            <el-option label="禁用" value="0" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="创建人">
-          <el-input v-model.trim="params.creator" clearable placeholder="创建人" @clear="search" />
-        </el-form-item>
-        <el-form-item>
-          <el-button :loading="loading" icon="el-icon-search" type="primary" @click="search">查询</el-button>
-        </el-form-item>
-        <el-form-item>
-          <el-button :loading="loading" icon="el-icon-plus" type="warning" @click="create">新增</el-button>
-        </el-form-item>
-        <el-form-item>
-          <el-button
-            :disabled="multipleSelection.length === 0"
-            :loading="loading"
-            icon="el-icon-delete"
-            type="danger"
-            @click="batchDelete"
-          >批量删除
-          </el-button>
-        </el-form-item>
-      </el-form>
-
+      <el-row>
+        <el-form size="medium" :inline="true" :model="params" class="demo-form-inline">
+          <el-col :span="6">
+            <el-form-item label="名称">
+              <el-input v-model.trim="params.name" clearable placeholder="名称" @clear="search" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="6">
+            <el-form-item label="状态">
+              <el-select v-model.trim="params.status" clearable placeholder="状态" @change="search" @clear="search">
+                <el-option label="正常" value="1" />
+                <el-option label="禁用" value="0" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="6">
+            <el-form-item label="创建人">
+              <el-input v-model.trim="params.creator" clearable placeholder="创建人" @clear="search" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="6">
+            <el-form-item>
+              <el-button :loading="loading" icon="el-icon-search" type="primary" @click="search">查询</el-button>
+            </el-form-item>
+            <el-form-item>
+              <el-button :loading="loading" icon="el-icon-plus" type="warning" @click="create">新增</el-button>
+            </el-form-item>
+            <el-form-item>
+              <el-button
+                :disabled="multipleSelection.length === 0"
+                :loading="loading"
+                icon="el-icon-delete"
+                type="danger"
+                @click="batchDelete"
+              >批量删除
+              </el-button>
+            </el-form-item>
+          </el-col>
+        </el-form>
+      </el-row>
       <!-- 配置列表 -->
       <el-table
         v-loading="loading"
@@ -44,42 +52,36 @@
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="55" align="center" />
-        <el-table-column show-overflow-tooltip sortable prop="ID" with="55" label="模块ID" align="center" />
-        <el-table-column show-overflow-tooltip sortable prop="name" with="120" label="模块名称" align="center" />
-        <el-table-column show-overflow-tooltip sortable prop="desc" with="120" label="模块描述" align="center" />
-        <el-table-column show-overflow-tooltip sortable prop="status" with="60" label="模块状态" align="center">
+        <el-table-column show-overflow-tooltip sortable prop="moduleName" label="模块名称" align="center" />
+        <el-table-column show-overflow-tooltip sortable prop="moduleType" label="模块类型" align="center">
+          <template slot-scope="scope">
+            {{ getModuleType(scope.row.moduleType) }}
+          </template>
+        </el-table-column>
+        <el-table-column show-overflow-tooltip sortable prop="desc" label="模块描述" align="center" />
+        <el-table-column show-overflow-tooltip sortable prop="moduleVersion" label="版本" align="center">
+          <template slot-scope="scope">
+            <el-tag size="small" disable-transitions>
+              {{ scope.row.moduleVersion }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column show-overflow-tooltip sortable prop="status" label="模块状态" align="center">
           <template slot-scope="scope">
             <el-tag size="small" :type="scope.row.status === 1 ? 'success':'danger'" disable-transitions>
               {{ scope.row.status === 1 ? '正常' : '禁用' }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column show-overflow-tooltip sortable prop="status" with="60" label="配置状态" align="center">
-          <template slot="status" slot-scope="scope">
-            <el-switch
-              v-model="scope.row.status"
-              on-value="true"
-              off-value="false"
-              @change="switchChange(scope.row)"
-            />
-          </template>
-        </el-table-column>
-
-        <el-table-column show-overflow-tooltip sortable prop="creator" label="创建人" align="center" />
-        <el-table-column fixed="right" label="操作" align="center" width="240">
+        <el-table-column show-overflow-tooltip sortable prop="operator" label="操作人" align="center" />
+        <el-table-column show-overflow-tooltip sortable prop="updateTime" label="更新时间" align="center" />
+        <el-table-column fixed="right" label="操作" align="center">
           <template slot-scope="scope">
-            <el-tooltip content="查看模块" effect="dark" placement="top">
-              <el-button size="mini" circle type="primary" icon="el-icon-view" @click="viewModuleDetail(scope.row)" />
-            </el-tooltip>
-            <el-tooltip class="delete-popover" content="删除模块" effect="dark" placement="top">
-              <el-popconfirm title="确定删除吗？" @onConfirm="singleDelete(scope.row.ID)">
-                <el-button slot="reference" size="mini" icon="el-icon-delete" circle type="danger" />
-              </el-popconfirm>
-            </el-tooltip>
+            <el-button type="text" size="medium" @click="handleDelete(scope.row)">删除</el-button>
+            <el-button type="text" size="medium" @click="handleEdit(scope.row)">修改</el-button>
           </template>
         </el-table-column>
       </el-table>
-
       <!--分页配置-->
       <el-pagination
         :current-page="params.pageNum"
@@ -92,42 +94,73 @@
         @size-change="handleSizeChange"
         @current-change="handleCurrentChange"
       />
-
-      <!-- 模块内容详情对话框 -->
-      <el-dialog title="配置详情" :visible.sync="moduleDetailVisible" width="60%">
-        <el-form size="small" :model="moduleDetailData" label-width="100px">
-          <json-viewer v-model="moduleDetailData.parameters" copyable boxed />
-        </el-form>
-        <div slot="footer" class="dialog-footer">
-          <el-button size="mini" @click="closeModuleDetail()">关 闭</el-button>
-        </div>
-      </el-dialog>
-
+      <!-- 新增防护模块对话框-->
       <el-dialog title="新增防护模块" :visible.sync="createModuleVisible" width="60%">
         <el-form
           ref="createModuleForm"
           size="small"
-          :model="createModuleData"
+          :model="bindModuleData"
           label-width="100px"
         >
-          <el-form-item label="模块名称" prop="name">
-            <el-input v-model.trim="createModuleData.name" placeholder="模块名称" />
-          </el-form-item>
-          <el-form-item label="模块版本" prop="version">
-            <el-input v-model.number="createModuleData.version" />
-          </el-form-item>
-          <el-form-item label="下载链接" prop="url">
-            <el-input v-model.number="createModuleData.url" />
-          </el-form-item>
-          <el-form-item label="文件hash" prop="hash">
-            <el-input v-model.number="createModuleData.hash" />
-          </el-form-item>
+          <el-row>
+            <el-col :span="7">
+              <el-form-item label="模块名称" prop="moduleName">
+                <el-input v-model="bindModuleData.moduleName" placeholder="模块名称" />
+              </el-form-item>
+            </el-col>
+            <el-col :span="6">
+              <el-form-item label="模块版本" prop="moduleVersion">
+                <el-input v-model="bindModuleData.moduleVersion" />
+              </el-form-item>
+            </el-col>
+            <el-col :span="11">
+              <el-form-item label="模块类型" prop="moduleType">
+                <el-radio-group v-model="bindModuleData.moduleType">
+                  <el-radio :label="1">hook模块</el-radio>
+                  <el-radio :label="2">algorithm模块</el-radio>
+                  <el-radio :label="3">其他模块</el-radio>
+                </el-radio-group>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-col :span="7">
+              <el-form-item label="目标中间件" prop="middlewareName">
+                <el-input v-model="bindModuleData.middlewareName" placeholder="模块名称" />
+              </el-form-item>
+            </el-col>
+            <el-col :span="6">
+              <el-form-item label="目标版本号" prop="middlewareVersion">
+                <el-input v-model="bindModuleData.middlewareVersion" />
+              </el-form-item>
+            </el-col>
+            <el-col :span="11">
+              <el-form-item label="模块状态" prop="status">
+                <el-select v-model="bindModuleData.status" clearable placeholder="模块状态">
+                  <el-option label="启用" :value="true" />
+                  <el-option label="禁用" :value="false" />
+                </el-select>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-col :span="12">
+              <el-form-item label="下载链接" prop="downLoadURL">
+                <el-input v-model="bindModuleData.downLoadURL" />
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="文件hash" prop="md5">
+                <el-input v-model="bindModuleData.md5" />
+              </el-form-item>
+            </el-col>
+          </el-row>
           <el-form-item label="模块描述" prop="desc">
-            <el-input v-model.trim="createModuleData.desc" placeholder="模块描述" />
+            <el-input v-model="bindModuleData.desc" placeholder="模块描述" />
           </el-form-item>
-          <el-form-item label="配置参数" prop="content">
+          <el-form-item label="配置参数" prop="parameters">
             <vue-json-editor
-              v-model="createModuleData.parameters"
+              v-model="bindModuleData.parameters"
               :show-btns="false"
               :mode="'code'"
               lang="zh"
@@ -144,6 +177,87 @@
           </el-button>
         </div>
       </el-dialog>
+      <!-- 修改防护模块对话框-->
+      <el-dialog title="修改防护模块" :visible.sync="editModuleVisible" width="60%">
+        <el-form
+          ref="editModuleForm"
+          size="small"
+          :model="bindModuleData"
+          label-width="100px"
+        >
+          <el-row>
+            <el-col :span="7">
+              <el-form-item label="模块名称" prop="moduleName">
+                <el-input v-model="bindModuleData.moduleName" placeholder="模块名称" />
+              </el-form-item>
+            </el-col>
+            <el-col :span="6">
+              <el-form-item label="模块版本" prop="moduleVersion">
+                <el-input v-model="bindModuleData.moduleVersion" />
+              </el-form-item>
+            </el-col>
+            <el-col :span="11">
+              <el-form-item label="模块类型" prop="moduleType">
+                <el-radio-group v-model="bindModuleData.moduleType">
+                  <el-radio :label="1">hook模块</el-radio>
+                  <el-radio :label="2">algorithm模块</el-radio>
+                  <el-radio :label="3">其他模块</el-radio>
+                </el-radio-group>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-col :span="7">
+              <el-form-item label="目标中间件" prop="middlewareName">
+                <el-input v-model="bindModuleData.middlewareName" placeholder="模块名称" />
+              </el-form-item>
+            </el-col>
+            <el-col :span="6">
+              <el-form-item label="目标版本号" prop="middlewareVersion">
+                <el-input v-model="bindModuleData.middlewareVersion" />
+              </el-form-item>
+            </el-col>
+            <el-col :span="11">
+              <el-form-item label="模块状态" prop="status">
+                <el-select v-model="bindModuleData.status" clearable placeholder="模块状态">
+                  <el-option label="启用" :value="true" />
+                  <el-option label="禁用" :value="false" />
+                </el-select>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-col :span="12">
+              <el-form-item label="下载链接" prop="downLoadURL">
+                <el-input v-model="bindModuleData.downLoadURL" />
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="文件hash" prop="md5">
+                <el-input v-model="bindModuleData.md5" />
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-form-item label="模块描述" prop="desc">
+            <el-input v-model="bindModuleData.desc" placeholder="模块描述" />
+          </el-form-item>
+          <el-form-item label="配置参数" prop="parameters">
+            <vue-json-editor
+              v-model="bindModuleData.parameters"
+              :show-btns="false"
+              :mode="'code'"
+              lang="zh"
+              @json-change="onJsonChange"
+              @json-save="onJsonSave"
+              @has-error="onError"
+            />
+          </el-form-item>
+        </el-form>
+        <div slot="footer" class="dialog-footer">
+          <el-button size="mini" @click="closeEditModule()">关 闭</el-button>
+          <el-button size="mini" :loading="submitCreateModuleLoading" type="primary" @click="updateModuleForm()">更 新</el-button>
+        </div>
+      </el-dialog>
     </el-card>
   </div>
 </template>
@@ -151,7 +265,7 @@
 <script>
 
 import vueJsonEditor from 'vue-json-editor'
-import { batchDeleteModuleByIds, createModule, getModules } from '@/api/module/module'
+import { batchDeleteModuleByIds, createModule, deleteModule, getModules, updateModule } from '@/api/module/module'
 import { batchDeleteConfigByIds } from '@/api/config/config'
 
 export default {
@@ -172,39 +286,26 @@ export default {
       total: 0,
       loading: false,
 
-      // 模块详情
-      moduleDetailVisible: false,
-      moduleDetailData: {
-        id: '',
-        name: '',
-        desc: '',
-        status: '',
-        parameters: {}
-      },
-
       // 创建模块
       createModuleVisible: false,
       submitCreateModuleLoading: false,
-      createModuleData: {
-        name: '',
-        version: '',
-        url: '',
-        hash: '',
+      bindModuleData: {
+        moduleName: '',
+        moduleVersion: '',
+        downLoadURL: '',
+        md5: '',
+        moduleType: 1,
+        middlewareName: '',
+        middlewareVersion: '',
+        tag: '',
         desc: '',
-        status: '',
+        status: true,
         parameters: {}
       },
-      // 配置项约束
-      createModuleFormRules: {
-        name: [
-          { required: true, message: '请输入配置名称', trigger: 'blur' },
-          { min: 2, max: 20, message: '长度在 2 到 20 个字符', trigger: 'blur' }
-        ],
-        desc: [
-          { required: true, message: '请输入配置描述', trigger: 'blur' },
-          { min: 6, max: 30, message: '长度在 6 到 30 个字符', trigger: 'blur' }
-        ]
-      },
+      // 编辑模块
+      editModuleVisible: false,
+
+      selectedModuleData: null,
 
       hasJsonFlag: true, // json是否验证通过
       // 删除按钮弹出框
@@ -228,32 +329,72 @@ export default {
       this.loading = true
       try {
         const { data } = await getModules(this.params)
-        this.tableData = data.data
+        this.tableData = data.list
         this.total = data.total
       } finally {
         this.loading = false
       }
     },
 
-    // 查看配置详情
-    viewModuleDetail(row) {
-      this.configDetailVisible = true
-      this.configDetailData.configId = row.ID
-      this.configDetailData.configName = row.name
-      this.configDetailData.configDesc = row.desc
-      this.configDetailData.configStatus = row.status
-      this.configDetailData.configContent = JSON.parse(row.content) // 字符串转json对象
-    },
     closeCreateModule() {
       this.createModuleVisible = false
     },
 
-    closeModuleDetail() {
-      this.moduleDetailVisible = false
+    closeEditModule() {
+      this.editModuleVisible = false
     },
 
     create() {
+      this.bindModuleData = {
+        name: '',
+        version: '',
+        url: '',
+        hash: '',
+        type: 1,
+        middlewareName: '',
+        middlewareVersion: '',
+        tag: '',
+        desc: '',
+        status: true,
+        parameters: {}
+      }
       this.createModuleVisible = true
+    },
+
+    handleEdit(record) {
+      this.selectedModuleData = record
+      this.bindModuleData = record
+      this.editModuleVisible = true
+    },
+
+    handleDelete(record) {
+      this.$confirm('此操作将永久删除, 是否继续?', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(async res => {
+        this.loading = true
+        let msg = ''
+        try {
+          const { message } = await deleteModule({ id: record.id })
+          msg = message
+        } finally {
+          this.loading = false
+        }
+
+        await this.getModuleTableData()
+        this.$message({
+          showClose: true,
+          message: msg,
+          type: 'success'
+        })
+      }).catch(() => {
+        this.$message({
+          showClose: true,
+          type: 'info',
+          message: '已取消删除'
+        })
+      })
     },
 
     // 提交表单
@@ -263,13 +404,42 @@ export default {
           this.submitCreateConfigLoading = true
           let msg = ''
           try {
-            const { message } = await createModule(this.createConfigData)
+            const { message } = await createModule(this.bindModuleData)
             msg = message
           } finally {
             this.submitCreateModuleLoading = false
           }
           this.resetForm()
-          this.getModuleTableData()
+          await this.getModuleTableData()
+          this.$message({
+            showClose: true,
+            message: msg,
+            type: 'success'
+          })
+        } else {
+          this.$message({
+            showClose: true,
+            message: '表单校验失败',
+            type: 'error'
+          })
+          return false
+        }
+      })
+    },
+
+    updateModuleForm() {
+      this.$refs['editModuleForm'].validate(async valid => {
+        if (valid) {
+          this.submitCreateConfigLoading = true
+          let msg = ''
+          try {
+            const { message } = await updateModule(this.bindModuleData)
+            msg = message
+          } finally {
+            this.submitCreateModuleLoading = false
+          }
+          await this.getModuleTableData()
+          this.editModuleVisible = false
           this.$message({
             showClose: true,
             message: msg,
@@ -341,7 +511,7 @@ export default {
           this.loading = false
         }
 
-        this.getModuleTableData()
+        await this.getModuleTableData()
         this.$message({
           showClose: true,
           message: msg,
@@ -372,7 +542,7 @@ export default {
         this.loading = false
       }
 
-      this.getModuleTableData()
+      await this.getModuleTableData()
       this.$message({
         showClose: true,
         message: msg,
@@ -388,6 +558,15 @@ export default {
     handleCurrentChange(val) {
       this.params.pageNum = val
       this.getModuleTableData()
+    },
+    getModuleType(type) {
+      if (type === 1) {
+        return 'hook模块'
+      } else if (type === 2) {
+        return 'algorithm模块'
+      } else if (type === 3) {
+        return '其他模块'
+      }
     }
   }
 }

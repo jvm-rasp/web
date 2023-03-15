@@ -1,39 +1,47 @@
 <template>
   <div>
     <el-card class="container-card" shadow="always">
-
       <!-- 条件搜索框 -->
-      <el-form size="mini" :inline="true" :model="params" class="demo-form-inline">
-        <el-form-item label="名称">
-          <el-input v-model.trim="params.name" clearable placeholder="名称" @clear="search" />
-        </el-form-item>
-        <el-form-item label="状态">
-          <el-select v-model.trim="params.status" clearable placeholder="状态" @change="search" @clear="search">
-            <el-option label="正常" value="1" />
-            <el-option label="禁用" value="0" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="创建人">
-          <el-input v-model.trim="params.creator" clearable placeholder="创建人" @clear="search" />
-        </el-form-item>
-        <el-form-item>
-          <el-button :loading="loading" icon="el-icon-search" type="primary" @click="search">查询</el-button>
-        </el-form-item>
-        <el-form-item>
-          <el-button :loading="loading" icon="el-icon-plus" type="warning" @click="create">新增</el-button>
-        </el-form-item>
-        <el-form-item>
-          <el-button
-            :disabled="multipleSelection.length === 0"
-            :loading="loading"
-            icon="el-icon-delete"
-            type="danger"
-            @click="batchDelete"
-          >批量删除
-          </el-button>
-        </el-form-item>
-      </el-form>
-
+      <el-row>
+        <el-form size="medium" :inline="true" :model="params" class="demo-form-inline">
+          <el-col :span="6">
+            <el-form-item label="名称">
+              <el-input v-model.trim="params.name" clearable placeholder="名称" @clear="search" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="6">
+            <el-form-item label="状态">
+              <el-select v-model.trim="params.status" clearable placeholder="状态" @change="search" @clear="search">
+                <el-option label="可用" :value="true" />
+                <el-option label="禁用" :value="false" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="6">
+            <el-form-item label="创建人">
+              <el-input v-model.trim="params.creator" clearable placeholder="创建人" @clear="search" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="6">
+            <el-form-item>
+              <el-button :loading="loading" icon="el-icon-search" type="primary" @click="search">查询</el-button>
+            </el-form-item>
+            <el-form-item>
+              <el-button :loading="loading" icon="el-icon-plus" type="warning" @click="create">新增</el-button>
+            </el-form-item>
+            <el-form-item>
+              <el-button
+                :disabled="multipleSelection.length === 0"
+                :loading="loading"
+                icon="el-icon-delete"
+                type="danger"
+                @click="batchDelete"
+              >批量删除
+              </el-button>
+            </el-form-item>
+          </el-col>
+        </el-form>
+      </el-row>
       <!-- 配置列表 -->
       <el-table
         v-loading="loading"
@@ -44,42 +52,27 @@
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="55" align="center" />
-        <el-table-column show-overflow-tooltip sortable prop="ID" with="55" label="配置ID" align="center" />
-        <el-table-column show-overflow-tooltip sortable prop="name" with="120" label="配置名称" align="center" />
-        <el-table-column show-overflow-tooltip sortable prop="desc" with="120" label="配置描述" align="center" />
-        <el-table-column show-overflow-tooltip sortable prop="status" with="60" label="配置状态" align="center">
+        <el-table-column show-overflow-tooltip sortable prop="id" with="55" label="配置ID" align="center" />
+        <el-table-column show-overflow-tooltip sortable prop="name" label="配置名称" align="center" />
+        <el-table-column show-overflow-tooltip sortable prop="desc" label="配置描述" align="center" />
+        <el-table-column show-overflow-tooltip sortable prop="status" label="配置状态" align="center">
           <template slot-scope="scope">
-            <el-tag size="small" :type="scope.row.status === 1 ? 'success':'danger'" disable-transitions>
-              {{ scope.row.status === 1 ? '正常' : '禁用' }}
+            <el-tag size="small" :type="scope.row.status ? 'success':'danger'" disable-transitions>
+              {{ scope.row.status ? '可用' : '禁用' }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column show-overflow-tooltip sortable prop="status" with="60" label="配置状态" align="center">
-          <template slot="status" slot-scope="scope">
-            <el-switch
-              v-model="scope.row.status"
-              on-value="true"
-              off-value="false"
-              @change="switchChange(scope.row)"
-            />
-          </template>
-        </el-table-column>
-
         <el-table-column show-overflow-tooltip sortable prop="creator" label="创建人" align="center" />
-        <el-table-column fixed="right" label="操作" align="center" width="240">
+        <el-table-column show-overflow-tooltip sortable prop="operator" label="操作人" align="center" />
+        <el-table-column show-overflow-tooltip sortable prop="updateTime" label="更新时间" align="center" />
+        <el-table-column show-overflow-tooltip sortable prop="createTime" label="创建时间" align="center" />
+        <el-table-column fixed="right" label="操作" align="center">
           <template slot-scope="scope">
-            <el-tooltip content="查看配置" effect="dark" placement="top">
-              <el-button size="mini" circle type="primary" icon="el-icon-view" @click="viewConfigDetail(scope.row)" />
-            </el-tooltip>
-            <el-tooltip class="delete-popover" content="删除配置" effect="dark" placement="top">
-              <el-popconfirm title="确定删除吗？" @onConfirm="singleDelete(scope.row.ID)">
-                <el-button slot="reference" size="mini" icon="el-icon-delete" circle type="danger" />
-              </el-popconfirm>
-            </el-tooltip>
+            <el-button type="text" size="medium" @click="handleDelete(scope.row)">删除</el-button>
+            <el-button type="text" size="medium" @click="handleEdit(scope.row)">修改</el-button>
           </template>
         </el-table-column>
       </el-table>
-
       <!--分页配置-->
       <el-pagination
         :current-page="params.pageNum"
@@ -93,40 +86,198 @@
         @current-change="handleCurrentChange"
       />
 
-      <!-- 配置内容详情对话框 -->
-      <el-dialog title="配置详情" :visible.sync="configDetailVisible" width="60%">
-        <el-form size="small" :model="configDetailData" label-width="100px">
-          <json-viewer v-model="configDetailData.configContent" copyable boxed />
-        </el-form>
-        <div slot="footer" class="dialog-footer">
-          <el-button size="mini" @click="closeConfigDetail()">关 闭</el-button>
-        </div>
-      </el-dialog>
-
       <!-- 新建配置对话框 -->
-      <el-dialog title="创建配置" :visible.sync="createConfigVisible" width="60%">
-        <el-form ref="createConfigForm" size="small" :model="createConfigData" :rules="createConfigFormRules" label-width="100px">
-          <el-form-item label="配置名称" prop="name">
-            <el-input v-model.trim="createConfigData.name" placeholder="配置名称" />
-          </el-form-item>
-          <el-form-item label="配置描述" prop="desc">
-            <el-input v-model.trim="createConfigData.desc" placeholder="配置描述" />
-          </el-form-item>
-          <el-form-item label="配置内容" prop="content">
-            <vue-json-editor
-              v-model="createConfigData.content"
-              :show-btns="false"
-              :mode="'code'"
-              lang="zh"
-              @json-change="onJsonChange"
-              @json-save="onJsonSave"
-              @has-error="onError"
-            />
-          </el-form-item>
+      <el-dialog title="创建配置" :visible.sync="createConfigVisible" width="50%">
+        <el-form ref="createConfigForm" size="small" :model="bindConfigData" :rules="createConfigFormRules" label-width="100px">
+          <el-row>
+            <el-col :span="12">
+              <el-form-item label="配置名称" prop="name">
+                <el-input v-model.trim="bindConfigData.name" placeholder="配置名称" />
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="接入模式" prop="agentMode">
+                <el-radio-group v-model="bindConfigData.agentMode">
+                  <el-radio :label="1">动态</el-radio>
+                  <el-radio :label="2">静态</el-radio>
+                  <el-radio :label="0">关闭</el-radio>
+                </el-radio-group>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-col :span="24">
+              <el-form-item label="模块列表" prop="moduleConfigs">
+                <el-checkbox v-model="checkAll" :indeterminate="isIndeterminate" @change="handleCheckAllChange">全选</el-checkbox>
+                <div style="margin: 15px 0;" />
+                <el-checkbox-group v-model="selectedModuleId" @change="handleCheckedModulesChange">
+                  <el-checkbox v-for="module in moduleList" :key="module.id" :label="module.id">{{ module.moduleName }}</el-checkbox>
+                </el-checkbox-group>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-col :span="12">
+              <el-form-item label="阻断反馈链接" label-width="120px" prop="agentConfigs.redirect_url">
+                <el-input v-model.trim="bindConfigData.agentConfigs.redirect_url" placeholder="配置名称" />
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="阻断状态码" label-width="120px" prop="agentConfigs.block_status_code">
+                <el-input v-model.trim="bindConfigData.agentConfigs.block_status_code" placeholder="阻断状态码" />
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-col :span="24">
+              <el-form-item label="json阻断文本" label-width="120px" prop="agentConfigs.json_block_content">
+                <el-input v-model.trim="bindConfigData.agentConfigs.json_block_content" placeholder="json格式的阻断文本" />
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-col :span="24">
+              <el-form-item label="xml阻断文本" label-width="120px" prop="agentConfigs.xml_block_content">
+                <el-input v-model.trim="bindConfigData.agentConfigs.xml_block_content" placeholder="xml格式的阻断文本" />
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-col :span="24">
+              <el-form-item label="html阻断文本" label-width="120px" prop="agentConfigs.html_block_content">
+                <el-input v-model.trim="bindConfigData.agentConfigs.html_block_content" placeholder="html格式的阻断文本" />
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-col :span="24">
+              <el-form-item label="日志文件路径" label-width="120px" prop="logPath">
+                <el-input v-model.trim="bindConfigData.logPath" placeholder="日志文件路径" />
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-col :span="24">
+              <el-form-item label="守护进程URL" label-width="120px" prop="binFileUrl">
+                <el-input v-model.trim="bindConfigData.binFileUrl" placeholder="守护进程下载链接" />
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-col :span="24">
+              <el-form-item label="守护进程hash" label-width="120px" prop="binFileHash">
+                <el-input v-model.trim="bindConfigData.binFileHash" placeholder="守护进程文件hash" />
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-col :span="24">
+              <el-form-item label="配置描述" label-width="120px" prop="desc">
+                <el-input v-model.trim="bindConfigData.desc" placeholder="配置描述" />
+              </el-form-item>
+            </el-col>
+          </el-row>
         </el-form>
         <div slot="footer" class="dialog-footer">
           <el-button size="mini" @click="closeCreateConfig()">关 闭</el-button>
           <el-button size="mini" :loading="submitCreateConfigLoading" type="primary" @click="submitNewConfigForm()">确 定</el-button>
+        </div>
+      </el-dialog>
+      <!-- 新建配置对话框 -->
+      <el-dialog title="修改配置" :visible.sync="editConfigVisible" width="50%">
+        <el-form ref="editConfigForm" size="small" :model="bindConfigData" :rules="createConfigFormRules" label-width="100px">
+          <el-row>
+            <el-col :span="12">
+              <el-form-item label="配置名称" prop="name">
+                <el-input v-model.trim="bindConfigData.name" placeholder="配置名称" />
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="接入模式" prop="agentMode">
+                <el-radio-group v-model="bindConfigData.agentMode">
+                  <el-radio :label="1">动态</el-radio>
+                  <el-radio :label="2">静态</el-radio>
+                  <el-radio :label="0">关闭</el-radio>
+                </el-radio-group>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-col :span="24">
+              <el-form-item label="模块列表" prop="moduleConfigs">
+                <el-checkbox v-model="checkAll" :indeterminate="isIndeterminate" @change="handleCheckAllChange">全选</el-checkbox>
+                <div style="margin: 15px 0;" />
+                <el-checkbox-group v-model="selectedModuleId" @change="handleCheckedModulesChange">
+                  <el-checkbox v-for="module in moduleList" :key="module.id" :checked="selectedModuleId.indexOf(module.id) > 0" :label="module.id">{{ module.moduleName }}</el-checkbox>
+                </el-checkbox-group>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-col :span="12">
+              <el-form-item label="阻断反馈链接" label-width="120px" prop="agentConfigs.redirect_url">
+                <el-input v-model.trim="bindConfigData.agentConfigs.redirect_url" placeholder="配置名称" />
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="阻断状态码" label-width="120px" prop="agentConfigs.block_status_code">
+                <el-input v-model.trim="bindConfigData.agentConfigs.block_status_code" placeholder="阻断状态码" />
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-col :span="24">
+              <el-form-item label="json阻断文本" label-width="120px" prop="agentConfigs.json_block_content">
+                <el-input v-model.trim="bindConfigData.agentConfigs.json_block_content" placeholder="json格式的阻断文本" />
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-col :span="24">
+              <el-form-item label="xml阻断文本" label-width="120px" prop="agentConfigs.xml_block_content">
+                <el-input v-model.trim="bindConfigData.agentConfigs.xml_block_content" placeholder="xml格式的阻断文本" />
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-col :span="24">
+              <el-form-item label="html阻断文本" label-width="120px" prop="agentConfigs.html_block_content">
+                <el-input v-model.trim="bindConfigData.agentConfigs.html_block_content" placeholder="html格式的阻断文本" />
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-col :span="24">
+              <el-form-item label="日志文件路径" label-width="120px" prop="logPath">
+                <el-input v-model.trim="bindConfigData.logPath" placeholder="日志文件路径" />
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-col :span="24">
+              <el-form-item label="守护进程URL" label-width="120px" prop="binFileUrl">
+                <el-input v-model.trim="bindConfigData.binFileUrl" placeholder="守护进程下载链接" />
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-col :span="24">
+              <el-form-item label="守护进程hash" label-width="120px" prop="binFileHash">
+                <el-input v-model.trim="bindConfigData.binFileHash" placeholder="守护进程文件hash" />
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-col :span="24">
+              <el-form-item label="配置描述" label-width="120px" prop="desc">
+                <el-input v-model.trim="bindConfigData.desc" placeholder="配置描述" />
+              </el-form-item>
+            </el-col>
+          </el-row>
+        </el-form>
+        <div slot="footer" class="dialog-footer">
+          <el-button size="mini" @click="closeCreateConfig()">关 闭</el-button>
+          <el-button size="mini" :loading="submitCreateConfigLoading" type="primary" @click="editConfigForm()">更 新</el-button>
         </div>
       </el-dialog>
     </el-card>
@@ -134,12 +285,14 @@
 </template>
 
 <script>
-import { getConfigs, createConfig, batchDeleteConfigByIds } from '@/api/config/config'
+import { getConfigs, createConfig, batchDeleteConfigByIds, updateConfig, deleteConfig } from '@/api/config/config'
 import vueJsonEditor from 'vue-json-editor'
+import { getModules } from '@/api/module/module'
 
 export default {
   name: 'Config',
   // 注册组件
+  // eslint-disable-next-line vue/no-unused-components
   components: { vueJsonEditor },
   data() {
     return {
@@ -156,26 +309,49 @@ export default {
       total: 0,
       loading: false,
 
-      // 配置详情
-      configDetailVisible: false,
-      configDetailData: {
-        configId: '',
-        configName: '',
-        configDesc: '',
-        configStatus: '',
-        configContent: {}
-      },
+      // 可用模块
+      moduleList: [
+      ],
 
-      // 创建配置
-      createConfigVisible: false,
-      submitCreateConfigLoading: false,
-      createConfigData: {
+      // 已选择的模块
+      selectedModuleId: [],
+      selectedModuleData: {},
+
+      // 配置数据绑定
+      bindConfigData: {
         id: '',
         name: '',
         desc: '',
         status: '',
-        content: {}
+        creator: '',
+        operator: '',
+        createTime: '',
+        updateTime: '',
+        agentMode: '',
+        moduleConfigs: [],
+        logPath: '',
+        agentConfigs: {
+          check_disable: false,
+          redirect_url: '',
+          block_status_code: '',
+          json_block_content: '',
+          xml_block_content: '',
+          html_block_content: ''
+        },
+        binFileUrl: '',
+        binFileHash: ''
       },
+
+      isIndeterminate: true,
+      checkAll: false,
+
+      // 编辑配置
+      editConfigVisible: false,
+
+      // 创建配置
+      createConfigVisible: false,
+      submitCreateConfigLoading: false,
+
       // 配置项约束
       createConfigFormRules: {
         name: [
@@ -197,6 +373,7 @@ export default {
   },
   created() {
     this.getConfigTableData()
+    this.getModuleListData()
   },
   methods: {
     // 查询
@@ -205,30 +382,86 @@ export default {
       this.getConfigTableData()
     },
 
+    handleEdit(record) {
+      this.selectedModuleData = record
+      this.bindConfigData = record
+      this.selectedModuleId = []
+      record.moduleConfigs.forEach((item) => {
+        this.selectedModuleId.push(item.id)
+      })
+      this.editConfigVisible = true
+    },
+
+    handleDelete(record) {
+      this.$confirm('此操作将永久删除, 是否继续?', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(async res => {
+        this.loading = true
+        let msg = ''
+        try {
+          const { message } = await deleteConfig({ id: record.id })
+          msg = message
+        } finally {
+          this.loading = false
+        }
+
+        await this.getConfigTableData()
+        this.$message({
+          showClose: true,
+          message: msg,
+          type: 'success'
+        })
+      }).catch(() => {
+        this.$message({
+          showClose: true,
+          type: 'info',
+          message: '已取消删除'
+        })
+      })
+    },
+
+    handleCheckAllChange(value) {
+      if (value) {
+        this.checkAll = true
+        this.isIndeterminate = false
+        this.moduleList.forEach((item) => {
+          this.selectedModuleId.push(item.id)
+        })
+      } else {
+        this.checkAll = false
+        this.isIndeterminate = true
+        this.selectedModuleId = []
+      }
+      this.handleCheckedModulesChange(this.selectedModuleId)
+    },
+
+    handleCheckedModulesChange(value) {
+      this.bindConfigData.moduleConfigs = []
+      value.forEach((checkedItem) => {
+        const matches = this.moduleList.filter((moduleItem) => {
+          return moduleItem.id === checkedItem
+        })
+        this.bindConfigData.moduleConfigs = this.bindConfigData.moduleConfigs.concat(matches)
+      })
+    },
+
     // 获取表格数据
     async getConfigTableData() {
       this.loading = true
       try {
         const { data } = await getConfigs(this.params)
-        this.tableData = data.data
+        this.tableData = data.list
         this.total = data.total
       } finally {
         this.loading = false
       }
     },
 
-    // 查看配置详情
-    viewConfigDetail(row) {
-      this.configDetailVisible = true
-      this.configDetailData.configId = row.ID
-      this.configDetailData.configName = row.name
-      this.configDetailData.configDesc = row.desc
-      this.configDetailData.configStatus = row.status
-      this.configDetailData.configContent = JSON.parse(row.content) // 字符串转json对象
-    },
-    // 关闭配置详情
-    closeConfigDetail() {
-      this.configDetailVisible = false
+    async getModuleListData() {
+      const { data } = await getModules(this.params)
+      this.moduleList = data.list
     },
 
     // 配置创建
@@ -247,13 +480,43 @@ export default {
           this.submitCreateConfigLoading = true
           let msg = ''
           try {
-            const { message } = await createConfig(this.createConfigData)
+            const { message } = await createConfig(this.bindConfigData)
             msg = message
           } finally {
             this.submitCreateConfigLoading = false
           }
           this.resetForm()
-          this.getConfigTableData()
+          await this.getConfigTableData()
+          this.$message({
+            showClose: true,
+            message: msg,
+            type: 'success'
+          })
+        } else {
+          this.$message({
+            showClose: true,
+            message: '表单校验失败',
+            type: 'error'
+          })
+          return false
+        }
+      })
+    },
+
+    // 更新表单
+    editConfigForm() {
+      this.$refs['editConfigForm'].validate(async valid => {
+        if (valid) {
+          this.submitCreateConfigLoading = true
+          let msg = ''
+          try {
+            const { message } = await updateConfig(this.bindConfigData)
+            msg = message
+          } finally {
+            this.submitCreateConfigLoading = false
+          }
+          await this.getConfigTableData()
+          this.editConfigVisible = false
           this.$message({
             showClose: true,
             message: msg,

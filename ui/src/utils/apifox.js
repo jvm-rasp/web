@@ -7,10 +7,18 @@ export const api = [
   '/api/host/update',
   '/api/host/detail',
   '/api/config/list',
+  '/api/config/create',
+  '/api/config/update',
+  '/api/config/delete',
   '/api/attack/list',
   '/api/attack/delete',
   '/api/attack/detail',
   '/api/dashboard/attackData',
   '/api/dashboard/attackTrends',
-  '/api/dashboard/attackTypes'
+  '/api/dashboard/attackTypes',
+  '/api/module/create',
+  '/api/module/list',
+  '/api/module/update',
+  '/api/module/delete',
+  '/api/module/delete/batch'
 ]
