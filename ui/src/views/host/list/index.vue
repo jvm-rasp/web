@@ -23,22 +23,22 @@
     </el-card>
     <el-card class="app-container" :body-style="{ padding: '10px' }">
       <el-table :data="tableData" border stripe style="width: 100%">
-        <el-table-column prop="serverName" label="实例名称" />
-        <el-table-column prop="serverIP" label="IP地址" />
-        <el-table-column prop="agentVersion" label="RASP版本" width="90" />
-        <el-table-column prop="agentType" label="接入方式" width="90">
+        <el-table-column prop="serverName" label="实例名称" align="center" />
+        <el-table-column prop="serverIP" label="IP地址" align="center" />
+        <el-table-column prop="agentVersion" label="RASP版本" width="90" align="center" />
+        <el-table-column prop="agentType" label="接入方式" width="90" align="center">
           <template slot-scope="scope">
             <el-tag size="small" :type="getAgentTypeColor(scope.row.agentType)" disable-transitions>{{ scope.row.agentType }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="strategyID" label="策略ID" width="90" />
-        <el-table-column prop="online" label="在线状态" width="90">
+        <el-table-column prop="strategyID" label="策略ID" width="90" align="center" />
+        <el-table-column prop="online" label="在线状态" width="90" align="center">
           <template slot-scope="scope">
             <el-tag size="small" :type="scope.row.online === 1 ? 'success':'danger'" disable-transitions>{{ scope.row.online === 1 ? '在线':'离线' }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="configEffectTime" label="配置生效时间" />
-        <el-table-column prop="agentRegisterTime" label="注册时间" />
+        <el-table-column prop="configEffectTime" label="配置生效时间" align="center" />
+        <el-table-column prop="agentRegisterTime" label="注册时间" align="center" />
         <el-table-column fixed="right" label="操作" align="center">
           <template slot-scope="scope">
             <el-button type="text" size="medium" @click="handleDelete(scope.row.serverID)">删除</el-button>
@@ -239,7 +239,7 @@ export default {
 
     async getConfigData() {
       const { data } = await getConfigs({})
-      this.configData = data.data
+      this.configData = data.list
     },
 
     getAgentTypeColor(type) {

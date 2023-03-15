@@ -41,7 +41,7 @@
               <el-button size="mini" icon="el-icon-edit" circle type="primary" @click="update(scope.row)" />
             </el-tooltip>
             <el-tooltip class="delete-popover" content="删除" effect="dark" placement="top">
-              <el-popconfirm title="确定删除吗？" @onConfirm="singleDelete(scope.row.ID)">
+              <el-popconfirm title="确定删除吗？" @confirm="singleDelete(scope.row.ID)">
                 <el-button slot="reference" size="mini" icon="el-icon-delete" circle type="danger" />
               </el-popconfirm>
             </el-tooltip>
@@ -232,6 +232,22 @@ export default {
     create() {
       this.dialogFormTitle = '新增菜单'
       this.dialogType = 'create'
+      this.dialogFormData = {
+        title: '',
+        name: '',
+        icon: '',
+        path: '',
+        component: 'Layout',
+        redirect: '',
+        sort: 999,
+        status: '否',
+        hidden: '否',
+        noCache: '是',
+        alwaysShow: 2,
+        breadcrumb: 1,
+        activeMenu: '',
+        parentId: 0
+      }
       this.dialogFormVisible = true
     },
 
@@ -250,6 +266,7 @@ export default {
       this.dialogFormData.noCache = row.noCache === 1 ? '否' : '是'
       this.dialogFormData.activeMenu = row.activeMenu
       this.dialogFormData.parentId = row.parentId
+      this.treeselectValue = row.parentId
 
       this.dialogFormTitle = '修改菜单'
       this.dialogType = 'update'
