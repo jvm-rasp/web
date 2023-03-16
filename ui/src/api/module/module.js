@@ -12,15 +12,31 @@ export function createModule(params) {
   return request({
     url: '/api/module/create',
     method: 'post',
-    params
+    data: params
   })
 }
 
-export function batchDeleteModuleByIds(data) {
+export function updateModule(params) {
+  return request({
+    url: '/api/module/update',
+    method: 'post',
+    data: params
+  })
+}
+
+export function deleteModule(params) {
+  return request({
+    url: '/api/module/delete',
+    method: 'post',
+    data: params
+  })
+}
+
+export function batchDeleteModuleByIds(params) {
   return request({
     url: '/api/module/delete/batch',
-    method: 'delete',
-    data
+    method: 'post',
+    data: params
   })
 }
 

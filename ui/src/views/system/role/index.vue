@@ -46,7 +46,7 @@
               <el-button size="mini" icon="el-icon-key" circle type="warning" @click="updatePermission(scope.row.ID)" />
             </el-tooltip>
             <el-tooltip content="删除" effect="dark" placement="top">
-              <el-popconfirm style="margin-left:10px" title="确定删除吗？" @onConfirm="singleDelete(scope.row.ID)">
+              <el-popconfirm style="margin-left:10px" title="确定删除吗？" @confirm="singleDelete(scope.row.ID)">
                 <el-button slot="reference" size="mini" icon="el-icon-delete" circle type="danger" />
               </el-popconfirm>
             </el-tooltip>

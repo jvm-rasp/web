@@ -14,7 +14,24 @@ export function createConfig(params) {
   return request({
     url: '/api/config/create',
     method: 'post',
-    params
+    data: params
+  })
+}
+
+// 创建新配置
+export function updateConfig(params) {
+  return request({
+    url: '/api/config/update',
+    method: 'post',
+    data: params
+  })
+}
+
+export function deleteConfig(params) {
+  return request({
+    url: '/api/config/delete',
+    method: 'post',
+    data: params
   })
 }
 

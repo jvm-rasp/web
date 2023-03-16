@@ -46,7 +46,7 @@
         <el-table-column fixed="right" label="操作" align="center" width="80">
           <template slot-scope="scope">
             <el-tooltip content="删除" effect="dark" placement="top">
-              <el-popconfirm title="确定删除吗？" @onConfirm="singleDelete(scope.row.ID)">
+              <el-popconfirm title="确定删除吗？" @confirm="singleDelete(scope.row.ID)">
                 <el-button slot="reference" size="mini" icon="el-icon-delete" circle type="danger" />
               </el-popconfirm>
             </el-tooltip>
