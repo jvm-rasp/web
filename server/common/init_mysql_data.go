@@ -650,7 +650,6 @@ func InitData() {
 
 			// 非管理员拥有基础权限
 			basePaths := []string{
-				"/log/report",
 				"/base/login",
 				"/base/logout",
 				"/base/refreshToken",
