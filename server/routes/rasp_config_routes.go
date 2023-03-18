@@ -17,7 +17,7 @@ func InitRaspConfigRoutes(r *gin.RouterGroup, authMiddleware *jwt.GinJWTMiddlewa
 	{
 		router.POST("/create", raspConfigController.CreateRaspConfig)
 		router.GET("/list", raspConfigController.GetRaspConfigs)
-		router.DELETE("/delete/batch", raspConfigController.BatchDeleteConfigByIds)
+		router.POST("/delete/batch", raspConfigController.BatchDeleteConfigByIds)
 	}
 	return r
 }

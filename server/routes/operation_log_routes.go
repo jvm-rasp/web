@@ -16,7 +16,7 @@ func InitOperationLogRoutes(r *gin.RouterGroup, authMiddleware *jwt.GinJWTMiddle
 	router.Use(middleware.CasbinMiddleware())
 	{
 		router.GET("/operation/list", operationLogController.GetOperationLogs)
-		router.DELETE("/operation/delete/batch", operationLogController.BatchDeleteOperationLogByIds)
+		router.POST("/operation/delete/batch", operationLogController.BatchDeleteOperationLogByIds)
 	}
 	return r
 }

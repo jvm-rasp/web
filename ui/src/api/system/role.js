@@ -22,7 +22,7 @@ export function createRole(data) {
 export function updateRoleById(roleId, data) {
   return request({
     url: '/api/role/update/' + roleId,
-    method: 'patch',
+    method: 'get',
     data
   })
 }
@@ -39,7 +39,7 @@ export function getRoleMenusById(roleId) {
 export function updateRoleMenusById(roleId, data) {
   return request({
     url: '/api/role/menus/update/' + roleId,
-    method: 'patch',
+    method: 'get',
     data
   })
 }
@@ -56,7 +56,7 @@ export function getRoleApisById(roleId) {
 export function updateRoleApisById(roleId, data) {
   return request({
     url: '/api/role/apis/update/' + roleId,
-    method: 'patch',
+    method: 'get',
     data
   })
 }
@@ -65,7 +65,7 @@ export function updateRoleApisById(roleId, data) {
 export function batchDeleteRoleByIds(data) {
   return request({
     url: '/api/role/delete/batch',
-    method: 'delete',
+    method: 'post',
     data
   })
 }

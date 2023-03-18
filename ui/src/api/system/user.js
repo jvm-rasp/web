@@ -21,7 +21,7 @@ export function getUsers(params) {
 export function changePwd(data) {
   return request({
     url: '/api/user/changePwd',
-    method: 'put',
+    method: 'post',
     data
   })
 }
@@ -48,7 +48,7 @@ export function updateUserById(id, data) {
 export function batchDeleteUserByIds(data) {
   return request({
     url: '/api/user/delete/batch',
-    method: 'delete',
+    method: 'get',
     data
   })
 }

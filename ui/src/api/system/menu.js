@@ -29,7 +29,7 @@ export function createMenu(data) {
 export function updateMenuById(Id, data) {
   return request({
     url: '/api/menu/update/' + Id,
-    method: 'patch',
+    method: 'get',
     data
   })
 }
@@ -38,7 +38,7 @@ export function updateMenuById(Id, data) {
 export function batchDeleteMenuByIds(data) {
   return request({
     url: '/api/menu/delete/batch',
-    method: 'delete',
+    method: 'post',
     data
   })
 }

@@ -12,7 +12,8 @@ type IJavaProcessInfoRepository interface {
 	GetJavaProcessInfos(req *vo.JavaProcessInfoListRequest) ([]*model.JavaProcessInfo, int64, error)
 	GetAllJavaProcessInfos(hostName string) ([]*model.JavaProcessInfo, error)
 	DeleteProcess(id uint) error
-	SaveProcessInfo(*model.JavaProcessInfo)error
+	SaveProcessInfo(*model.JavaProcessInfo) error
+	DeleteProcessByPid(hostName string, pid uint) error
 }
 
 type JavaProcessInfoRepository struct {
@@ -79,6 +80,7 @@ func (j JavaProcessInfoRepository) SaveProcessInfo(process *model.JavaProcessInf
 }
 
 func (j JavaProcessInfoRepository) DeleteProcessByPid(hostName string, pid uint) error {
-	//err := common.DB.Where("id = ?", id).Unscoped().Delete(&model.JavaProcessInfo{}).Error
-	return nil
+	err := common.DB.Where("host_name = ?", hostName).
+		Where("pid = ?", pid).Unscoped().Delete(&model.JavaProcessInfo{}).Error
+	return err
 }

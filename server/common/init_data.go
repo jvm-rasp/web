@@ -374,7 +374,7 @@ func InitData() {
 			Creator:  "系统",
 		},
 		{
-			Method:   "PUT",
+			Method:   "POST",
 			Path:     "/user/changePwd",
 			Category: "user",
 			Desc:     "更新用户登录密码",
@@ -388,14 +388,14 @@ func InitData() {
 			Creator:  "系统",
 		},
 		{
-			Method:   "PATCH",
+			Method:   "GET",
 			Path:     "/user/update/:userId",
 			Category: "user",
 			Desc:     "更新用户",
 			Creator:  "系统",
 		},
 		{
-			Method:   "DELETE",
+			Method:   "POST",
 			Path:     "/user/delete/batch",
 			Category: "user",
 			Desc:     "批量删除用户",
@@ -416,7 +416,7 @@ func InitData() {
 			Creator:  "系统",
 		},
 		{
-			Method:   "PATCH",
+			Method:   "GET",
 			Path:     "/role/update/:roleId",
 			Category: "role",
 			Desc:     "更新角色",
@@ -430,7 +430,7 @@ func InitData() {
 			Creator:  "系统",
 		},
 		{
-			Method:   "PATCH",
+			Method:   "GET",
 			Path:     "/role/menus/update/:roleId",
 			Category: "role",
 			Desc:     "更新角色的权限菜单",
@@ -444,14 +444,14 @@ func InitData() {
 			Creator:  "系统",
 		},
 		{
-			Method:   "PATCH",
+			Method:   "GET",
 			Path:     "/role/apis/update/:roleId",
 			Category: "role",
 			Desc:     "更新角色的权限接口",
 			Creator:  "系统",
 		},
 		{
-			Method:   "DELETE",
+			Method:   "POST",
 			Path:     "/role/delete/batch",
 			Category: "role",
 			Desc:     "批量删除角色",
@@ -479,14 +479,14 @@ func InitData() {
 			Creator:  "系统",
 		},
 		{
-			Method:   "PATCH",
+			Method:   "GET",
 			Path:     "/menu/update/:menuId",
 			Category: "menu",
 			Desc:     "更新菜单",
 			Creator:  "系统",
 		},
 		{
-			Method:   "DELETE",
+			Method:   "POST",
 			Path:     "/menu/delete/batch",
 			Category: "menu",
 			Desc:     "批量删除菜单",
@@ -528,14 +528,14 @@ func InitData() {
 			Creator:  "系统",
 		},
 		{
-			Method:   "PATCH",
+			Method:   "GET",
 			Path:     "/api/update/:roleId",
 			Category: "api",
 			Desc:     "更新接口",
 			Creator:  "系统",
 		},
 		{
-			Method:   "DELETE",
+			Method:   "POST",
 			Path:     "/api/delete/batch",
 			Category: "api",
 			Desc:     "批量删除接口",
@@ -549,7 +549,7 @@ func InitData() {
 			Creator:  "系统",
 		},
 		{
-			Method:   "DELETE",
+			Method:   "POST",
 			Path:     "/log/operation/delete/batch",
 			Category: "log",
 			Desc:     "批量删除操作日志",
@@ -570,7 +570,7 @@ func InitData() {
 			Creator:  "系统",
 		},
 		{
-			Method:   "DELETE",
+			Method:   "POST",
 			Path:     "/config/delete/batch",
 			Category: "config",
 			Desc:     "批量删除配置",

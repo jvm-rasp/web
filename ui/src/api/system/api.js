@@ -31,7 +31,7 @@ export function createApi(data) {
 export function updateApiById(Id, data) {
   return request({
     url: '/api/api/update/' + Id,
-    method: 'patch',
+    method: 'get',
     data
   })
 }
@@ -40,7 +40,7 @@ export function updateApiById(Id, data) {
 export function batchDeleteApiByIds(data) {
   return request({
     url: '/api/api/delete/batch',
-    method: 'delete',
+    method: 'post',
     data
   })
 }

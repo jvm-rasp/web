@@ -130,7 +130,6 @@ func handleStartupLog(message *message.DaemonMessage) {
 		return
 	}
 	host.AgentMode = detailMap["agentMode"]
-
 	dbData, err := raspHostRepository.QueryRaspHost(host.HostName)
 	if err != nil {
 		// todo
@@ -143,6 +142,13 @@ func handleStartupLog(message *message.DaemonMessage) {
 			return
 		}
 	}
+	dbData, err = raspHostRepository.QueryRaspHost(host.HostName)
+	if err != nil {
+		// todo
+		return
+	}
+	fmt.Println("host.AgentMode")
+	fmt.Println(host.AgentMode)
 }
 
 func handleHostEnvLog(message *message.DaemonMessage) {
@@ -253,14 +259,12 @@ func handleHeartbeatLog(message *message.DaemonMessage) {
 		// TODO
 		return
 	}
-	if len(detailMap) > 0 {
-		for _, v := range list {
-			if detailMap[string(v.Pid)] == nil {
-				err := javaProcessRepository.DeleteProcess(v.ID)
-				if err != nil {
 
-					return
-				}
+	for _, v := range list {
+		if len(detailMap) == 0 || detailMap[string(v.Pid)] == nil {
+			err := javaProcessRepository.DeleteProcess(v.ID)
+			if err != nil {
+				return
 			}
 		}
 	}
@@ -302,11 +306,20 @@ func handleFindJavaProcessLog(message *message.DaemonMessage) {
 	}
 	fmt.Printf("SaveProcessInfo:%v\n", process.Pid)
 	err = javaProcessRepository.SaveProcessInfo(process)
-	if err!= nil {
+	if err != nil {
 		panic(err)
 	}
 }
 
 func handleRemoveJavaProcessLog(message *message.DaemonMessage) {
-
+	pid, err := strconv.ParseInt(message.Detail, 10, 32)
+	if err != nil {
+		// TODO
+		return
+	}
+	err = javaProcessRepository.DeleteProcessByPid(message.HostName, uint(pid))
+	if err != nil {
+		// TODO
+		return
+	}
 }

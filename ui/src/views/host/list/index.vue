@@ -99,8 +99,7 @@
         >
           <el-table-column show-overflow-tooltip sortable prop="pid" label="PID" align="center" />
           <el-table-column show-overflow-tooltip sortable prop="startTime" label="启动时间" align="center" />
-          <el-table-column show-overflow-tooltip sortable prop="status" label="保护状态" align="center" />
-          <el-table-column show-overflow-tooltip sortable prop="status" label="状态" align="center">
+          <el-table-column show-overflow-tooltip sortable prop="status" label="保护状态" align="center">
             <template slot-scope="scope">
               <el-tag size="small" :type="getAgentStatusColor(scope.row.status)" disable-transitions>{{ getAgentStatusText(scope.row.status) }}</el-tag>
             </template>

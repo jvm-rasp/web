@@ -18,10 +18,10 @@ func InitUserRoutes(r *gin.RouterGroup, authMiddleware *jwt.GinJWTMiddleware) gi
 	{
 		router.POST("/info", userController.GetUserInfo)
 		router.GET("/list", userController.GetUsers)
-		router.PUT("/changePwd", userController.ChangePwd)
+		router.POST("/changePwd", userController.ChangePwd)
 		router.POST("/create", userController.CreateUser)
-		router.PATCH("/update/:userId", userController.UpdateUserById)
-		router.DELETE("/delete/batch", userController.BatchDeleteUserByIds)
+		router.GET("/update/:userId", userController.UpdateUserById)
+		router.POST("/delete/batch", userController.BatchDeleteUserByIds)
 	}
 	return r
 }

@@ -18,8 +18,8 @@ func InitMenuRoutes(r *gin.RouterGroup, authMiddleware *jwt.GinJWTMiddleware) gi
 		router.GET("/tree", menuController.GetMenuTree)
 		router.GET("/list", menuController.GetMenus)
 		router.POST("/create", menuController.CreateMenu)
-		router.PATCH("/update/:menuId", menuController.UpdateMenuById)
-		router.DELETE("/delete/batch", menuController.BatchDeleteMenuByIds)
+		router.GET("/update/:menuId", menuController.UpdateMenuById)
+		router.POST("/delete/batch", menuController.BatchDeleteMenuByIds)
 		router.GET("/access/list/:userId", menuController.GetUserMenusByUserId)
 		router.GET("/access/tree/:userId", menuController.GetUserMenuTreeByUserId)
 	}

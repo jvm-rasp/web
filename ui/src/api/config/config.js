@@ -39,7 +39,7 @@ export function deleteConfig(params) {
 export function batchDeleteConfigByIds(data) {
   return request({
     url: '/api/config/delete/batch',
-    method: 'delete',
+    method: 'post',
     data
   })
 }
