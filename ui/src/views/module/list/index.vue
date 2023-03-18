@@ -266,7 +266,6 @@
 
 import vueJsonEditor from 'vue-json-editor'
 import { batchDeleteModuleByIds, createModule, deleteModule, getModules, updateModule } from '@/api/module/module'
-import { batchDeleteConfigByIds } from '@/api/config/config'
 
 export default {
   name: 'Module',
@@ -529,25 +528,6 @@ export default {
     // 表格多选
     handleSelectionChange(val) {
       this.multipleSelection = val
-    },
-
-    // 单个删除
-    async singleDelete(Id) {
-      this.loading = true
-      let msg = ''
-      try {
-        const { message } = await batchDeleteConfigByIds({ ids: [Id] })
-        msg = message
-      } finally {
-        this.loading = false
-      }
-
-      await this.getModuleTableData()
-      this.$message({
-        showClose: true,
-        message: msg,
-        type: 'success'
-      })
     },
 
     // 分页

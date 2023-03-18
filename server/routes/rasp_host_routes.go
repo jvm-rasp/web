@@ -14,7 +14,7 @@ func InitRaspHostRoutes(r *gin.RouterGroup, authMiddleware *jwt.GinJWTMiddleware
 	router.Use(middleware.CasbinMiddleware())
 	{
 		router.GET("/list", raspHostController.GetRaspHosts)
-		router.DELETE("/delete/batch", raspHostController.BatchDeleteHostByIds)
+		router.POST("/delete/batch", raspHostController.BatchDeleteHostByIds)
 	}
 	return r
 }

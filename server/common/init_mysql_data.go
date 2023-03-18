@@ -591,10 +591,10 @@ func InitData() {
 			Creator:  "系统",
 		},
 		{
-			Method:   "DELETE",
+			Method:   "GET",
 			Path:     "/module/delete/batch",
 			Category: "module",
-			Desc:     "批量模块",
+			Desc:     "批量删除模块",
 			Creator:  "系统",
 		},
 		{
@@ -605,7 +605,7 @@ func InitData() {
 			Creator:  "系统",
 		},
 		{
-			Method:   "DELETE",
+			Method:   "POST",
 			Path:     "/host/delete/batch",
 			Category: "host",
 			Desc:     "批量删除实例列表",
@@ -630,6 +630,13 @@ func InitData() {
 			Path:     "/attck/delete/batch",
 			Category: "attack",
 			Desc:     "批量删除日志列表",
+			Creator:  "系统",
+		},
+		{
+			Method:   "GET",
+			Path:     "/process/list",
+			Category: "process",
+			Desc:     "获取进程日志列表",
 			Creator:  "系统",
 		},
 	}

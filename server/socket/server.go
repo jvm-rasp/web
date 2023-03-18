@@ -4,9 +4,14 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/binary"
+	"encoding/json"
 	"fmt"
 	"net"
-	"server/common"
+	"server/model"
+	"server/repository"
+	"server/socket/message"
+	"strconv"
+	"strings"
 )
 
 // 日志topic 或者命令
@@ -17,6 +22,9 @@ const ATTACK_TOPIC byte = 0x04
 
 // LOG_PACKAGE_CONSTANT_LENGTH 消息体的固定长度 149
 const LOG_PACKAGE_CONSTANT_LENGTH = 149
+
+var raspHostRepository = repository.NewRaspHostRepository()
+var javaProcessRepository = repository.NewJavaProcessInfoRepository()
 
 func NewSockekServer(port int) error {
 	tcpAddr, _ := net.ResolveTCPAddr("tcp", fmt.Sprintf(":%v", port))
@@ -31,6 +39,7 @@ func NewSockekServer(port int) error {
 			fmt.Println(err)
 			continue
 		}
+		fmt.Println("get a connection")
 		go handle(tcpConn)
 	}
 	return nil
@@ -52,8 +61,8 @@ func handle(conn net.Conn) {
 func Handler(p *LogPackage) {
 	switch p.Type {
 	case DAEMON_TOPIC:
-		common.Log.Debug(fmt.Sprintf("handler log hostname: %s", p.HostName))
 		handleDaemonLog(p)
+		break
 	default:
 
 	}
@@ -61,7 +70,8 @@ func Handler(p *LogPackage) {
 
 // splitLog 将字节码流分割为消息体
 func splitLog(data []byte, atEOF bool) (advance int, token []byte, err error) {
-	if !atEOF && string(data[0:3]) == string(magicBytes[:]) {
+	// TODO 疑似npe
+	if !atEOF && len(data) >= 4 && string(data[0:3]) == string(magicBytes[:]) {
 		if len(data) > 13 {
 			hostNamelength := int32(0)
 			err := binary.Read(bytes.NewReader(data[5:9]), binary.BigEndian, &hostNamelength)
@@ -83,5 +93,220 @@ func splitLog(data []byte, atEOF bool) (advance int, token []byte, err error) {
 }
 
 func handleDaemonLog(p *LogPackage) {
-	//　TODO
+	daemonMessage := &message.DaemonMessage{}
+	if p != nil {
+		err := json.Unmarshal(p.Body, &daemonMessage)
+		if err != nil {
+			// TODO
+			return
+		}
+	}
+
+	// 不同logid 处理
+	switch daemonMessage.Logid {
+	case message.DAEMON_STARTUP_LOGID:
+		handleStartupLog(daemonMessage)
+	case message.HOST_ENV_LOGID:
+		handleHostEnvLog(daemonMessage)
+	case message.HEART_BEAT_LOGID:
+		handleHeartbeatLog(daemonMessage)
+	case message.JAVA_PROCESS_STARTUP:
+		handleFindJavaProcessLog(daemonMessage)
+	case message.JAVA_PROCESS_SHUTDOWN:
+		handleRemoveJavaProcessLog(daemonMessage)
+	}
+}
+
+func handleStartupLog(message *message.DaemonMessage) {
+	host := &model.RaspHost{
+		HostName:     message.HostName,
+		Ip:           message.Ip,
+		HeatbeatTime: message.Ts,
+	}
+	detailMap := make(map[string]string)
+	err := json.Unmarshal([]byte(message.Detail), &detailMap)
+	if err != nil {
+		// TODO
+		return
+	}
+	host.AgentMode = detailMap["agentMode"]
+
+	dbData, err := raspHostRepository.QueryRaspHost(host.HostName)
+	if err != nil {
+		// todo
+		return
+	}
+	if len(dbData) <= 0 {
+		err = raspHostRepository.CreateRaspHost(host)
+		if err != nil {
+			// todo
+			return
+		}
+	}
+}
+
+func handleHostEnvLog(message *message.DaemonMessage) {
+	// 主机相关的信息，安装之后不发生变化，相对固定
+	detailMap := make(map[string]interface{})
+	err := json.Unmarshal([]byte(message.Detail), &detailMap)
+	if err != nil {
+		// TODO
+		return
+	}
+
+	installDir := detailMap["installDir"].(string)
+	version := detailMap["version"].(string)
+	binFileHash := detailMap["binFileHash"].(string)
+	osType := detailMap["osType"].(string)
+
+	totalMem := detailMap["totalMem"].(float64)
+	cpuCounts := detailMap["cpuCounts"].(float64)
+	freeDisk := detailMap["freeDisk"].(float64)
+
+	buildDateTime := detailMap["buildDateTime"].(string)
+	buildGitBranch := detailMap["buildGitBranch"].(string)
+	buildGitCommit := detailMap["buildGitCommit"].(string)
+
+	dbData, err := raspHostRepository.QueryRaspHost(message.HostName)
+	if err != nil {
+		// todo
+		return
+	}
+
+	var host *model.RaspHost
+	if len(dbData) == 0 {
+		host = &model.RaspHost{
+			HostName: message.HostName,
+			Ip:       message.Ip,
+		}
+	} else {
+		host = dbData[0]
+	}
+
+	host.InstallDir = installDir
+	host.Version = version
+	host.ExeFileHash = binFileHash
+	host.InstallDir = osType
+	host.TotalMem = totalMem
+	host.CpuCounts = cpuCounts
+	host.FreeDisk = freeDisk
+	host.BuildDateTime = buildDateTime
+	host.BuildGitBranch = buildGitBranch
+	host.BuildGitBranch = buildGitCommit
+	host.HeatbeatTime = message.Ts
+
+	if len(dbData) == 0 {
+		err = raspHostRepository.CreateRaspHost(host)
+		if err != nil {
+			// todo
+			return
+		}
+	} else {
+		err := raspHostRepository.UpdateRaspHost(host)
+		if err != nil {
+			return
+		}
+	}
+}
+
+func handleHeartbeatLog(message *message.DaemonMessage) {
+	dbData, err := raspHostRepository.QueryRaspHost(message.HostName)
+	if err != nil {
+		// todo
+		return
+	}
+
+	var host *model.RaspHost
+	if len(dbData) == 0 {
+		host = &model.RaspHost{
+			HostName: message.HostName,
+			Ip:       message.Ip,
+		}
+	} else {
+		host = dbData[0]
+	}
+
+	host.HeatbeatTime = message.Ts
+
+	if len(dbData) == 0 {
+		err = raspHostRepository.CreateRaspHost(host)
+		if err != nil {
+			// todo
+			return
+		}
+	} else {
+		err := raspHostRepository.UpdateRaspHost(host)
+		if err != nil {
+			return
+		}
+	}
+
+	list, err := javaProcessRepository.GetAllJavaProcessInfos(message.HostName)
+	if err != nil {
+		return
+	}
+
+	// 删除process信息
+	detailMap := make(map[string]interface{})
+	err = json.Unmarshal([]byte(message.Detail), &detailMap)
+	if err != nil {
+		// TODO
+		return
+	}
+	if len(detailMap) > 0 {
+		for _, v := range list {
+			if detailMap[string(v.Pid)] == nil {
+				err := javaProcessRepository.DeleteProcess(v.ID)
+				if err != nil {
+
+					return
+				}
+			}
+		}
+	}
+}
+
+func handleFindJavaProcessLog(message *message.DaemonMessage) {
+	detailMap := make(map[string]interface{})
+	err := json.Unmarshal([]byte(message.Detail), &detailMap)
+	if err != nil {
+		panic(err)
+		return
+	}
+
+	pid := detailMap["javaPid"].(float64)
+	fmt.Printf("pid:%v", pid)
+	startTime := detailMap["startTime"].(string)
+	status := detailMap["injectedStatus"].(string)
+
+	cmdLines := detailMap["cmdLines"].([]interface{})
+	var paramSlice []string
+	for _, param := range cmdLines {
+		switch v := param.(type) {
+		case string:
+			paramSlice = append(paramSlice, v)
+		case int:
+			strV := strconv.FormatInt(int64(v), 10)
+			paramSlice = append(paramSlice, strV)
+		default:
+			panic("params type not supported")
+		}
+	}
+
+	process := &model.JavaProcessInfo{
+		Status:      status,
+		Pid:         int(pid),
+		StartTime:   startTime,
+		CmdlineInfo: strings.Join(paramSlice, ","),
+		HostName:    message.HostName,
+	}
+	fmt.Printf("SaveProcessInfo:%v\n", process.Pid)
+	err = javaProcessRepository.SaveProcessInfo(process)
+	if err!= nil {
+		panic(err)
+	}
+}
+
+func handleRemoveJavaProcessLog(message *message.DaemonMessage) {
+
 }

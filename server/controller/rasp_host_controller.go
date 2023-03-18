@@ -15,7 +15,7 @@ type IRaspHostController interface {
 }
 
 type RaspHostController struct {
-	RaspHostRepository repository.IRaspHostRepository
+	RaspHostRepository        repository.IRaspHostRepository
 }
 
 func NewRaspHostController() IRaspHostController {
@@ -62,7 +62,6 @@ func (h RaspHostController) BatchDeleteHostByIds(c *gin.Context) {
 		response.Fail(c, nil, errStr)
 		return
 	}
-
 	// 删除接口
 	err := h.RaspHostRepository.DeleteRaspHost(req.Ids)
 	if err != nil {

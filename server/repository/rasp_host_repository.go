@@ -10,8 +10,10 @@ import (
 
 type IRaspHostRepository interface {
 	GetRaspHosts(req *vo.RaspHostListRequest) ([]*model.RaspHost, int64, error)
-	CreateRaspHost(config *model.RaspHost) error
+	CreateRaspHost(host *model.RaspHost) error
 	DeleteRaspHost(ids []uint) error
+	QueryRaspHost(hostName string) ([]*model.RaspHost, error)
+	UpdateRaspHost(host *model.RaspHost) error
 }
 
 type RaspHostRepository struct {
@@ -28,13 +30,26 @@ func (h RaspHostRepository) GetRaspHosts(req *vo.RaspHostListRequest) ([]*model.
 	// 名称模糊查询
 	name := strings.TrimSpace(req.HostName)
 	if name != "" {
-		db = db.Where("hostName LIKE ?", fmt.Sprintf("%%%s%%", name))
+		db = db.Where("host_name LIKE ?", fmt.Sprintf("%%%s%%", name))
+	} else {
+		// ip 模糊查询
+		ip := strings.TrimSpace(req.Ip)
+		if ip != "" {
+			db = db.Where("ip LIKE ?", fmt.Sprintf("%%%s%%", ip))
+		}
 	}
 
-	status := req.Status
-	if status != 0 {
-		db = db.Where("status = ?", status)
+	// agent 模式查询
+	agentMode := strings.TrimSpace(req.AgentMode)
+	if agentMode != "" {
+		db = db.Where("agent_mode = ?", agentMode)
 	}
+
+	// todo 在线状态查询
+	//status := req.Status
+	//if status != 0 {
+	//	db = db.Where("status = ?", status)
+	//}
 
 	// 当pageNum > 0 且 pageSize > 0 才分页
 	//记录总条数
@@ -60,5 +75,24 @@ func (h RaspHostRepository) CreateRaspHost(raspHost *model.RaspHost) error {
 
 func (h RaspHostRepository) DeleteRaspHost(ids []uint) error {
 	err := common.DB.Where("id IN (?)", ids).Unscoped().Delete(&model.RaspHost{}).Error
+	return err
+}
+
+func (h RaspHostRepository) QueryRaspHost(hostName string) ([]*model.RaspHost, error) {
+	var list []*model.RaspHost
+	db := common.DB.Model(&model.RaspHost{}).Order("created_at DESC")
+	name := strings.TrimSpace(hostName)
+	if name != "" {
+		db = db.Where("host_name = ?", name)
+	}
+	err := db.Find(&list).Limit(1).Error
+	if err != nil {
+		return list, err
+	}
+	return list, nil
+}
+
+func (h RaspHostRepository) UpdateRaspHost(host *model.RaspHost) error {
+	err := common.DB.Model(host).Where("host_name = ?", host.HostName).Updates(host).Error
 	return err
 }
