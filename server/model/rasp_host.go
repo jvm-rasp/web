@@ -16,8 +16,8 @@ type RaspHost struct {
 	AgentConfigUpdateTime string  `gorm:"type:varchar(128);comment:'agent 配置更新时间" json:"agentConfigUpdateTime"`
 	OsType                string  `gorm:"type:varchar(128);comment:'实例操作系统类型:darwin、windowns、linux等'" json:"osType"`
 	TotalMem              float64 `gorm:"type:float64;comment:'实例总内存,单位GB'" json:"totalMem"`
-	CpuCounts             float64 `gorm:"type:int(11);comment:'实例逻辑cpu数量'" json:"cpuCounts"`
-	FreeDisk              float64 `gorm:"type:int(11);comment:'实例可用磁盘容量,单位GB'" json:"freeDisk"`
+	CpuCounts             float64 `gorm:"type:float64;comment:'实例逻辑cpu数量'" json:"cpuCounts"`
+	FreeDisk              float64 `gorm:"type:float64;comment:'实例可用磁盘容量,单位GB'" json:"freeDisk"`
 	BuildDateTime         string  `gorm:"type:varchar(128);comment:'代码信息：编译时间'" json:"buildDateTime"`
 	BuildGitBranch        string  `gorm:"type:varchar(128);comment:'代码信息：分支'" json:"buildGitBranch"`
 	BuildGitCommit        string  `gorm:"type:varchar(128);comment:'代码信息：commit''" json:"buildGitCommit"`

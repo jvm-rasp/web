@@ -39,7 +39,7 @@ export function createUser(data) {
 export function updateUserById(id, data) {
   return request({
     url: '/api/user/update/' + id,
-    method: 'patch',
+    method: 'post',
     data
   })
 }

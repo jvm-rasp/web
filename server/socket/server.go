@@ -97,8 +97,7 @@ func handleDaemonLog(p *LogPackage) {
 	if p != nil {
 		err := json.Unmarshal(p.Body, &daemonMessage)
 		if err != nil {
-			// TODO
-			return
+			panic(err)
 		}
 	}
 
@@ -123,32 +122,30 @@ func handleStartupLog(message *message.DaemonMessage) {
 		Ip:           message.Ip,
 		HeatbeatTime: message.Ts,
 	}
-	detailMap := make(map[string]string)
-	err := json.Unmarshal([]byte(message.Detail), &detailMap)
-	if err != nil {
-		// TODO
-		return
-	}
-	host.AgentMode = detailMap["agentMode"]
 	dbData, err := raspHostRepository.QueryRaspHost(host.HostName)
 	if err != nil {
-		// todo
-		return
+		panic(err)
 	}
+
+	// 获取 agentMode
+	detailMap := make(map[string]string)
+	err = json.Unmarshal([]byte(message.Detail), &detailMap)
+	if err != nil {
+		panic(err)
+	}
+	host.AgentMode = detailMap["agentMode"]
+
 	if len(dbData) <= 0 {
 		err = raspHostRepository.CreateRaspHost(host)
 		if err != nil {
-			// todo
-			return
+			panic(err)
+		}
+	} else {
+		err := raspHostRepository.UpdateRaspHostByHostName(host)
+		if err != nil {
+			panic(err)
 		}
 	}
-	dbData, err = raspHostRepository.QueryRaspHost(host.HostName)
-	if err != nil {
-		// todo
-		return
-	}
-	fmt.Println("host.AgentMode")
-	fmt.Println(host.AgentMode)
 }
 
 func handleHostEnvLog(message *message.DaemonMessage) {
@@ -156,12 +153,14 @@ func handleHostEnvLog(message *message.DaemonMessage) {
 	detailMap := make(map[string]interface{})
 	err := json.Unmarshal([]byte(message.Detail), &detailMap)
 	if err != nil {
-		// TODO
-		return
+		panic(err)
 	}
-
+	// TODO 判断是否为空
 	installDir := detailMap["installDir"].(string)
 	version := detailMap["version"].(string)
+	fmt.Println("version:" + version)
+	b, err := json.Marshal(message)
+	fmt.Println(string(b))
 	binFileHash := detailMap["binFileHash"].(string)
 	osType := detailMap["osType"].(string)
 
@@ -175,7 +174,7 @@ func handleHostEnvLog(message *message.DaemonMessage) {
 
 	dbData, err := raspHostRepository.QueryRaspHost(message.HostName)
 	if err != nil {
-		// todo
+		panic(err)
 		return
 	}
 
@@ -192,7 +191,7 @@ func handleHostEnvLog(message *message.DaemonMessage) {
 	host.InstallDir = installDir
 	host.Version = version
 	host.ExeFileHash = binFileHash
-	host.InstallDir = osType
+	host.OsType = osType
 	host.TotalMem = totalMem
 	host.CpuCounts = cpuCounts
 	host.FreeDisk = freeDisk
@@ -202,15 +201,14 @@ func handleHostEnvLog(message *message.DaemonMessage) {
 	host.HeatbeatTime = message.Ts
 
 	if len(dbData) == 0 {
-		err = raspHostRepository.CreateRaspHost(host)
+		err := raspHostRepository.CreateRaspHost(host)
 		if err != nil {
-			// todo
-			return
+			panic(err)
 		}
 	} else {
-		err := raspHostRepository.UpdateRaspHost(host)
+		err := raspHostRepository.UpdateRaspHostByHostName(host)
 		if err != nil {
-			return
+			panic(err)
 		}
 	}
 }
@@ -218,8 +216,7 @@ func handleHostEnvLog(message *message.DaemonMessage) {
 func handleHeartbeatLog(message *message.DaemonMessage) {
 	dbData, err := raspHostRepository.QueryRaspHost(message.HostName)
 	if err != nil {
-		// todo
-		return
+		panic(err)
 	}
 
 	var host *model.RaspHost
@@ -237,34 +234,32 @@ func handleHeartbeatLog(message *message.DaemonMessage) {
 	if len(dbData) == 0 {
 		err = raspHostRepository.CreateRaspHost(host)
 		if err != nil {
-			// todo
-			return
+			panic(err)
 		}
 	} else {
-		err := raspHostRepository.UpdateRaspHost(host)
+		err := raspHostRepository.UpdateRaspHostByHostName(host)
 		if err != nil {
-			return
+			panic(err)
 		}
 	}
 
 	list, err := javaProcessRepository.GetAllJavaProcessInfos(message.HostName)
 	if err != nil {
-		return
+		panic(err)
 	}
 
 	// 删除process信息
 	detailMap := make(map[string]interface{})
 	err = json.Unmarshal([]byte(message.Detail), &detailMap)
 	if err != nil {
-		// TODO
-		return
+		panic(err)
 	}
 
 	for _, v := range list {
 		if len(detailMap) == 0 || detailMap[string(v.Pid)] == nil {
 			err := javaProcessRepository.DeleteProcess(v.ID)
 			if err != nil {
-				return
+				panic(err)
 			}
 		}
 	}
@@ -279,7 +274,6 @@ func handleFindJavaProcessLog(message *message.DaemonMessage) {
 	}
 
 	pid := detailMap["javaPid"].(float64)
-	fmt.Printf("pid:%v", pid)
 	startTime := detailMap["startTime"].(string)
 	status := detailMap["injectedStatus"].(string)
 
@@ -304,7 +298,6 @@ func handleFindJavaProcessLog(message *message.DaemonMessage) {
 		CmdlineInfo: strings.Join(paramSlice, ","),
 		HostName:    message.HostName,
 	}
-	fmt.Printf("SaveProcessInfo:%v\n", process.Pid)
 	err = javaProcessRepository.SaveProcessInfo(process)
 	if err != nil {
 		panic(err)
@@ -314,12 +307,10 @@ func handleFindJavaProcessLog(message *message.DaemonMessage) {
 func handleRemoveJavaProcessLog(message *message.DaemonMessage) {
 	pid, err := strconv.ParseInt(message.Detail, 10, 32)
 	if err != nil {
-		// TODO
-		return
+		panic(err)
 	}
 	err = javaProcessRepository.DeleteProcessByPid(message.HostName, uint(pid))
 	if err != nil {
-		// TODO
-		return
+		panic(err)
 	}
 }

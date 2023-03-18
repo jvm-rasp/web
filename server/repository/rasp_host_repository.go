@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"errors"
 	"fmt"
 	"server/common"
 	"server/model"
@@ -13,7 +14,7 @@ type IRaspHostRepository interface {
 	CreateRaspHost(host *model.RaspHost) error
 	DeleteRaspHost(ids []uint) error
 	QueryRaspHost(hostName string) ([]*model.RaspHost, error)
-	UpdateRaspHost(host *model.RaspHost) error
+	UpdateRaspHostByHostName(host *model.RaspHost) error
 }
 
 type RaspHostRepository struct {
@@ -92,7 +93,11 @@ func (h RaspHostRepository) QueryRaspHost(hostName string) ([]*model.RaspHost, e
 	return list, nil
 }
 
-func (h RaspHostRepository) UpdateRaspHost(host *model.RaspHost) error {
+// UpdateRaspHostByHostName 通过id更新节点信息
+func (h RaspHostRepository) UpdateRaspHostByHostName(host *model.RaspHost) error {
+	if host == nil || host.HostName == "" {
+		return errors.New("host object is nil or host_name is nil")
+	}
 	err := common.DB.Model(host).Where("host_name = ?", host.HostName).Updates(host).Error
 	return err
 }
