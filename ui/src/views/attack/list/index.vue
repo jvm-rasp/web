@@ -29,27 +29,33 @@
     </el-card>
     <el-card class="app-container" :body-style="{ padding: '10px' }">
       <el-table :data="tableData" border stripe style="width: 100%">
-        <el-table-column prop="attack_time" label="攻击时间" />
-        <el-table-column prop="host_name" label="实例名称" />
-        <el-table-column prop="attack_type" label="攻击类型">
+        <el-table-column prop="attackTime" label="攻击时间" />
+        <el-table-column prop="hostName" label="实例名称" />
+        <el-table-column prop="attackType" label="攻击类型">
           <template slot-scope="scope">
-            <el-tag size="small" type="" effect="plain" disable-transitions>{{ scope.row.attack_type }}</el-tag>
+            <el-tag size="small" type="" effect="plain" disable-transitions>{{ scope.row.attackType }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="remote_ip" label="攻击IP" />
+        <el-table-column prop="remoteIp" label="攻击IP" />
         <el-table-column prop="level" label="风险等级">
           <template slot-scope="scope">
-            <el-tag size="small" :type="scope.row.level >= 90 ? 'danger' : ''" disable-transitions>{{ scope.row.level >= 90 ? '高危' : '中危' }}</el-tag>
+            <el-tag size="small" :type="scope.row.level >= 90 ? 'danger' : ''" disable-transitions>
+              {{ scope.row.level >= 90 ? '高危' : '中危' }}
+            </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="is_blocked" label="阻断状态">
+        <el-table-column prop="isBlocked" label="阻断状态">
           <template slot-scope="scope">
-            <el-tag size="small" :type="scope.row.is_blocked ? 'danger' : 'success'" disable-transitions>{{ scope.row.is_blocked ? '阻断' : '放行' }}</el-tag>
+            <el-tag size="small" :type="scope.row.isBlocked ? 'danger' : 'success'" disable-transitions>
+              {{ scope.row.isBlocked ? '阻断' : '放行' }}
+            </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="handle_status" label="处理状态">
+        <el-table-column prop="handleStatus" label="处理状态">
           <template slot-scope="scope">
-            <el-tag size="small" :type="getHandleStatusColor(scope.row.handle_status)" disable-transitions>{{ getHandleStatusLabel(scope.row.handle_status) }}</el-tag>
+            <el-tag size="small" :type="getHandleStatusColor(scope.row.handleStatus)" disable-transitions>
+              {{ getHandleStatusLabel(scope.row.handleStatus) }}
+            </el-tag>
           </template>
         </el-table-column>
         <el-table-column fixed="right" label="操作" align="left">
@@ -71,36 +77,37 @@
         @current-change="handleCurrentPageChanged"
       />
     </el-card>
+
     <el-dialog title="攻击详情" :visible.sync="dialogDetailVisible" width="1000px">
       <div style="margin: 20px;">
         <el-descriptions title="攻击详情" :column="2" border>
-          <el-descriptions-item label="主机名称">{{ attackDetail.host_name }}</el-descriptions-item>
-          <el-descriptions-item label="受攻击IP">{{ attackDetail.local_ip }}</el-descriptions-item>
-          <el-descriptions-item label="攻击IP">{{ attackDetail.remote_ip }}</el-descriptions-item>
-          <el-descriptions-item label="攻击时间">{{ attackDetail.attack_time }}</el-descriptions-item>
+          <el-descriptions-item label="主机名称">{{ attackDetail.hostName }}</el-descriptions-item>
+          <el-descriptions-item label="受攻击IP">{{ attackDetail.localIp }}</el-descriptions-item>
+          <el-descriptions-item label="攻击IP">{{ attackDetail.remoteIp }}</el-descriptions-item>
+          <el-descriptions-item label="攻击时间">{{ attackDetail.attackTime }}</el-descriptions-item>
           <el-descriptions-item label="危险等级">{{ attackDetail.level }}</el-descriptions-item>
-          <el-descriptions-item label="阻断状态">{{ attackDetail.is_blocked }}</el-descriptions-item>
-          <el-descriptions-item label="请求协议">{{ attackDetail.request_protocol }}</el-descriptions-item>
-          <el-descriptions-item label="请求方法">{{ attackDetail.http_method }}</el-descriptions-item>
+          <el-descriptions-item label="阻断状态">{{ attackDetail.isBlocked }}</el-descriptions-item>
+          <el-descriptions-item label="请求协议">{{ attackDetail.requestProtocol }}</el-descriptions-item>
+          <el-descriptions-item label="请求方法">{{ attackDetail.httpMethod }}</el-descriptions-item>
         </el-descriptions>
       </div>
-      <div style="margin: 20px;">
-        <el-descriptions title="请求信息" direction="vertical" :column="1">
-          <el-descriptions-item label="请求uri">{{ attackDetail.request_uri }}</el-descriptions-item>
-          <el-descriptions-item label="请求参数">{{ attackDetail.request_parameters }}</el-descriptions-item>
-          <el-descriptions-item label="攻击参数">{{ attackDetail.attack_parameters }}</el-descriptions-item>
-          <el-descriptions-item label="检测结果">{{ attackDetail.check_type }}</el-descriptions-item>
-          <el-descriptions-item label="堆栈信息">
-            <json-viewer v-model="attackDetail.stack_trace" copyable :boxed="false" />
-          </el-descriptions-item>
-        </el-descriptions>
-      </div>
+      <!--      <div style="margin: 20px;">-->
+      <!--        <el-descriptions title="请求信息" direction="vertical" :column="1">-->
+      <!--          <el-descriptions-item label="请求uri">{{ attackDetail.requestUri }}</el-descriptions-item>-->
+      <!--          <el-descriptions-item label="请求参数">{{ attackDetail.requestParameters }}</el-descriptions-item>-->
+      <!--          <el-descriptions-item label="攻击参数">{{ attackDetail.attackParameters }}</el-descriptions-item>-->
+      <!--          <el-descriptions-item label="检测结果">{{ attackDetail.checkType }}</el-descriptions-item>-->
+      <!--          <el-descriptions-item label="堆栈信息">-->
+      <!--            <json-viewer v-model="attackDetail.stackTrace" copyable :boxed="false"/>-->
+      <!--          </el-descriptions-item>-->
+      <!--        </el-descriptions>-->
+      <!--      </div>-->
     </el-dialog>
   </div>
 </template>
 
 <script>
-import { deleteAttackLog, getAttackDetail, getAttackLogs } from '@/api/log/attackLog'
+import { deleteAttackLog, getAttackLogs } from '@/api/log/attackLog'
 
 export default {
   data() {
@@ -124,28 +131,28 @@ export default {
       dialogDetailVisible: false,
       attackDetail: {
         id: null,
-        host_name: null,
-        remote_ip: null,
-        local_ip: null,
-        attack_type: null,
-        check_type: null,
-        is_blocked: null,
+        hostName: null,
+        remoteIp: null,
+        localIp: null,
+        attackType: null,
+        checkType: null,
+        isBlocked: null,
         level: null,
         tag: null,
-        handle_status: null,
-        handle_result: null,
-        stack_trace: null,
-        http_method: null,
-        request_protocol: null,
-        request_uri: null,
-        request_parameters: null,
-        attack_parameters: null,
+        handleStatus: null,
+        handleResult: null,
+        stackTrace: null,
+        httpMethod: null,
+        requestProtocol: null,
+        requestUri: null,
+        requestParameters: null,
+        attackParameters: null,
         cookies: null,
         header: null,
         body: null,
-        attack_time: null,
-        create_time: null,
-        update_time: null
+        attackTime: null,
+        createTime: null,
+        updateTime: null
       }
     }
   },
@@ -173,12 +180,18 @@ export default {
 
     getHandleStatusColor(status) {
       switch (status) {
-        case 0: return 'danger'
-        case 1: return ''
-        case 2: return 'success'
-        case 3: return 'info'
-        case 4: return 'info'
-        default: return 'danger'
+        case 0:
+          return 'danger'
+        case 1:
+          return ''
+        case 2:
+          return 'success'
+        case 3:
+          return 'info'
+        case 4:
+          return 'info'
+        default:
+          return 'danger'
       }
     },
 
@@ -198,7 +211,8 @@ export default {
         cancelButtonText: '取消',
         type: 'warning'
       }).then(async() => {
-        const data = await deleteAttackLog({ id: record.id })
+        const data = await deleteAttackLog({ ids: [record.ID] })
+        await this.getTableData()
         if (data.code === 200) {
           this.$message({
             type: 'success',
@@ -219,9 +233,25 @@ export default {
     },
 
     async handleDetail(record) {
-      const { data } = await getAttackDetail(record.id)
-      this.attackDetail = data
-      this.attackDetail.stack_trace = JSON.parse(this.attackDetail.stack_trace)
+      this.attackDetail.attackParameters = record.attackParameters
+      this.attackDetail.attackTime = record.attackTime
+      this.attackDetail.hostName = record.hostName
+      this.attackDetail.remoteIp = record.remoteIp
+      this.attackDetail.localIp = record.localIp
+      this.attackDetail.checkType = record.checkType
+      this.attackDetail.isBlocked = record.isBlocked
+      this.attackDetail.level = record.level
+      this.attackDetail.handleStatus = record.handleStatus
+      this.attackDetail.handleResult = record.handleResult
+      this.attackDetail.stackTrace = JSON.parse(this.attackDetail.stackTrace)
+      this.attackDetail.httpMethod = record.httpMethod
+      this.attackDetail.requestProtocol = record.requestProtocol
+      this.attackDetail.requestUri = record.requestUri
+      this.attackDetail.requestParameters = record.requestParameters
+      this.attackDetail.attackParameters = record.attackParameters
+      this.attackDetail.cookies = record.cookies
+      this.attackDetail.header = record.header
+      this.attackDetail.body = record.body
       this.dialogDetailVisible = true
     },
 
@@ -230,7 +260,7 @@ export default {
       this.loading = true
       try {
         const { data } = await getAttackLogs(this.params)
-        this.tableData = data.list
+        this.tableData = data.data
         this.total = data.total
       } finally {
         this.loading = false

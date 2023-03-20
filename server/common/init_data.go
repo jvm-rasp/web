@@ -361,6 +361,13 @@ func InitData() {
 		},
 		{
 			Method:   "POST",
+			Path:     "/base/report",
+			Category: "base",
+			Desc:     "收集日志",
+			Creator:  "系统",
+		},
+		{
+			Method:   "POST",
 			Path:     "/user/info",
 			Category: "user",
 			Desc:     "获取当前登录用户信息",
@@ -613,21 +620,21 @@ func InitData() {
 		},
 		{
 			Method:   "GET",
-			Path:     "/attck/list",
+			Path:     "/attack/list",
 			Category: "attack",
 			Desc:     "获取攻击日志列表",
 			Creator:  "系统",
 		},
 		{
 			Method:   "GET",
-			Path:     "/attck/detail",
+			Path:     "/attack/detail",
 			Category: "attack",
 			Desc:     "获取攻击日志详情",
 			Creator:  "系统",
 		},
 		{
-			Method:   "GET",
-			Path:     "/attck/delete/batch",
+			Method:   "POST",
+			Path:     "/attack/delete/batch",
 			Category: "attack",
 			Desc:     "批量删除日志列表",
 			Creator:  "系统",
@@ -660,6 +667,7 @@ func InitData() {
 				"/base/login",
 				"/base/logout",
 				"/base/refreshToken",
+				"/base/report",
 				"/user/info",
 				"/menu/access/tree/:userId",
 			}

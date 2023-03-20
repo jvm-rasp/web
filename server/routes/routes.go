@@ -54,6 +54,7 @@ func InitRoutes() *gin.Engine {
 	InitRaspModuleRoutes(apiGroup, authMiddleware)   // 注册配置路由, jwt认证中间件,casbin鉴权中间件
 	InitRaspHostRoutes(apiGroup, authMiddleware)
 	InitJavaProcessInfoRoutes(apiGroup, authMiddleware)
+	InitRaspAttackRoutes(apiGroup, authMiddleware)
 	// 注册静态资源路由
 	InitStaticRouter(r)
 	common.Log.Info("初始化路由完成！")

@@ -14,6 +14,7 @@ type IJavaProcessInfoRepository interface {
 	DeleteProcess(id uint) error
 	SaveProcessInfo(*model.JavaProcessInfo) error
 	DeleteProcessByPid(hostName string, pid uint) error
+	UpdateProcessByHostName(process *model.JavaProcessInfo) error
 }
 
 type JavaProcessInfoRepository struct {
@@ -82,5 +83,11 @@ func (j JavaProcessInfoRepository) SaveProcessInfo(process *model.JavaProcessInf
 func (j JavaProcessInfoRepository) DeleteProcessByPid(hostName string, pid uint) error {
 	err := common.DB.Where("host_name = ?", hostName).
 		Where("pid = ?", pid).Unscoped().Delete(&model.JavaProcessInfo{}).Error
+	return err
+}
+
+func (j JavaProcessInfoRepository) UpdateProcessByHostName(process *model.JavaProcessInfo) error{
+	err := common.DB.Where("host_name = ?", process.HostName).
+		Where("pid = ?", process.Pid).Unscoped().Delete(&model.JavaProcessInfo{}).Error
 	return err
 }

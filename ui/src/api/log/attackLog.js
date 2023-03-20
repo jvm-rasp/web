@@ -10,7 +10,7 @@ export function getAttackLogs(params) {
 
 export function deleteAttackLog(params) {
   return request({
-    url: '/api/attack/delete',
+    url: '/api/attack/delete/batch',
     method: 'post',
     data: params
   })
