@@ -18,6 +18,10 @@ type RaspConfigListRequest struct {
 	PageSize uint   `json:"pageSize" form:"pageSize"`
 }
 
+type RaspConfigRequest struct {
+	Key     string `json:"key" form:"key"`
+}
+
 // 批量删除接口结构体
 type DeleteRaspConfigRequest struct {
 	Ids []uint `json:"ids" form:"ids"`

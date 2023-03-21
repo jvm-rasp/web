@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"errors"
 	"fmt"
 	"server/common"
 	"server/model"
@@ -12,6 +13,7 @@ type IRaspConfigRepository interface {
 	GetRaspConfigs(req *vo.RaspConfigListRequest) ([]*model.RaspConfig, int64, error) // 获取配置列表列表
 	CreateRaspConfig(config *model.RaspConfig) error                                  // 创建接口
 	DeleteRaspConfig(ids []uint) error
+	GetRaspConfig(hostName string) (*model.RaspConfig, error)
 }
 
 type RaspConfigRepository struct {
@@ -70,4 +72,19 @@ func (a RaspConfigRepository) GetRaspConfigs(req *vo.RaspConfigListRequest) ([]*
 func (r RaspConfigRepository) DeleteRaspConfig(ids []uint) error {
 	err := common.DB.Where("id IN (?)", ids).Unscoped().Delete(&model.RaspConfig{}).Error
 	return err
+}
+
+func (a RaspConfigRepository) GetRaspConfig(hostName string) (*model.RaspConfig, error) {
+	var list []*model.RaspConfig
+	db := common.DB.Model(&model.RaspConfig{}).Order("created_at DESC")
+	name := strings.TrimSpace(hostName)
+	if name != "" {
+		db = db.Where("name = ?", name)
+	}
+
+	err := db.Find(&list).Error
+	if len(list) == 0 {
+		return nil, errors.New("no config find in db, hostName: " + hostName)
+	}
+	return list[0], err
 }

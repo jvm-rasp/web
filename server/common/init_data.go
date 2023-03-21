@@ -368,6 +368,13 @@ func InitData() {
 		},
 		{
 			Method:   "POST",
+			Path:     "/base/remote/config",
+			Category: "base",
+			Desc:     "获取配置",
+			Creator:  "系统",
+		},
+		{
+			Method:   "POST",
 			Path:     "/user/info",
 			Category: "user",
 			Desc:     "获取当前登录用户信息",
@@ -668,6 +675,7 @@ func InitData() {
 				"/base/logout",
 				"/base/refreshToken",
 				"/base/report",
+				"/base/remote/config",
 				"/user/info",
 				"/menu/access/tree/:userId",
 			}

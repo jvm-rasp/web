@@ -8,12 +8,14 @@ import (
 	"server/repository"
 	"server/response"
 	"server/vo"
+	"strings"
 )
 
 type IRaspConfigController interface {
 	CreateRaspConfig(c *gin.Context)
 	GetRaspConfigs(c *gin.Context)
 	BatchDeleteConfigByIds(c *gin.Context)
+	GetViperRaspConfig(c *gin.Context) // viper remote get
 }
 
 type RaspConfigController struct {
@@ -114,4 +116,23 @@ func (r RaspConfigController) BatchDeleteConfigByIds(c *gin.Context) {
 	response.Success(c, nil, "删除配置成功")
 }
 
-
+// GetViperRaspConfig viper remote get
+func (l RaspConfigController) GetViperRaspConfig(c *gin.Context) {
+	var req vo.RaspConfigRequest
+	if err := c.ShouldBind(&req); err != nil {
+		response.Fail(c, nil, err.Error())
+		return
+	}
+	if err := common.Validate.Struct(&req); err != nil {
+		errStr := err.(validator.ValidationErrors)[0].Translate(common.Trans)
+		response.Fail(c, nil, errStr)
+		return
+	}
+	name := strings.TrimSpace(req.Key)
+	config, err := l.RaspConfigRepository.GetRaspConfig(name)
+	if err != nil {
+		response.Fail(c, nil, err.Error())
+		return
+	}
+	response.Success(c, gin.H{"key": name, "value": config.Content,}, "获取配置成功")
+}
