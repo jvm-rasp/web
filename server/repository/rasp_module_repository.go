@@ -5,11 +5,14 @@ import (
 	"server/common"
 	"server/model"
 	"server/vo"
+	"strconv"
 	"strings"
 )
 
 type IRaspModuleRepository interface {
 	GetRaspModules(req *vo.RaspModuleListRequest) ([]*model.RaspModule, int64, error)
+	GetRaspModuleById(id uint) (*model.RaspModule, error)
+	UpdateRaspModule(module *model.RaspModule) error
 	CreateRaspModule(module *model.RaspModule) error
 	DeleteRaspModule(ids []uint) error
 }
@@ -23,17 +26,17 @@ func NewRaspModuleRepository() IRaspModuleRepository {
 
 func (a RaspModuleRepository) GetRaspModules(req *vo.RaspModuleListRequest) ([]*model.RaspModule, int64, error) {
 	var list []*model.RaspModule
-	db := common.DB.Model(&model.RaspModule{}).Order("created_at DESC")
+	db := common.DB.Model(&model.RaspModule{}).Order("create_time DESC")
 
 	// 名称模糊查询
 	name := strings.TrimSpace(req.Name)
 	if name != "" {
-		db = db.Where("name LIKE ?", fmt.Sprintf("%%%s%%", name))
+		db = db.Where("module_name LIKE ?", fmt.Sprintf("%%%s%%", name))
 	}
 
 	// 配置的状态
-	status := req.Status
-	if status != 0 {
+	status, err := strconv.ParseBool(req.Status)
+	if err == nil {
 		db = db.Where("status = ?", status)
 	}
 
@@ -46,7 +49,7 @@ func (a RaspModuleRepository) GetRaspModules(req *vo.RaspModuleListRequest) ([]*
 	// 当pageNum > 0 且 pageSize > 0 才分页
 	//记录总条数
 	var total int64
-	err := db.Count(&total).Error
+	err = db.Count(&total).Error
 	if err != nil {
 		return list, total, err
 	}
@@ -58,6 +61,17 @@ func (a RaspModuleRepository) GetRaspModules(req *vo.RaspModuleListRequest) ([]*
 		err = db.Find(&list).Error
 	}
 	return list, total, err
+}
+
+func (a RaspModuleRepository) GetRaspModuleById(id uint) (*model.RaspModule, error) {
+	var record *model.RaspModule
+	err := common.DB.Find(&record, "id = ?", id).Error
+	return record, err
+}
+
+func (a RaspModuleRepository) UpdateRaspModule(module *model.RaspModule) error {
+	err := common.DB.Save(module).Error
+	return err
 }
 
 func (a RaspModuleRepository) CreateRaspModule(module *model.RaspModule) error {

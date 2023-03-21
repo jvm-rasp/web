@@ -12,8 +12,9 @@
           <el-col :span="6">
             <el-form-item label="状态">
               <el-select v-model.trim="params.status" clearable placeholder="状态" @change="search" @clear="search">
-                <el-option label="正常" value="1" />
-                <el-option label="禁用" value="0" />
+                <el-option label="启用" value="true" />
+                <el-option label="禁用" value="false" />
+                <el-option label="全部" value="" />
               </el-select>
             </el-form-item>
           </el-col>
@@ -68,12 +69,13 @@
         </el-table-column>
         <el-table-column show-overflow-tooltip sortable prop="status" label="模块状态" align="center">
           <template slot-scope="scope">
-            <el-tag size="small" :type="scope.row.status === 1 ? 'success':'danger'" disable-transitions>
-              {{ scope.row.status === 1 ? '正常' : '禁用' }}
+            <el-tag size="small" :type="scope.row.status ? 'success':'danger'" disable-transitions>
+              {{ scope.row.status ? '启用' : '禁用' }}
             </el-tag>
           </template>
         </el-table-column>
         <el-table-column show-overflow-tooltip sortable prop="operator" label="操作人" align="center" />
+        <el-table-column show-overflow-tooltip sortable prop="createTime" label="创建时间" align="center" />
         <el-table-column show-overflow-tooltip sortable prop="updateTime" label="更新时间" align="center" />
         <el-table-column fixed="right" label="操作" align="center">
           <template slot-scope="scope">
@@ -289,6 +291,7 @@ export default {
       createModuleVisible: false,
       submitCreateModuleLoading: false,
       bindModuleData: {
+        id: '',
         moduleName: '',
         moduleVersion: '',
         downLoadURL: '',
@@ -345,14 +348,13 @@ export default {
 
     create() {
       this.bindModuleData = {
-        name: '',
-        version: '',
-        url: '',
-        hash: '',
-        type: 1,
+        moduleName: '',
+        moduleVersion: '',
+        downLoadURL: '',
+        md5: '',
+        moduleType: 1,
         middlewareName: '',
         middlewareVersion: '',
-        tag: '',
         desc: '',
         status: true,
         parameters: {}
@@ -361,6 +363,7 @@ export default {
     },
 
     handleEdit(record) {
+      record.parameters = JSON.parse(record.parameters)
       this.selectedModuleData = record
       this.bindModuleData = record
       this.editModuleVisible = true

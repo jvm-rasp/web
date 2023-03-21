@@ -2,11 +2,15 @@ package vo
 
 // CreateRaspConfigRequest 创建接口结构体
 type CreateRaspConfigRequest struct {
-	Name     string `json:"name" form:"name" validate:"required,min=2,max=32"`
-	Content  string `json:"content" form:"content" validate:"required"`
-	Tag      string `json:"tag" form:"tag"`
-	Status   uint   `json:"status" form:"status" validate:"oneof=0 1"`
-	Desc     string `json:"desc" form:"desc" validate:"min=2,max=100"`
+	Name          string      `json:"name" form:"name" validate:"required,min=2,max=32"`
+	Desc          string      `json:"desc" form:"desc" validate:"min=2,max=100"`
+	Status        bool        `json:"status" form:"status" validate:"required"`
+	AgentMode     uint        `json:"agentMode" form:"agentMode" validate:"oneof=1 2 3"`
+	ModuleConfigs interface{} `json:"moduleConfigs" form:"moduleConfigs"`
+	LogPath       string      `json:"logPath" form:"logPath" validate:"required,min=2,max=32"`
+	AgentConfigs  interface{} `json:"agentConfigs" form:"agentConfigs"`
+	BinFileUrl    string      `json:"binFileUrl" form:"binFileUrl"`
+	BinFileHash   string      `json:"binFileHash" form:"binFileHash"`
 }
 
 // 获取接口列表结构体
