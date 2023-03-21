@@ -612,6 +612,13 @@ func InitData() {
 			Creator:  "系统",
 		},
 		{
+			Method:   "POST",
+			Path:     "/module/delete",
+			Category: "module",
+			Desc:     "删除指定模块",
+			Creator:  "系统",
+		},
+		{
 			Method:   "GET",
 			Path:     "/host/list",
 			Category: "host",
