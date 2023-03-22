@@ -7,9 +7,7 @@ import (
 	"server/model"
 	"server/repository"
 	"server/response"
-	"server/util"
 	"server/vo"
-	"time"
 )
 
 type IRaspModuleController interface {
@@ -86,11 +84,9 @@ func (r RaspModuleController) CreateRaspModule(c *gin.Context) {
 		MiddlewareVersion: req.MiddlewareVersion,
 		Desc:              req.Desc,
 		Status:            req.Status,
-		Parameters:        util.Struct2Json(req.Parameters),
+		Parameters:        req.Parameters,
 		Creator:           ctxUser.Username,
 		Operator:          ctxUser.Username,
-		CreateTime:        time.Now().Format("2006-01-02 15:04:05"),
-		UpdateTime:        time.Now().Format("2006-01-02 15:04:05"),
 	}
 
 	// 获取
@@ -141,9 +137,8 @@ func (r RaspModuleController) UpdateRaspModules(c *gin.Context) {
 	module.MiddlewareVersion = req.MiddlewareVersion
 	module.Desc = req.Desc
 	module.Status = req.Status
-	module.Parameters = util.Struct2Json(req.Parameters)
+	module.Parameters = req.Parameters
 	module.Operator = ctxUser.Username
-	module.UpdateTime = time.Now().Format("2006-01-02 15:04:05")
 
 	err = r.RaspModuleRepository.UpdateRaspModule(module)
 	if err != nil {

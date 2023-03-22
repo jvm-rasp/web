@@ -26,7 +26,7 @@ func NewRaspModuleRepository() IRaspModuleRepository {
 
 func (a RaspModuleRepository) GetRaspModules(req *vo.RaspModuleListRequest) ([]*model.RaspModule, int64, error) {
 	var list []*model.RaspModule
-	db := common.DB.Model(&model.RaspModule{}).Order("create_time DESC")
+	db := common.DB.Model(&model.RaspModule{}).Order("created_at DESC")
 
 	// 名称模糊查询
 	name := strings.TrimSpace(req.Name)

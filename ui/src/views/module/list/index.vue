@@ -75,8 +75,8 @@
           </template>
         </el-table-column>
         <el-table-column show-overflow-tooltip sortable prop="operator" label="操作人" align="center" />
-        <el-table-column show-overflow-tooltip sortable prop="createTime" label="创建时间" align="center" />
-        <el-table-column show-overflow-tooltip sortable prop="updateTime" label="更新时间" align="center" />
+        <el-table-column show-overflow-tooltip sortable prop="CreatedAt" label="创建时间" align="center" :formatter="dateFormat" />
+        <el-table-column show-overflow-tooltip sortable prop="UpdatedAt" label="更新时间" align="center" :formatter="dateFormat" />
         <el-table-column fixed="right" label="操作" align="center">
           <template slot-scope="scope">
             <el-button type="text" size="medium" @click="handleDelete(scope.row)">删除</el-button>
@@ -268,6 +268,7 @@
 
 import vueJsonEditor from 'vue-json-editor'
 import { batchDeleteModuleByIds, createModule, deleteModule, getModules, updateModule } from '@/api/module/module'
+import moment from 'moment'
 
 export default {
   name: 'Module',
@@ -291,7 +292,7 @@ export default {
       createModuleVisible: false,
       submitCreateModuleLoading: false,
       bindModuleData: {
-        id: '',
+        ID: '',
         moduleName: '',
         moduleVersion: '',
         downLoadURL: '',
@@ -331,9 +332,6 @@ export default {
       this.loading = true
       try {
         const { data } = await getModules(this.params)
-        data.list.forEach((item, index) => {
-          item.parameters = JSON.parse(item.parameters)
-        })
         this.tableData = data.list
         this.total = data.total
       } finally {
@@ -380,7 +378,7 @@ export default {
         this.loading = true
         let msg = ''
         try {
-          const { message } = await deleteModule({ id: record.id })
+          const { message } = await deleteModule({ id: record.ID })
           msg = message
         } finally {
           this.loading = false
@@ -552,6 +550,13 @@ export default {
       } else if (type === 3) {
         return '其他模块'
       }
+    },
+    dateFormat(row, column) {
+      const date = row[column.property]
+      if (date === undefined) {
+        return ''
+      }
+      return moment(date).format('YYYY-MM-DD HH:mm:ss')
     }
   }
 }

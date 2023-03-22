@@ -9,7 +9,6 @@ import (
 	"server/response"
 	"server/vo"
 	"strings"
-	"time"
 )
 
 type IRaspConfigController interface {
@@ -88,8 +87,6 @@ func (r RaspConfigController) CreateRaspConfig(c *gin.Context) {
 		AgentConfigs:  req.AgentConfigs,
 		BinFileUrl:    req.BinFileUrl,
 		BinFileHash:   req.BinFileHash,
-		CreateTime:    time.Now().Format("2006-01-02 15:04:05"),
-		UpdateTime:    time.Now().Format("2006-01-02 15:04:05"),
 	}
 
 	// 获取
@@ -135,7 +132,6 @@ func (r RaspConfigController) UpdateRaspConfig(c *gin.Context) {
 	config.Desc = req.Desc
 	config.Status = req.Status
 	config.Operator = ctxUser.Username
-	config.UpdateTime = time.Now().Format("2006-01-02 15:04:05")
 	config.AgentMode = req.AgentMode
 	config.ModuleConfigs = req.ModuleConfigs
 	config.LogPath = req.LogPath

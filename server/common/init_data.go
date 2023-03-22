@@ -585,9 +585,23 @@ func InitData() {
 		},
 		{
 			Method:   "POST",
+			Path:     "/config/update",
+			Category: "config",
+			Desc:     "更新配置",
+			Creator:  "系统",
+		},
+		{
+			Method:   "POST",
 			Path:     "/config/delete/batch",
 			Category: "config",
 			Desc:     "批量删除配置",
+			Creator:  "系统",
+		},
+		{
+			Method:   "POST",
+			Path:     "/config/delete",
+			Category: "config",
+			Desc:     "删除配置",
 			Creator:  "系统",
 		},
 		{
@@ -605,7 +619,14 @@ func InitData() {
 			Creator:  "系统",
 		},
 		{
-			Method:   "GET",
+			Method:   "POST",
+			Path:     "/module/update",
+			Category: "module",
+			Desc:     "更新模块",
+			Creator:  "系统",
+		},
+		{
+			Method:   "POST",
 			Path:     "/module/delete/batch",
 			Category: "module",
 			Desc:     "批量删除模块",

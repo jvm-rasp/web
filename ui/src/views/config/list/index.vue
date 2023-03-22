@@ -53,7 +53,7 @@
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="55" align="center" />
-        <el-table-column show-overflow-tooltip sortable prop="id" with="55" label="配置ID" align="center" />
+        <el-table-column show-overflow-tooltip sortable prop="ID" with="55" label="配置ID" align="center" />
         <el-table-column show-overflow-tooltip sortable prop="name" label="配置名称" align="center" />
         <el-table-column show-overflow-tooltip sortable prop="desc" label="配置描述" align="center" />
         <el-table-column show-overflow-tooltip sortable prop="status" label="配置状态" align="center">
@@ -65,8 +65,8 @@
         </el-table-column>
         <el-table-column show-overflow-tooltip sortable prop="creator" label="创建人" align="center" />
         <el-table-column show-overflow-tooltip sortable prop="operator" label="操作人" align="center" />
-        <el-table-column show-overflow-tooltip sortable prop="updateTime" label="更新时间" align="center" />
-        <el-table-column show-overflow-tooltip sortable prop="createTime" label="创建时间" align="center" />
+        <el-table-column show-overflow-tooltip sortable prop="UpdatedAt" label="更新时间" align="center" :formatter="dateFormat" />
+        <el-table-column show-overflow-tooltip sortable prop="CreatedAt" label="创建时间" align="center" :formatter="dateFormat" />
         <el-table-column fixed="right" label="操作" align="center">
           <template slot-scope="scope">
             <el-button type="text" size="medium" @click="handleDelete(scope.row)">删除</el-button>
@@ -91,18 +91,26 @@
       <el-dialog title="创建配置" :visible.sync="createConfigVisible" width="50%">
         <el-form ref="createConfigForm" size="small" :model="bindConfigData" :rules="createConfigFormRules" label-width="100px">
           <el-row>
-            <el-col :span="12">
+            <el-col :span="8">
               <el-form-item label="配置名称" prop="name">
                 <el-input v-model.trim="bindConfigData.name" placeholder="配置名称" />
               </el-form-item>
             </el-col>
-            <el-col :span="12">
+            <el-col :span="9">
               <el-form-item label="接入模式" prop="agentMode">
                 <el-radio-group v-model="bindConfigData.agentMode">
                   <el-radio :label="1">动态</el-radio>
                   <el-radio :label="2">静态</el-radio>
                   <el-radio :label="0">关闭</el-radio>
                 </el-radio-group>
+              </el-form-item>
+            </el-col>
+            <el-col :span="7">
+              <el-form-item label="模块状态" prop="status">
+                <el-select v-model="bindConfigData.status" clearable placeholder="模块状态">
+                  <el-option label="启用" :value="true" />
+                  <el-option label="禁用" :value="false" />
+                </el-select>
               </el-form-item>
             </el-col>
           </el-row>
@@ -112,7 +120,7 @@
                 <el-checkbox v-model="checkAll" :indeterminate="isIndeterminate" @change="handleCheckAllChange">全选</el-checkbox>
                 <div style="margin: 15px 0;" />
                 <el-checkbox-group v-model="selectedModuleId" @change="handleCheckedModulesChange">
-                  <el-checkbox v-for="module in moduleList" :key="module.id" :label="module.id">{{ module.moduleName }}</el-checkbox>
+                  <el-checkbox v-for="module in moduleList" :key="module.ID" :label="module.ID">{{ module.moduleName }}</el-checkbox>
                 </el-checkbox-group>
               </el-form-item>
             </el-col>
@@ -217,7 +225,7 @@
                 <el-checkbox v-model="checkAll" :indeterminate="isIndeterminate" @change="handleCheckAllChange">全选</el-checkbox>
                 <div style="margin: 15px 0;" />
                 <el-checkbox-group v-model="selectedModuleId" @change="handleCheckedModulesChange">
-                  <el-checkbox v-for="module in moduleList" :key="module.id" :label="module.id">{{ module.moduleName }}</el-checkbox>
+                  <el-checkbox v-for="module in moduleList" :key="module.ID" :label="module.ID">{{ module.moduleName }}</el-checkbox>
                 </el-checkbox-group>
               </el-form-item>
             </el-col>
@@ -297,6 +305,7 @@
 import { getConfigs, createConfig, batchDeleteConfigByIds, updateConfig } from '@/api/config/config'
 import vueJsonEditor from 'vue-json-editor'
 import { getModules } from '@/api/module/module'
+import moment from 'moment/moment'
 
 export default {
   name: 'Config',
@@ -328,7 +337,7 @@ export default {
 
       // 配置数据绑定
       bindConfigData: {
-        id: '',
+        ID: '',
         name: '',
         desc: '',
         status: true,
@@ -396,7 +405,7 @@ export default {
       this.bindConfigData = record
       this.selectedModuleId = []
       record.moduleConfigs.forEach((item) => {
-        this.selectedModuleId.push(item.id)
+        this.selectedModuleId.push(item.ID)
       })
       this.editConfigVisible = true
     },
@@ -410,7 +419,7 @@ export default {
         this.loading = true
         let msg = ''
         try {
-          const { message } = await batchDeleteConfigByIds({ ids: [record.id] })
+          const { message } = await batchDeleteConfigByIds({ ids: [record.ID] })
           msg = message
         } finally {
           this.loading = false
@@ -436,7 +445,7 @@ export default {
         this.checkAll = true
         this.isIndeterminate = false
         this.moduleList.forEach((item) => {
-          this.selectedModuleId.push(item.id)
+          this.selectedModuleId.push(item.ID)
         })
       } else {
         this.checkAll = false
@@ -450,7 +459,7 @@ export default {
       this.bindConfigData.moduleConfigs = []
       value.forEach((checkedItem) => {
         const matches = this.moduleList.filter((moduleItem) => {
-          return moduleItem.id === checkedItem
+          return moduleItem.ID === checkedItem
         })
         this.bindConfigData.moduleConfigs = this.bindConfigData.moduleConfigs.concat(matches)
       })
@@ -611,7 +620,7 @@ export default {
         this.loading = true
         const configIds = []
         this.multipleSelection.forEach(x => {
-          configIds.push(x.id)
+          configIds.push(x.ID)
         })
         let msg = ''
         try {
@@ -668,6 +677,13 @@ export default {
     handleCurrentChange(val) {
       this.params.pageNum = val
       this.getConfigTableData()
+    },
+    dateFormat(row, column) {
+      const date = row[column.property]
+      if (date === undefined) {
+        return ''
+      }
+      return moment(date).format('YYYY-MM-DD HH:mm:ss')
     }
   }
 }
