@@ -681,6 +681,27 @@ func InitData() {
 			Desc:     "获取进程日志列表",
 			Creator:  "系统",
 		},
+		{
+			Method:   "GET",
+			Path:     "/dashboard/attackData",
+			Category: "dashboard",
+			Desc:     "获取攻击数据",
+			Creator:  "系统",
+		},
+		{
+			Method:   "GET",
+			Path:     "/dashboard/attackTrends",
+			Category: "dashboard",
+			Desc:     "获取攻击趋势",
+			Creator:  "系统",
+		},
+		{
+			Method:   "GET",
+			Path:     "/dashboard/attackTypes",
+			Category: "dashboard",
+			Desc:     "获取攻击类型",
+			Creator:  "系统",
+		},
 	}
 	newApi := make([]model.Api, 0)
 	newRoleCasbin := make([]model.RoleCasbin, 0)
