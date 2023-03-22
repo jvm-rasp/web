@@ -27,6 +27,7 @@ func (r *Resource) Open(name string) (fs.File, error) {
 		return nil, errors.New("http: invalid character in file path")
 	}
 	fullName := filepath.Join(r.path, filepath.FromSlash(path.Clean("/static/"+name)))
+	fullName = filepath.ToSlash(fullName)
 	file, err := r.fs.Open(fullName)
 
 	return file, err

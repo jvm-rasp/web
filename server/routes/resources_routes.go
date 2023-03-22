@@ -35,5 +35,5 @@ func InitStaticRouter(engine *gin.Engine) {
 		group.GET("", html.Index)
 	}
 	// 解决刷新404问题
-	engine.NoRoute(html.RedirectIndex)
+	//engine.NoRoute(html.RedirectIndex)
 }
