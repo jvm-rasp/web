@@ -36,11 +36,11 @@ export function deleteConfig(params) {
 }
 
 // 批量删除配置
-export function batchDeleteConfigByIds(data) {
+export function batchDeleteConfigByIds(params) {
   return request({
     url: '/api/config/delete/batch',
     method: 'post',
-    data
+    data: params
   })
 }
 

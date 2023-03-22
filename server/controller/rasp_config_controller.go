@@ -7,14 +7,17 @@ import (
 	"server/model"
 	"server/repository"
 	"server/response"
-	"server/util"
 	"server/vo"
+	"strings"
+	"time"
 )
 
 type IRaspConfigController interface {
 	CreateRaspConfig(c *gin.Context)
+	UpdateRaspConfig(c *gin.Context)
 	GetRaspConfigs(c *gin.Context)
 	BatchDeleteConfigByIds(c *gin.Context)
+	GetViperRaspConfig(c *gin.Context)
 }
 
 type RaspConfigController struct {
@@ -80,11 +83,13 @@ func (r RaspConfigController) CreateRaspConfig(c *gin.Context) {
 		Creator:       ctxUser.Username,
 		Operator:      ctxUser.Username,
 		AgentMode:     req.AgentMode,
-		ModuleConfigs: util.Struct2Json(req.ModuleConfigs),
+		ModuleConfigs: req.ModuleConfigs,
 		LogPath:       req.LogPath,
-		AgentConfigs:  util.Struct2Json(req.AgentConfigs),
+		AgentConfigs:  req.AgentConfigs,
 		BinFileUrl:    req.BinFileUrl,
 		BinFileHash:   req.BinFileHash,
+		CreateTime:    time.Now().Format("2006-01-02 15:04:05"),
+		UpdateTime:    time.Now().Format("2006-01-02 15:04:05"),
 	}
 
 	// 获取
@@ -95,6 +100,55 @@ func (r RaspConfigController) CreateRaspConfig(c *gin.Context) {
 	}
 	response.Success(c, nil, "创建配置成功")
 	return
+}
+
+func (r RaspConfigController) UpdateRaspConfig(c *gin.Context) {
+	var req vo.UpdateRaspConfigRequest
+	// 参数绑定
+	if err := c.ShouldBind(&req); err != nil {
+		response.Fail(c, nil, err.Error())
+		return
+	}
+	// 参数校验
+	if err := common.Validate.Struct(&req); err != nil {
+		errStr := err.(validator.ValidationErrors)[0].Translate(common.Trans)
+		response.Fail(c, nil, errStr)
+		return
+	}
+
+	// 获取当前用户
+	ur := repository.NewUserRepository()
+	ctxUser, err := ur.GetCurrentUser(c)
+	if err != nil {
+		response.Fail(c, nil, "获取当前用户信息失败")
+		return
+	}
+
+	id := req.ID
+	config, err := r.RaspConfigRepository.GetRaspConfigById(id)
+	if err != nil {
+		response.Fail(c, nil, "获取当前模块失败")
+		return
+	}
+
+	config.Name = req.Name
+	config.Desc = req.Desc
+	config.Status = req.Status
+	config.Operator = ctxUser.Username
+	config.UpdateTime = time.Now().Format("2006-01-02 15:04:05")
+	config.AgentMode = req.AgentMode
+	config.ModuleConfigs = req.ModuleConfigs
+	config.LogPath = req.LogPath
+	config.AgentConfigs = req.AgentConfigs
+	config.BinFileUrl = req.BinFileUrl
+	config.BinFileHash = req.BinFileHash
+
+	err = r.RaspConfigRepository.UpdateRaspConfig(config)
+	if err != nil {
+		response.Fail(c, nil, "更新当前配置失败")
+		return
+	}
+	response.Success(c, nil, "更新配置成功")
 }
 
 // 批量删除接口
@@ -119,4 +173,25 @@ func (r RaspConfigController) BatchDeleteConfigByIds(c *gin.Context) {
 		return
 	}
 	response.Success(c, nil, "删除配置成功")
+}
+
+// GetViperRaspConfig viper remote get
+func (l RaspConfigController) GetViperRaspConfig(c *gin.Context) {
+	var req vo.RaspConfigRequest
+	if err := c.ShouldBind(&req); err != nil {
+		response.Fail(c, nil, err.Error())
+		return
+	}
+	if err := common.Validate.Struct(&req); err != nil {
+		errStr := err.(validator.ValidationErrors)[0].Translate(common.Trans)
+		response.Fail(c, nil, errStr)
+		return
+	}
+	name := strings.TrimSpace(req.Key)
+	config, err := l.RaspConfigRepository.GetRaspConfig(name)
+	if err != nil {
+		response.Fail(c, nil, err.Error())
+		return
+	}
+	response.Success(c, gin.H{"key": name, "value": config.AgentConfigs}, "获取配置成功")
 }

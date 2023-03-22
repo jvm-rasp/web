@@ -331,6 +331,9 @@ export default {
       this.loading = true
       try {
         const { data } = await getModules(this.params)
+        data.list.forEach((item, index) => {
+          item.parameters = JSON.parse(item.parameters)
+        })
         this.tableData = data.list
         this.total = data.total
       } finally {
@@ -363,7 +366,6 @@ export default {
     },
 
     handleEdit(record) {
-      record.parameters = JSON.parse(record.parameters)
       this.selectedModuleData = record
       this.bindModuleData = record
       this.editModuleVisible = true

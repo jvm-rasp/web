@@ -6,12 +6,15 @@ import (
 	"server/common"
 	"server/model"
 	"server/vo"
+	"strconv"
 	"strings"
 )
 
 type IRaspConfigRepository interface {
 	GetRaspConfigs(req *vo.RaspConfigListRequest) ([]*model.RaspConfig, int64, error) // 获取配置列表列表
-	CreateRaspConfig(config *model.RaspConfig) error                                  // 创建接口
+	GetRaspConfigById(id uint) (*model.RaspConfig, error)
+	CreateRaspConfig(config *model.RaspConfig) error // 创建接口
+	UpdateRaspConfig(config *model.RaspConfig) error
 	DeleteRaspConfig(ids []uint) error
 	GetRaspConfig(hostName string) (*model.RaspConfig, error)
 }
@@ -29,10 +32,15 @@ func (a RaspConfigRepository) CreateRaspConfig(config *model.RaspConfig) error {
 	return err
 }
 
+func (a RaspConfigRepository) UpdateRaspConfig(config *model.RaspConfig) error {
+	err := common.DB.Save(config).Error
+	return err
+}
+
 // GetRaspConfigs 查询配置
 func (a RaspConfigRepository) GetRaspConfigs(req *vo.RaspConfigListRequest) ([]*model.RaspConfig, int64, error) {
 	var list []*model.RaspConfig
-	db := common.DB.Model(&model.RaspConfig{}).Order("created_at DESC")
+	db := common.DB.Model(&model.RaspConfig{}).Order("create_time DESC")
 
 	// 名称模糊查询
 	name := strings.TrimSpace(req.Name)
@@ -41,8 +49,8 @@ func (a RaspConfigRepository) GetRaspConfigs(req *vo.RaspConfigListRequest) ([]*
 	}
 
 	// 配置的状态
-	status := req.Status
-	if status != 0 {
+	status, err := strconv.ParseBool(req.Status)
+	if err == nil {
 		db = db.Where("status = ?", status)
 	}
 
@@ -55,7 +63,7 @@ func (a RaspConfigRepository) GetRaspConfigs(req *vo.RaspConfigListRequest) ([]*
 	// 当pageNum > 0 且 pageSize > 0 才分页
 	//记录总条数
 	var total int64
-	err := db.Count(&total).Error
+	err = db.Count(&total).Error
 	if err != nil {
 		return list, total, err
 	}
@@ -67,6 +75,12 @@ func (a RaspConfigRepository) GetRaspConfigs(req *vo.RaspConfigListRequest) ([]*
 		err = db.Find(&list).Error
 	}
 	return list, total, err
+}
+
+func (a RaspConfigRepository) GetRaspConfigById(id uint) (*model.RaspConfig, error) {
+	var record *model.RaspConfig
+	err := common.DB.Find(&record, "id = ?", id).Error
+	return record, err
 }
 
 func (r RaspConfigRepository) DeleteRaspConfig(ids []uint) error {

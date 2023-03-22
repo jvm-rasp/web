@@ -21,12 +21,12 @@ type IRaspModuleController interface {
 }
 
 type RaspModuleController struct {
-	RaspConfigRepository repository.IRaspModuleRepository
+	RaspModuleRepository repository.IRaspModuleRepository
 }
 
 func NewRaspModuleController() IRaspModuleController {
 	raspModuleRepository := repository.NewRaspModuleRepository()
-	raspModuleController := RaspModuleController{RaspConfigRepository: raspModuleRepository}
+	raspModuleController := RaspModuleController{RaspModuleRepository: raspModuleRepository}
 	return raspModuleController
 }
 
@@ -44,7 +44,7 @@ func (r RaspModuleController) GetRaspModules(c *gin.Context) {
 		return
 	}
 	// 获取
-	raspConfigs, total, err := r.RaspConfigRepository.GetRaspModules(&req)
+	raspConfigs, total, err := r.RaspModuleRepository.GetRaspModules(&req)
 	if err != nil {
 		response.Fail(c, nil, "获取模块列表失败")
 		return
@@ -94,7 +94,7 @@ func (r RaspModuleController) CreateRaspModule(c *gin.Context) {
 	}
 
 	// 获取
-	err = r.RaspConfigRepository.CreateRaspModule(&raspConfig)
+	err = r.RaspModuleRepository.CreateRaspModule(&raspConfig)
 	if err != nil {
 		response.Fail(c, nil, "创建模块列表失败"+err.Error())
 		return
@@ -126,7 +126,7 @@ func (r RaspModuleController) UpdateRaspModules(c *gin.Context) {
 	}
 
 	id := req.ID
-	module, err := r.RaspConfigRepository.GetRaspModuleById(id)
+	module, err := r.RaspModuleRepository.GetRaspModuleById(id)
 	if err != nil {
 		response.Fail(c, nil, "获取当前模块失败")
 		return
@@ -145,7 +145,7 @@ func (r RaspModuleController) UpdateRaspModules(c *gin.Context) {
 	module.Operator = ctxUser.Username
 	module.UpdateTime = time.Now().Format("2006-01-02 15:04:05")
 
-	err = r.RaspConfigRepository.UpdateRaspModule(module)
+	err = r.RaspModuleRepository.UpdateRaspModule(module)
 	if err != nil {
 		response.Fail(c, nil, "更新当前模块失败")
 		return
@@ -168,7 +168,7 @@ func (r RaspModuleController) DeleteModuleById(c *gin.Context) {
 	}
 	ids := []uint{req.Id}
 	// 删除接口
-	err := r.RaspConfigRepository.DeleteRaspModule(ids)
+	err := r.RaspModuleRepository.DeleteRaspModule(ids)
 	if err != nil {
 		response.Fail(c, nil, "删除模块失败: "+err.Error())
 		return
@@ -192,7 +192,7 @@ func (r RaspModuleController) BatchDeleteModuleByIds(c *gin.Context) {
 	}
 
 	// 删除接口
-	err := r.RaspConfigRepository.DeleteRaspModule(req.Ids)
+	err := r.RaspModuleRepository.DeleteRaspModule(req.Ids)
 	if err != nil {
 		response.Fail(c, nil, "删除模块失败: "+err.Error())
 		return
