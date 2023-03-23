@@ -3,7 +3,7 @@ import request from '@/utils/request'
 // 获取角色列表
 export function getRoles(params) {
   return request({
-    url: '/api/role/list',
+    url: '/role/list',
     method: 'get',
     params
   })
@@ -12,7 +12,7 @@ export function getRoles(params) {
 // 创建角色
 export function createRole(data) {
   return request({
-    url: '/api/role/create',
+    url: '/role/create',
     method: 'post',
     data
   })
@@ -21,7 +21,7 @@ export function createRole(data) {
 // 更新角色
 export function updateRoleById(roleId, data) {
   return request({
-    url: '/api/role/update/' + roleId,
+    url: '/role/update/' + roleId,
     method: 'get',
     data
   })
@@ -30,7 +30,7 @@ export function updateRoleById(roleId, data) {
 // 获取角色的权限菜单
 export function getRoleMenusById(roleId) {
   return request({
-    url: '/api/role/menus/get/' + roleId,
+    url: '/role/menus/get/' + roleId,
     method: 'get'
   })
 }
@@ -38,7 +38,7 @@ export function getRoleMenusById(roleId) {
 // 更新角色的权限菜单
 export function updateRoleMenusById(roleId, data) {
   return request({
-    url: '/api/role/menus/update/' + roleId,
+    url: '/role/menus/update/' + roleId,
     method: 'get',
     data
   })
@@ -47,7 +47,7 @@ export function updateRoleMenusById(roleId, data) {
 // 获取角色的权限接口
 export function getRoleApisById(roleId) {
   return request({
-    url: '/api/role/apis/get/' + roleId,
+    url: '/role/apis/get/' + roleId,
     method: 'get'
   })
 }
@@ -55,7 +55,7 @@ export function getRoleApisById(roleId) {
 // 更新角色的权限接口
 export function updateRoleApisById(roleId, data) {
   return request({
-    url: '/api/role/apis/update/' + roleId,
+    url: '/role/apis/update/' + roleId,
     method: 'get',
     data
   })
@@ -64,7 +64,7 @@ export function updateRoleApisById(roleId, data) {
 // 批量删除角色
 export function batchDeleteRoleByIds(data) {
   return request({
-    url: '/api/role/delete/batch',
+    url: '/role/delete/batch',
     method: 'post',
     data
   })

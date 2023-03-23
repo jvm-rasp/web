@@ -8,7 +8,7 @@ import { enable, api, baseUrl } from '@/utils/apifox'
 
 // create an axios instance
 const service = axios.create({
-  baseURL: process.env.NODE_ENV === 'production' ? process.env.VUE_APP_BASE_API : '/', // api 的 base_url
+  baseURL: './',
   // withCredentials: true, // send cookies when cross-domain requests
   timeout: 5000 // request timeout
 })

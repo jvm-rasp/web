@@ -2,7 +2,7 @@ import request from '@/utils/request'
 
 export function getAttackLogs(params) {
   return request({
-    url: '/api/attack/list',
+    url: '/attack/list',
     method: 'get',
     params
   })
@@ -10,7 +10,7 @@ export function getAttackLogs(params) {
 
 export function deleteAttackLog(params) {
   return request({
-    url: '/api/attack/delete/batch',
+    url: '/attack/delete/batch',
     method: 'post',
     data: params
   })
@@ -18,7 +18,7 @@ export function deleteAttackLog(params) {
 
 export function getAttackDetail(params) {
   return request({
-    url: '/api/attack/detail',
+    url: '/attack/detail',
     method: 'get',
     params
   })

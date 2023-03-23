@@ -2,14 +2,14 @@ import request from '@/utils/request'
 
 export function getAttackData() {
   return request({
-    url: '/api/dashboard/attackData',
+    url: '/dashboard/attackData',
     method: 'get'
   })
 }
 
 export async function getTrendsData() {
   const res = await request({
-    url: '/api/dashboard/attackTrends',
+    url: '/dashboard/attackTrends',
     method: 'get'
   })
   const option = {
@@ -87,7 +87,7 @@ export async function getTrendsData() {
 
 export async function getAttackTypeData() {
   const res = await request({
-    url: '/api/dashboard/attackTypes',
+    url: '/dashboard/attackTypes',
     method: 'get'
   })
   const option = {

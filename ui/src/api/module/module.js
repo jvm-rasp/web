@@ -2,7 +2,7 @@ import request from '@/utils/request'
 
 export function getModules(params) {
   return request({
-    url: '/api/module/list',
+    url: '/module/list',
     method: 'get',
     params
   })
@@ -10,7 +10,7 @@ export function getModules(params) {
 
 export function createModule(params) {
   return request({
-    url: '/api/module/create',
+    url: '/module/create',
     method: 'post',
     data: params
   })
@@ -18,7 +18,7 @@ export function createModule(params) {
 
 export function updateModule(params) {
   return request({
-    url: '/api/module/update',
+    url: '/module/update',
     method: 'post',
     data: params
   })
@@ -26,7 +26,7 @@ export function updateModule(params) {
 
 export function deleteModule(params) {
   return request({
-    url: '/api/module/delete',
+    url: '/module/delete',
     method: 'post',
     data: params
   })
@@ -34,7 +34,7 @@ export function deleteModule(params) {
 
 export function batchDeleteModuleByIds(params) {
   return request({
-    url: '/api/module/delete/batch',
+    url: '/module/delete/batch',
     method: 'delete',
     data: params
   })

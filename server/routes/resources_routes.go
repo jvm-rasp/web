@@ -3,7 +3,9 @@ package routes
 import (
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"path"
 	"server/common"
+	"server/config"
 	"server/resources"
 )
 
@@ -15,7 +17,7 @@ func NewHtmlHandler() *HtmlHandler {
 
 // RedirectIndex 重定向
 func (h *HtmlHandler) RedirectIndex(c *gin.Context) {
-	c.Redirect(http.StatusFound, "/ui")
+	c.Redirect(http.StatusFound, path.Join("/", config.Conf.System.UrlPathPrefix))
 	return
 }
 
@@ -25,15 +27,14 @@ func (h *HtmlHandler) Index(c *gin.Context) {
 	return
 }
 
-// InitStaticRouter 静态资源配置
-func InitStaticRouter(engine *gin.Engine) {
-	engine.StaticFS("/static", http.FS(common.NewResource()))
-
+func InitStaticRouter(r *gin.RouterGroup, engine *gin.Engine) gin.IRoutes {
+	r.StaticFS("/static", http.FS(common.NewResource()))
 	html := NewHtmlHandler()
-	group := engine.Group("/ui")
+	router := r.Group("/")
 	{
-		group.GET("", html.Index)
+		router.GET("", html.Index)
 	}
 	// 解决刷新404问题
 	//engine.NoRoute(html.RedirectIndex)
+	return r
 }

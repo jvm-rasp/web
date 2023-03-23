@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
-	"server/util"
 	"go.uber.org/zap/zapcore"
 	"os"
+	"server/util"
+	"strings"
 )
 
 // 系统配置，对应yml
@@ -58,7 +59,12 @@ func InitConfig() {
 	// 读取rsa key
 	Conf.System.RSAPublicBytes = util.RSAReadKeyFromFile(Conf.System.RSAPublicKey)
 	Conf.System.RSAPrivateBytes = util.RSAReadKeyFromFile(Conf.System.RSAPrivateKey)
-
+	// 处理特殊的url-path-prefix情况
+	if Conf.System.UrlPathPrefix == "" || Conf.System.UrlPathPrefix == "/" {
+		Conf.System.UrlPathPrefix = "/"
+	} else {
+		Conf.System.UrlPathPrefix = strings.Trim(Conf.System.UrlPathPrefix, "/")
+	}
 }
 
 type SystemConfig struct {

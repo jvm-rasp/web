@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path"
 	"server/common"
 	"server/config"
 	"server/middleware"
@@ -66,7 +67,7 @@ func main() {
 		}
 	}()
 
-	common.Log.Info(fmt.Sprintf("Server is running at %s:%d/%s", host, port, config.Conf.System.UrlPathPrefix))
+	common.Log.Info(fmt.Sprintf("Server is running at %s:%d%s", host, port, path.Join("/", config.Conf.System.UrlPathPrefix)))
 
 	// Wait for interrupt signal to gracefully shutdown the server with
 	// a timeout of 5 seconds.

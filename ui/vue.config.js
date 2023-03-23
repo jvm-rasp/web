@@ -24,25 +24,22 @@ module.exports = {
    * In most cases please use '/' !!!
    * Detail: https://cli.vuejs.org/config/#publicpath
    */
-  publicPath: '/',
+  publicPath: process.env.NODE_ENV === 'development' ? defaultSettings.urlPathPrefix : './',
   outputDir: 'dist',
   assetsDir: 'static',
   lintOnSave: process.env.NODE_ENV === 'development',
   productionSourceMap: false,
   devServer: {
     port: port,
-    open: true,
+    open: false,
     overlay: {
       warnings: false,
       errors: true
     },
     proxy: {
-      '/api': {
+      '/base/|/api/|/menu/|/log/|/role/|/user/|/config/|/dashboard/|/host/|/attack/|/module/': {
         target: process.env.VUE_APP_BASE_API,
-        changeOrigin: true,
-        pathRewrite: {
-          '^/api': 'api'
-        }
+        changeOrigin: true
       }
     }
   },

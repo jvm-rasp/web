@@ -3,7 +3,7 @@ import request from '@/utils/request'
 // 获取当前登录用户信息
 export function getInfo() {
   return request({
-    url: '/api/user/info',
+    url: '/user/info',
     method: 'post'
   })
 }
@@ -11,7 +11,7 @@ export function getInfo() {
 // 获取用户列表
 export function getUsers(params) {
   return request({
-    url: '/api/user/list',
+    url: '/user/list',
     method: 'get',
     params
   })
@@ -20,7 +20,7 @@ export function getUsers(params) {
 // 更新用户登录密码
 export function changePwd(data) {
   return request({
-    url: '/api/user/changePwd',
+    url: '/user/changePwd',
     method: 'post',
     data
   })
@@ -29,7 +29,7 @@ export function changePwd(data) {
 // 创建用户
 export function createUser(data) {
   return request({
-    url: '/api/user/create',
+    url: '/user/create',
     method: 'post',
     data
   })
@@ -38,7 +38,7 @@ export function createUser(data) {
 // 更新用户
 export function updateUserById(id, data) {
   return request({
-    url: '/api/user/update/' + id,
+    url: '/user/update/' + id,
     method: 'post',
     data
   })
@@ -47,7 +47,7 @@ export function updateUserById(id, data) {
 // 批量删除用户
 export function batchDeleteUserByIds(data) {
   return request({
-    url: '/api/user/delete/batch',
+    url: '/user/delete/batch',
     method: 'get',
     data
   })

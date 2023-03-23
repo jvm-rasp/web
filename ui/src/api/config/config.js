@@ -3,7 +3,7 @@ import request from '@/utils/request'
 // 获取配置列表
 export function getConfigs(params) {
   return request({
-    url: '/api/config/list',
+    url: '/config/list',
     method: 'get',
     params
   })
@@ -12,7 +12,7 @@ export function getConfigs(params) {
 // 创建新配置
 export function createConfig(params) {
   return request({
-    url: '/api/config/create',
+    url: '/config/create',
     method: 'post',
     data: params
   })
@@ -21,7 +21,7 @@ export function createConfig(params) {
 // 创建新配置
 export function updateConfig(params) {
   return request({
-    url: '/api/config/update',
+    url: '/config/update',
     method: 'post',
     data: params
   })
@@ -29,7 +29,7 @@ export function updateConfig(params) {
 
 export function deleteConfig(params) {
   return request({
-    url: '/api/config/delete',
+    url: '/config/delete',
     method: 'post',
     data: params
   })
@@ -38,7 +38,7 @@ export function deleteConfig(params) {
 // 批量删除配置
 export function batchDeleteConfigByIds(params) {
   return request({
-    url: '/api/config/delete/batch',
+    url: '/config/delete/batch',
     method: 'post',
     data: params
   })
