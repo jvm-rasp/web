@@ -1,9 +1,10 @@
 package routes
 
 import (
+	"server/controller"
+
 	jwt "github.com/appleboy/gin-jwt/v2"
 	"github.com/gin-gonic/gin"
-	"server/controller"
 )
 
 // 注册基础路由

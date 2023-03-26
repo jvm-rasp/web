@@ -2,12 +2,13 @@ package config
 
 import (
 	"fmt"
-	"github.com/fsnotify/fsnotify"
-	"github.com/spf13/viper"
-	"go.uber.org/zap/zapcore"
 	"os"
 	"server/util"
 	"strings"
+
+	"github.com/fsnotify/fsnotify"
+	"github.com/spf13/viper"
+	"go.uber.org/zap/zapcore"
 )
 
 // 系统配置，对应yml

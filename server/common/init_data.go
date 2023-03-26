@@ -2,11 +2,12 @@ package common
 
 import (
 	"errors"
-	"github.com/thoas/go-funk"
-	"gorm.io/gorm"
 	"server/config"
 	"server/model"
 	"server/util"
+
+	"github.com/thoas/go-funk"
+	"gorm.io/gorm"
 )
 
 // 初始化mysql数据
@@ -702,6 +703,13 @@ func InitData() {
 			Desc:     "获取攻击类型",
 			Creator:  "系统",
 		},
+		{
+			Method:   "GET",
+			Path:     "/ws/:hostName",
+			Category: "ws",
+			Desc:     "socket获取配置",
+			Creator:  "系统",
+		},
 	}
 	newApi := make([]model.Api, 0)
 	newRoleCasbin := make([]model.RoleCasbin, 0)
@@ -727,6 +735,7 @@ func InitData() {
 				"/base/remote/config",
 				"/user/info",
 				"/menu/access/tree/:userId",
+				"/ws/:hostName",
 			}
 
 			if funk.ContainsString(basePaths, api.Path) {

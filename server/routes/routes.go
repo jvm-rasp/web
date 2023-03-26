@@ -2,11 +2,12 @@ package routes
 
 import (
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"server/common"
 	"server/config"
 	"server/middleware"
 	"time"
+
+	"github.com/gin-gonic/gin"
 )
 
 // 初始化
@@ -44,6 +45,7 @@ func InitRoutes() *gin.Engine {
 	apiGroup := r.Group("/" + config.Conf.System.UrlPathPrefix)
 
 	// 注册路由
+	InitSocketRoutes(apiGroup)
 	InitBaseRoutes(apiGroup, authMiddleware)          // 注册基础路由, 不需要jwt认证中间件,不需要casbin中间件
 	InitUserRoutes(apiGroup, authMiddleware)          // 注册用户路由, jwt认证中间件,casbin鉴权中间件
 	InitRoleRoutes(apiGroup, authMiddleware)          // 注册角色路由, jwt认证中间件,casbin鉴权中间件

@@ -12,6 +12,7 @@ import (
 	"server/middleware"
 	"server/repository"
 	"server/routes"
+	"server/socket"
 	"syscall"
 	"time"
 )
@@ -42,6 +43,11 @@ func main() {
 	for i := 0; i < 3; i++ {
 		go logRepository.SaveOperationLogChannel(middleware.OperationLogChan)
 	}
+
+	// 开启socket监听
+	go socket.WebsocketManager.Start()
+	// todo 使用 send 往客户端发送消息即可
+	go socket.WebsocketManager.SendService()
 
 	// 注册所有路由
 	r := routes.InitRoutes()
