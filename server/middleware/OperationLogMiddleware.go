@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"fmt"
 	"github.com/ahmetb/go-linq/v3"
 	"github.com/gin-gonic/gin"
 	"server/config"
@@ -41,8 +40,6 @@ func OperationLogMiddleware() gin.HandlerFunc {
 			username = "未登录"
 		}
 		username = user.Username
-
-		fmt.Print("FullPath:" + c.FullPath() + "\n")
 
 		// 获取访问路径
 		path := strings.TrimPrefix(c.FullPath(), "/"+config.Conf.System.UrlPathPrefix)

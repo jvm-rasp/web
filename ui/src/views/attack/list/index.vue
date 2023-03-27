@@ -125,19 +125,53 @@
             size="medium"
             direction="vertical"
             :label-style="{'text-align': 'center'}"
-            :content-style="{'word-break': 'normal'}"
+            :content-style="{'word-break': 'normal', 'font-size': 'small', 'border-top-width': '0px'}"
             :column="1"
             border
           >
             <el-descriptions-item label="堆栈信息">
-              <highlightjs class="stack" language="java" :code="formatStackTrace(selectRecord.detail.stackTrace)" />
+              <highlightjs language="java" :code="formatStackTrace(selectRecord.detail.stackTrace)" />
             </el-descriptions-item>
           </el-descriptions>
         </el-tab-pane>
         <el-tab-pane label="请求信息">
-          <el-descriptions title="" :column="2" border>
-            <el-descriptions-item label="请求协议">{{ selectRecord.requestProtocol }}</el-descriptions-item>
-            <el-descriptions-item label="请求方法">{{ selectRecord.httpMethod }}</el-descriptions-item>
+          <el-descriptions title="" :column="2" direction="horizontal" border>
+            <el-descriptions-item label="请求协议">
+              {{ selectRecord.detail.context.protocol }}
+            </el-descriptions-item>
+            <el-descriptions-item label="请求方法">
+              {{ selectRecord.detail.context.method }}
+            </el-descriptions-item>
+            <el-descriptions-item label="本地IP">
+              {{ selectRecord.detail.context.localAddr }}
+            </el-descriptions-item>
+            <el-descriptions-item label="远程IP">
+              {{ selectRecord.detail.context.remoteHost }}
+            </el-descriptions-item>
+            <el-descriptions-item label="请求类型">
+              {{ selectRecord.detail.context.contentType }}
+            </el-descriptions-item>
+            <el-descriptions-item label="请求长度">
+              {{ selectRecord.detail.context.contentLength }}
+            </el-descriptions-item>
+          </el-descriptions>
+          <el-descriptions title="" :column="1" direction="vertical" border>
+            <el-descriptions-item label="请求URL">
+              {{ selectRecord.detail.context.requestURL }}
+            </el-descriptions-item>
+            <el-descriptions-item label="查询参数">
+              {{ selectRecord.detail.context.queryString }}
+            </el-descriptions-item>
+          </el-descriptions>
+          <el-descriptions title="" :column="2" direction="vertical" :label-style="{'text-align': 'center'}" border>
+            <el-descriptions-item label="完整请求头">
+              {{ selectRecord.detail.context.header }}
+            </el-descriptions-item>
+          </el-descriptions>
+          <el-descriptions title="" :column="2" direction="vertical" :label-style="{'text-align': 'center'}" border>
+            <el-descriptions-item label="Form请求参数">
+              {{ selectRecord.detail.context.parameters }}
+            </el-descriptions-item>
           </el-descriptions>
         </el-tab-pane>
       </el-tabs>
@@ -172,7 +206,9 @@ export default {
       dialogDetailVisible: false,
       selectRecord: {
         record: {},
-        detail: {}
+        detail: {
+          context: {}
+        }
       },
       attackDetail: {
         id: null,
@@ -328,7 +364,8 @@ export default {
 </script>
 
 <style scoped>
-.stack {
-  font-size: small;
+.descriptions-item {
+  border-bottom-width: 0px;
+  border-top-width: 0px;
 }
 </style>

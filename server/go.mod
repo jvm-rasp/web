@@ -11,6 +11,7 @@ require (
 	github.com/go-playground/locales v0.14.1
 	github.com/go-playground/universal-translator v0.18.1
 	github.com/go-playground/validator/v10 v10.12.0
+	github.com/google/uuid v1.3.0
 	github.com/juju/ratelimit v1.0.1
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/spf13/viper v1.7.1
