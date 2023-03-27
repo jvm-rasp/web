@@ -1,9 +1,13 @@
 package vo
 
 type RaspAttackListRequest struct {
-	HostName     string `json:"hostName" form:"hostName"`
+	HostName string `json:"hostName" form:"hostName"`
 	PageNum  uint   `json:"pageNum" form:"pageNum"`
 	PageSize uint   `json:"pageSize" form:"pageSize"`
+}
+
+type RaspAttackDetailRequest struct {
+	Id string `json:"id" form:"id"`
 }
 
 type DeleteRaspAttackRequest struct {

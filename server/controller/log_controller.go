@@ -5,14 +5,18 @@ import (
 	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
+	"github.com/google/uuid"
 	"github.com/vjeantet/grok"
+	"gorm.io/datatypes"
 	"server/common"
 	"server/model"
 	"server/repository"
 	"server/response"
+	"server/util"
 	"server/vo"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // grok
@@ -21,6 +25,7 @@ const pattern = "%{TIMESTAMP_ISO8601:time}\\s*%{LOGLEVEL:level}\\s*\\[%{DATA:thr
 type ILogController interface {
 	ReportLog(c *gin.Context)
 	GetAttackLogs(c *gin.Context)
+	GetAttackDetail(c *gin.Context)
 	BatchDeleteLogByIds(c *gin.Context)
 }
 
@@ -81,7 +86,31 @@ func (l LogController) GetAttackLogs(c *gin.Context) {
 		return
 	}
 	response.Success(c, gin.H{
-		"data": raspHosts, "total": total,
+		"list": raspHosts, "total": total,
+	}, "获取攻击日志列表失败")
+}
+
+func (l LogController) GetAttackDetail(c *gin.Context) {
+	var req vo.RaspAttackDetailRequest
+	// 参数绑定
+	if err := c.ShouldBind(&req); err != nil {
+		response.Fail(c, nil, err.Error())
+		return
+	}
+	// 参数校验
+	if err := common.Validate.Struct(&req); err != nil {
+		errStr := err.(validator.ValidationErrors)[0].Translate(common.Trans)
+		response.Fail(c, nil, errStr)
+		return
+	}
+	// 获取
+	record, err := l.RaspAttackRepository.GetRaspAttackDetail(req.Id)
+	if err != nil {
+		response.Fail(c, nil, "获取实例列表失败")
+		return
+	}
+	response.Success(c, gin.H{
+		"detail": record,
 	}, "获取攻击日志列表失败")
 }
 
@@ -466,7 +495,8 @@ func (l LogController) handleAttackLog(req vo.RaspLogRequest) {
 	attack := model.RaspAttack{
 		HostName: req.Host.Name,
 	}
-	attack.AttackTime = maps["time"]
+	// 构件攻击详情对象
+	detail := model.RaspAttackDetail{}
 
 	// 攻击json
 	msg := maps["message"]
@@ -476,6 +506,8 @@ func (l LogController) handleAttackLog(req vo.RaspLogRequest) {
 		if err != nil {
 			panic(err)
 		}
+		guid, _ := uuid.NewUUID()
+		attack.RowGuid = guid.String()
 		attack.RequestProtocol = attackDetail.Context.Protocol
 		attack.HttpMethod = attackDetail.Context.Method
 		attack.RemoteIp = attackDetail.Context.RemoteHost
@@ -490,11 +522,27 @@ func (l LogController) handleAttackLog(req vo.RaspLogRequest) {
 		attack.AttackType = attackDetail.AttackType
 		attack.CheckType = attackDetail.Algorithm
 		attack.StackTrace = attackDetail.StackTrace
-		attack.AttackTime = strconv.FormatInt(attackDetail.AttackTime, 10)
+		attack.AttackTime = time.Unix(attackDetail.AttackTime/1000, 0)
 		attack.AttackParameters = attackDetail.Payload
+
+		// 构建攻击详情
+		detail.ParentGuid = attack.RowGuid
+		detail.Context = datatypes.JSON(util.Struct2Json(attackDetail.Context))
+		detail.StackTrace = attackDetail.StackTrace
+		detail.Payload = attackDetail.Payload
+		detail.IsBlocked = attackDetail.IsBlocked
+		detail.AttackType = attackDetail.AttackType
+		detail.Algorithm = attackDetail.Algorithm
+		detail.Extend = attackDetail.Extend
+		detail.AttackTime = time.Unix(attackDetail.AttackTime/1000, 0)
+		detail.Level = attackDetail.Level
 	}
 
 	err = l.RaspAttackRepository.CreateRaspAttack(&attack)
+	if err != nil {
+		return
+	}
+	err = l.RaspAttackRepository.CreateRaspAttackDetail(&detail)
 	if err != nil {
 		return
 	}

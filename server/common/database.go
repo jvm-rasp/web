@@ -40,5 +40,6 @@ func dbAutoMigrate() {
 		&model.RaspHost{},
 		&model.JavaProcessInfo{},
 		&model.RaspAttack{},
+		&model.RaspAttackDetail{},
 	)
 }

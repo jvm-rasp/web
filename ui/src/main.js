@@ -19,8 +19,8 @@ import './permission' // permission control
 import './utils/error-log' // error log
 
 import * as filters from './filters' // global filters
-
 import JsonViewer from 'vue-json-viewer'
+import highlightPlugin from '@highlightjs/vue-plugin'
 
 Vue.use(Element, {
   size: Cookies.get('size') || 'medium' // set element-ui default size
@@ -33,6 +33,7 @@ Object.keys(filters).forEach(key => {
 })
 
 Vue.use(JsonViewer)
+Vue.use(highlightPlugin)
 
 Vue.config.productionTip = false
 
