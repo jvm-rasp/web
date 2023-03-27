@@ -2,17 +2,19 @@ package middleware
 
 import (
 	"fmt"
+	"github.com/ahmetb/go-linq/v3"
+	"github.com/gin-gonic/gin"
 	"server/config"
 	"server/model"
 	"server/repository"
 	"strings"
 	"time"
-
-	"github.com/gin-gonic/gin"
 )
 
 // 操作日志channel
 var OperationLogChan = make(chan *model.OperationLog, 30)
+
+var SkipRecordPath = []string{"/", "", "/static/*filepath"}
 
 func OperationLogMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -49,8 +51,11 @@ func OperationLogMiddleware() gin.HandlerFunc {
 
 		// 获取接口描述
 		apiRepository := repository.NewApiRepository()
+		// js资源文件和首页html不记录操作日志
+		if linq.From(SkipRecordPath).Contains(path) {
+			return
+		}
 		apiDesc, _ := apiRepository.GetApiDescByPath(path, method)
-
 		operationLog := model.OperationLog{
 			Username:   username,
 			Ip:         c.ClientIP(),
