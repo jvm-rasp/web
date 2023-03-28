@@ -16,6 +16,7 @@ func InitRaspAttackRoutes(r *gin.RouterGroup, authMiddleware *jwt.GinJWTMiddlewa
 	router.Use(middleware.CasbinMiddleware())
 	{
 		router.GET("/list", raspLogController.GetAttackLogs)
+		router.GET("/detail", raspLogController.GetAttackDetail)
 		router.POST("/delete/batch", raspLogController.BatchDeleteLogByIds)
 	}
 	return r

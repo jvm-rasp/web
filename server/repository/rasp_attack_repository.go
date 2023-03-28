@@ -9,7 +9,9 @@ import (
 
 type IRaspAttackRepository interface {
 	GetRaspAttacks(req *vo.RaspAttackListRequest) ([]*model.RaspAttack, int64, error)
-	CreateRaspAttack(config *model.RaspAttack) error
+	GetRaspAttackDetail(parentGuid string) (*model.RaspAttackDetail, error)
+	CreateRaspAttack(attack *model.RaspAttack) error
+	CreateRaspAttackDetail(detail *model.RaspAttackDetail) error
 	DeleteRaspAttack(ids []uint) error
 }
 
@@ -23,6 +25,18 @@ func NewRaspAttackRepository() IRaspAttackRepository {
 func (a RaspAttackRepository) CreateRaspAttack(attack *model.RaspAttack) error {
 	err := common.DB.Create(attack).Error
 	return err
+}
+
+func (a RaspAttackRepository) CreateRaspAttackDetail(detail *model.RaspAttackDetail) error {
+	err := common.DB.Create(detail).Error
+	return err
+}
+
+func (a RaspAttackRepository) GetRaspAttackDetail(parentGuid string) (*model.RaspAttackDetail, error) {
+	var detail *model.RaspAttackDetail
+	db := common.DB.Model(&model.RaspAttackDetail{}).Where("parent_guid = ?", parentGuid)
+	err := db.Find(&detail).Error
+	return detail, err
 }
 
 func (a RaspAttackRepository) GetRaspAttacks(req *vo.RaspAttackListRequest) ([]*model.RaspAttack, int64, error) {
