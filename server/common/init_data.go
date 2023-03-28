@@ -628,6 +628,13 @@ func InitData() {
 		},
 		{
 			Method:   "POST",
+			Path:     "/module/update/status",
+			Category: "module",
+			Desc:     "更新模块状态",
+			Creator:  "系统",
+		},
+		{
+			Method:   "POST",
 			Path:     "/module/delete/batch",
 			Category: "module",
 			Desc:     "批量删除模块",

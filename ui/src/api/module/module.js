@@ -40,3 +40,10 @@ export function batchDeleteModuleByIds(params) {
   })
 }
 
+export function updateStatusById(params) {
+  return request({
+    url: '/module/update/status',
+    method: 'post',
+    data: params
+  })
+}

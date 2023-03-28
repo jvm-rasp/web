@@ -12,6 +12,8 @@ go_build_server
 
 jrasp.db
 
+resources/html
+
 # Test binary, built with `go test -c`
 *.test
 

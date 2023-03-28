@@ -16,6 +16,7 @@ type IRaspModuleController interface {
 	UpdateRaspModules(c *gin.Context)
 	BatchDeleteModuleByIds(c *gin.Context)
 	DeleteModuleById(c *gin.Context)
+	UpdateRaspModuleStatusById(c *gin.Context)
 }
 
 type RaspModuleController struct {
@@ -80,8 +81,6 @@ func (r RaspModuleController) CreateRaspModule(c *gin.Context) {
 		ModuleType:        req.ModuleType,
 		DownLoadURL:       req.DownLoadURL,
 		Md5:               req.Md5,
-		MiddlewareName:    req.MiddlewareName,
-		MiddlewareVersion: req.MiddlewareVersion,
 		Desc:              req.Desc,
 		Status:            req.Status,
 		Parameters:        req.Parameters,
@@ -133,8 +132,6 @@ func (r RaspModuleController) UpdateRaspModules(c *gin.Context) {
 	module.ModuleType = req.ModuleType
 	module.DownLoadURL = req.DownLoadURL
 	module.Md5 = req.Md5
-	module.MiddlewareName = req.MiddlewareName
-	module.MiddlewareVersion = req.MiddlewareVersion
 	module.Desc = req.Desc
 	module.Status = req.Status
 	module.Parameters = req.Parameters
@@ -193,4 +190,43 @@ func (r RaspModuleController) BatchDeleteModuleByIds(c *gin.Context) {
 		return
 	}
 	response.Success(c, nil, "删除模块成功")
+}
+
+func (r RaspModuleController) UpdateRaspModuleStatusById(c *gin.Context) {
+	var req vo.UpdateRaspModuleStatusRequest
+	// 参数绑定
+	if err := c.ShouldBind(&req); err != nil {
+		response.Fail(c, nil, err.Error())
+		return
+	}
+	// 参数校验
+	if err := common.Validate.Struct(&req); err != nil {
+		errStr := err.(validator.ValidationErrors)[0].Translate(common.Trans)
+		response.Fail(c, nil, errStr)
+		return
+	}
+
+	// 获取当前用户
+	ur := repository.NewUserRepository()
+	ctxUser, err := ur.GetCurrentUser(c)
+	if err != nil {
+		response.Fail(c, nil, "获取当前用户信息失败")
+		return
+	}
+
+	id := req.ID
+	module, err := r.RaspModuleRepository.GetRaspModuleById(id)
+	if err != nil {
+		response.Fail(c, nil, "获取当前模块失败")
+		return
+	}
+	module.Status = !module.Status
+	module.Operator = ctxUser.Username
+
+	err = r.RaspModuleRepository.UpdateRaspModule(module)
+	if err != nil {
+		response.Fail(c, nil, "更新当前模块失败")
+		return
+	}
+	response.Success(c, nil, "更新模块成功")
 }

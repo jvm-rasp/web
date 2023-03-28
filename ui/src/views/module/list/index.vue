@@ -67,16 +67,36 @@
             </el-tag>
           </template>
         </el-table-column>
+
         <el-table-column show-overflow-tooltip sortable prop="status" label="模块状态" align="center">
-          <template slot-scope="scope">
-            <el-tag size="small" :type="scope.row.status ? 'success':'danger'" disable-transitions>
-              {{ scope.row.status ? '启用' : '禁用' }}
-            </el-tag>
+          <template slot-scope="scope" label="模块状态" align="center">
+            <el-switch
+              v-model="scope.row.status"
+              active-color="#13ce66"
+              inactive-color="grey"
+              :active-value="true"
+              :inactive-value="false"
+              @change="switchChange($event,scope.row,scope.$index)"
+            />
           </template>
         </el-table-column>
         <el-table-column show-overflow-tooltip sortable prop="operator" label="操作人" align="center" />
-        <el-table-column show-overflow-tooltip sortable prop="CreatedAt" label="创建时间" align="center" :formatter="dateFormat" />
-        <el-table-column show-overflow-tooltip sortable prop="UpdatedAt" label="更新时间" align="center" :formatter="dateFormat" />
+        <el-table-column
+          show-overflow-tooltip
+          sortable
+          prop="CreatedAt"
+          label="创建时间"
+          align="center"
+          :formatter="dateFormat"
+        />
+        <el-table-column
+          show-overflow-tooltip
+          sortable
+          prop="UpdatedAt"
+          label="更新时间"
+          align="center"
+          :formatter="dateFormat"
+        />
         <el-table-column fixed="right" label="操作" align="center">
           <template slot-scope="scope">
             <el-button type="text" size="medium" @click="handleDelete(scope.row)">删除</el-button>
@@ -105,17 +125,17 @@
           label-width="100px"
         >
           <el-row>
-            <el-col :span="7">
+            <el-col span="12">
               <el-form-item label="模块名称" prop="moduleName">
                 <el-input v-model="bindModuleData.moduleName" placeholder="模块名称" />
               </el-form-item>
             </el-col>
-            <el-col :span="6">
+            <el-col span="12">
               <el-form-item label="模块版本" prop="moduleVersion">
                 <el-input v-model="bindModuleData.moduleVersion" />
               </el-form-item>
             </el-col>
-            <el-col :span="11">
+            <el-col>
               <el-form-item label="模块类型" prop="moduleType">
                 <el-radio-group v-model="bindModuleData.moduleType">
                   <el-radio :label="1">hook模块</el-radio>
@@ -126,40 +146,17 @@
             </el-col>
           </el-row>
           <el-row>
-            <el-col :span="7">
-              <el-form-item label="目标中间件" prop="middlewareName">
-                <el-input v-model="bindModuleData.middlewareName" placeholder="模块名称" />
-              </el-form-item>
-            </el-col>
-            <el-col :span="6">
-              <el-form-item label="目标版本号" prop="middlewareVersion">
-                <el-input v-model="bindModuleData.middlewareVersion" />
-              </el-form-item>
-            </el-col>
-            <el-col :span="11">
-              <el-form-item label="模块状态" prop="status">
-                <el-select v-model="bindModuleData.status" clearable placeholder="模块状态">
-                  <el-option label="启用" :value="true" />
-                  <el-option label="禁用" :value="false" />
-                </el-select>
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row>
-            <el-col :span="12">
+            <el-col span="12">
               <el-form-item label="下载链接" prop="downLoadURL">
                 <el-input v-model="bindModuleData.downLoadURL" />
               </el-form-item>
             </el-col>
-            <el-col :span="12">
+            <el-col span="12">
               <el-form-item label="文件hash" prop="md5">
                 <el-input v-model="bindModuleData.md5" />
               </el-form-item>
             </el-col>
           </el-row>
-          <el-form-item label="模块描述" prop="desc">
-            <el-input v-model="bindModuleData.desc" placeholder="模块描述" />
-          </el-form-item>
           <el-form-item label="配置参数" prop="parameters">
             <vue-json-editor
               v-model="bindModuleData.parameters"
@@ -170,6 +167,9 @@
               @json-save="onJsonSave"
               @has-error="onError"
             />
+          </el-form-item>
+          <el-form-item label="模块描述" prop="desc">
+            <el-input v-model="bindModuleData.desc" type="textarea" :rows="2" placeholder="模块描述" />
           </el-form-item>
         </el-form>
         <div slot="footer" class="dialog-footer">
@@ -188,43 +188,14 @@
           label-width="100px"
         >
           <el-row>
-            <el-col :span="7">
+            <el-col :span="12">
               <el-form-item label="模块名称" prop="moduleName">
                 <el-input v-model="bindModuleData.moduleName" placeholder="模块名称" />
               </el-form-item>
             </el-col>
-            <el-col :span="6">
+            <el-col :span="12">
               <el-form-item label="模块版本" prop="moduleVersion">
                 <el-input v-model="bindModuleData.moduleVersion" />
-              </el-form-item>
-            </el-col>
-            <el-col :span="11">
-              <el-form-item label="模块类型" prop="moduleType">
-                <el-radio-group v-model="bindModuleData.moduleType">
-                  <el-radio :label="1">hook模块</el-radio>
-                  <el-radio :label="2">algorithm模块</el-radio>
-                  <el-radio :label="3">其他模块</el-radio>
-                </el-radio-group>
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row>
-            <el-col :span="7">
-              <el-form-item label="目标中间件" prop="middlewareName">
-                <el-input v-model="bindModuleData.middlewareName" placeholder="模块名称" />
-              </el-form-item>
-            </el-col>
-            <el-col :span="6">
-              <el-form-item label="目标版本号" prop="middlewareVersion">
-                <el-input v-model="bindModuleData.middlewareVersion" />
-              </el-form-item>
-            </el-col>
-            <el-col :span="11">
-              <el-form-item label="模块状态" prop="status">
-                <el-select v-model="bindModuleData.status" clearable placeholder="模块状态">
-                  <el-option label="启用" :value="true" />
-                  <el-option label="禁用" :value="false" />
-                </el-select>
               </el-form-item>
             </el-col>
           </el-row>
@@ -240,9 +211,6 @@
               </el-form-item>
             </el-col>
           </el-row>
-          <el-form-item label="模块描述" prop="desc">
-            <el-input v-model="bindModuleData.desc" placeholder="模块描述" />
-          </el-form-item>
           <el-form-item label="配置参数" prop="parameters">
             <vue-json-editor
               v-model="bindModuleData.parameters"
@@ -254,10 +222,14 @@
               @has-error="onError"
             />
           </el-form-item>
+          <el-form-item label="模块描述" prop="desc">
+            <el-input v-model="bindModuleData.desc" placeholder="模块描述" />
+          </el-form-item>
         </el-form>
         <div slot="footer" class="dialog-footer">
           <el-button size="mini" @click="closeEditModule()">关 闭</el-button>
-          <el-button size="mini" :loading="submitCreateModuleLoading" type="primary" @click="updateModuleForm()">更 新</el-button>
+          <el-button size="mini" :loading="submitCreateModuleLoading" type="primary" @click="updateModuleForm()">更 新
+          </el-button>
         </div>
       </el-dialog>
     </el-card>
@@ -267,7 +239,14 @@
 <script>
 
 import vueJsonEditor from 'vue-json-editor'
-import { batchDeleteModuleByIds, createModule, deleteModule, getModules, updateModule } from '@/api/module/module'
+import {
+  batchDeleteModuleByIds,
+  createModule,
+  deleteModule,
+  getModules,
+  updateModule,
+  updateStatusById
+} from '@/api/module/module'
 import moment from 'moment'
 
 export default {
@@ -298,11 +277,9 @@ export default {
         downLoadURL: '',
         md5: '',
         moduleType: 1,
-        middlewareName: '',
-        middlewareVersion: '',
         tag: '',
         desc: '',
-        status: true,
+        status: '',
         parameters: {}
       },
       // 编辑模块
@@ -354,8 +331,6 @@ export default {
         downLoadURL: '',
         md5: '',
         moduleType: 1,
-        middlewareName: '',
-        middlewareVersion: '',
         desc: '',
         status: true,
         parameters: {}
@@ -397,6 +372,11 @@ export default {
           message: '已取消删除'
         })
       })
+    },
+
+    switchChange(e, row, index) {
+      updateStatusById({ id: row.ID })
+      // .then(res => {this.getModuleTableData()}).catch()
     },
 
     // 提交表单

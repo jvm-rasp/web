@@ -316,12 +316,18 @@ export default {
     return {
       // 查询参数
       params: {
-        name: '', // 配置名称
-        status: '', // 配置这台
+        name: '',
+        status: '',
         pageNum: 1,
         pageSize: 10
       },
 
+      // 模块查询参数
+      moduleQueryParams: {
+        name: '',
+        pageNum: 1,
+        pageSize: 1000
+      },
       // 表格数据
       tableData: [],
       total: 0,
@@ -478,7 +484,7 @@ export default {
     },
 
     async getModuleListData() {
-      const { data } = await getModules(this.params)
+      const { data } = await getModules(this.moduleQueryParams)
       this.moduleList = data.list
     },
 

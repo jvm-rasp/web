@@ -121,6 +121,9 @@
           <el-button size="mini" @click="closeProcessInfoVisible()">关 闭</el-button>
         </div>
       </el-dialog>
+
+      <!-- 配置下发对话框 -->
+      <el-dialog title="配置下发" :visible.sync="updateConfigVisible" />
     </el-card>
   </div>
 </template>
@@ -160,7 +163,11 @@ export default {
       showProcessInfoVisible: false,
       processTableData: [],
       processTotal: 0,
-      processLoading: false
+      processLoading: false,
+
+      // 配置更新
+      updateConfigVisible: false
+
     }
   },
   created() {
@@ -227,6 +234,7 @@ export default {
     },
 
     updateConfig(record) {
+
     },
 
     // 批量删除
