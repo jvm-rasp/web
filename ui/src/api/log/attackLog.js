@@ -23,3 +23,11 @@ export function getAttackDetail(params) {
     params
   })
 }
+
+export function updateStatus(params) {
+  return request({
+    url: '/attack/update',
+    method: 'post',
+    data: params
+  })
+}

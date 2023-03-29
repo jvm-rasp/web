@@ -683,6 +683,13 @@ func InitData() {
 			Creator:  "系统",
 		},
 		{
+			Method:   "POST",
+			Path:     "/attack/update",
+			Category: "attack",
+			Desc:     "更新攻击处理状态",
+			Creator:  "系统",
+		},
+		{
 			Method:   "GET",
 			Path:     "/process/list",
 			Category: "process",
