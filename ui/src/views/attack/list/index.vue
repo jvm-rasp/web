@@ -4,23 +4,23 @@
       <el-form size="medium" :inline="true" :model="params" class="demo-form-inline">
         <el-col :span="6">
           <el-form-item label="实例名称">
-            <el-input v-model="params.name" placeholder="请输入主机名" />
+            <el-input v-model="params.hostName" placeholder="请输入主机名" />
           </el-form-item>
         </el-col>
         <el-col :span="6">
           <el-form-item label="阻断状态">
-            <el-select v-model="params.block" placeholder="请选择">
-              <el-option label="放行" :value="0" />
-              <el-option label="阻断" :value="1" />
+            <el-select v-model="params.isBlocked" placeholder="请选择">
+              <el-option label="放行" :value="false" />
+              <el-option label="阻断" :value="true" />
+              <el-option label="全部" value="" />
             </el-select>
           </el-form-item>
         </el-col>
         <el-col :span="6">
           <el-form-item label="处理状态">
-            <el-select v-model="params.status" placeholder="请选择">
+            <el-select v-model="params.handleResult" placeholder="请选择">
               <el-option label="未处理" :value="handleStatus['未处理']" />
-              <el-option label="处理中" :value="handleStatus['处理中']" />
-              <el-option label="已处理" :value="handleStatus['已处理']" />
+              <el-option label="已确认" :value="handleStatus['已确认']" />
               <el-option label="误报" :value="handleStatus['误报']" />
               <el-option label="忽略" :value="handleStatus['忽略']" />
               <el-option label="全部" value="" />
@@ -31,6 +31,16 @@
           <el-form-item>
             <el-button type="primary" @click="onSearch">查询</el-button>
             <el-button type="primary" @click="onClear">重置</el-button>
+          </el-form-item>
+          <el-form-item>
+            <el-button
+              :disabled="multipleSelection.length === 0"
+              :loading="loading"
+              icon="el-icon-delete"
+              type="danger"
+              @click="batchDelete"
+            >批量删除
+            </el-button>
           </el-form-item>
         </el-col>
       </el-form>
@@ -66,10 +76,10 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="handleStatus" label="处理状态" width="100" align="center">
+        <el-table-column prop="HandleResult" label="处理状态" width="100" align="center">
           <template slot-scope="scope">
-            <el-tag size="small" :type="getHandleStatusColor(scope.row.handleStatus)" disable-transitions>
-              {{ getHandleStatusLabel(scope.row.handleStatus) }}
+            <el-tag size="small" :type="getHandleStatusColor(scope.row.handleResult)" disable-transitions>
+              {{ getHandleStatusLabel(scope.row.handleResult) }}
             </el-tag>
           </template>
         </el-table-column>
@@ -95,9 +105,9 @@
 
     <el-dialog title="告警详情" :visible.sync="dialogDetailVisible" width="1000px">
       <el-row style="text-align: right; margin-bottom: 20px;">
-        <el-button type="primary">确认</el-button>
-        <el-button>误报</el-button>
-        <el-button>忽略</el-button>
+        <el-button type="primary" @click="updateStatus(selectRecord.record.ID, 1)">确认</el-button>
+        <el-button @click="updateStatus(selectRecord.record.ID, 2)">误报</el-button>
+        <el-button @click="updateStatus(selectRecord.record.ID, 3)">忽略</el-button>
       </el-row>
       <el-tabs type="border-card">
         <el-tab-pane label="漏洞详情">
@@ -180,16 +190,16 @@
 </template>
 
 <script>
-import { deleteAttackLog, getAttackDetail, getAttackLogs } from '@/api/log/attackLog'
+import { deleteAttackLog, getAttackDetail, getAttackLogs, updateStatus } from '@/api/log/attackLog'
 import moment from 'moment'
 
 export default {
   data() {
     return {
       params: {
-        name: '',
-        block: '',
-        status: '',
+        hostName: '',
+        isBlocked: '',
+        handleResult: '',
         pageNum: 1,
         pageSize: 10
       },
@@ -198,10 +208,9 @@ export default {
       loading: false,
       handleStatus: {
         '未处理': 0,
-        '处理中': 1,
-        '已处理': 2,
-        '误报': 3,
-        '忽略': 4
+        '已确认': 1,
+        '误报': 2,
+        '忽略': 3
       },
       dialogDetailVisible: false,
       selectRecord: {
@@ -210,31 +219,7 @@ export default {
           context: {}
         }
       },
-      attackDetail: {
-        id: null,
-        hostName: null,
-        remoteIp: null,
-        localIp: null,
-        attackType: null,
-        checkType: null,
-        isBlocked: null,
-        level: null,
-        tag: null,
-        handleStatus: null,
-        handleResult: null,
-        stackTrace: null,
-        httpMethod: null,
-        requestProtocol: null,
-        requestUri: null,
-        requestParameters: null,
-        attackParameters: null,
-        cookies: null,
-        header: null,
-        body: null,
-        attackTime: null,
-        createTime: null,
-        updateTime: null
-      }
+      multipleSelection: []
     }
   },
   mounted() {
@@ -246,9 +231,9 @@ export default {
       this.getTableData()
     },
     onClear() {
-      this.params.name = ''
-      this.params.ip = ''
-      this.params.method = ''
+      this.params.hostName = ''
+      this.params.isBlocked = ''
+      this.params.handleResult = ''
     },
 
     getHandleStatusLabel(status) {
@@ -270,8 +255,6 @@ export default {
         case 2:
           return 'success'
         case 3:
-          return 'info'
-        case 4:
           return 'info'
         default:
           return 'danger'
@@ -299,7 +282,7 @@ export default {
         cancelButtonText: '取消',
         type: 'warning'
       }).then(async() => {
-        const data = await deleteAttackLog({ ids: [record.ID] })
+        const data = await deleteAttackLog({ guids: [record.rowGuid] })
         await this.getTableData()
         if (data.code === 200) {
           this.$message({
@@ -314,6 +297,40 @@ export default {
         }
       }).catch(() => {
         this.$message({
+          type: 'info',
+          message: '已取消删除'
+        })
+      })
+    },
+
+    // 批量删除
+    batchDelete() {
+      this.$confirm('此操作将永久删除, 是否继续?', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(async res => {
+        this.loading = true
+        const guids = []
+        this.multipleSelection.forEach(x => {
+          guids.push(x.rowGuid)
+        })
+        let msg = ''
+        try {
+          const { message } = await deleteAttackLog({ guids: guids })
+          msg = message
+        } finally {
+          this.loading = false
+        }
+        await this.getTableData()
+        this.$message({
+          showClose: true,
+          message: msg,
+          type: 'success'
+        })
+      }).catch(() => {
+        this.$message({
+          showClose: true,
           type: 'info',
           message: '已取消删除'
         })
@@ -338,6 +355,35 @@ export default {
         this.loading = false
       }
     },
+    // 更新状态
+    async updateStatus(id, result) {
+      this.$confirm('您确定要更新状态吗？', '更新处理状态', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(async() => {
+        const data = await updateStatus({ id: id, result: result })
+        await this.getTableData()
+        this.dialogDetailVisible = false
+        if (data.code === 200) {
+          this.$message({
+            type: 'success',
+            message: data.message
+          })
+        } else {
+          this.$message({
+            type: 'error',
+            message: data.message
+          })
+        }
+      }).catch(() => {
+        this.$message({
+          type: 'info',
+          message: '已取消操作'
+        })
+      })
+    },
+
     dateFormat(row, column) {
       const date = row[column.property]
       if (date === undefined) {

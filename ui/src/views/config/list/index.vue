@@ -413,6 +413,9 @@ export default {
       record.moduleConfigs.forEach((item) => {
         this.selectedModuleId.push(item.ID)
       })
+      const checkedCount = this.selectedModuleId.length
+      this.checkAll = checkedCount === this.moduleList.length
+      this.isIndeterminate = checkedCount > 0 && checkedCount < this.moduleList.length
       this.editConfigVisible = true
     },
 
@@ -449,19 +452,21 @@ export default {
     handleCheckAllChange(value) {
       if (value) {
         this.checkAll = true
-        this.isIndeterminate = false
         this.moduleList.forEach((item) => {
           this.selectedModuleId.push(item.ID)
         })
       } else {
         this.checkAll = false
-        this.isIndeterminate = true
         this.selectedModuleId = []
       }
+      this.isIndeterminate = false
       this.handleCheckedModulesChange(this.selectedModuleId)
     },
 
     handleCheckedModulesChange(value) {
+      const checkedCount = value.length
+      this.checkAll = checkedCount === this.moduleList.length
+      this.isIndeterminate = checkedCount > 0 && checkedCount < this.moduleList.length
       this.bindConfigData.moduleConfigs = []
       value.forEach((checkedItem) => {
         const matches = this.moduleList.filter((moduleItem) => {
@@ -514,6 +519,9 @@ export default {
         binFileUrl: '',
         binFileHash: ''
       }
+      const checkedCount = this.selectedModuleId.length
+      this.checkAll = checkedCount === this.moduleList.length
+      this.isIndeterminate = checkedCount > 0 && checkedCount < this.moduleList.length
       this.createConfigVisible = true
     },
     // 关闭配置创建

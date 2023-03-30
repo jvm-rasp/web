@@ -27,6 +27,7 @@ type ILogController interface {
 	GetAttackLogs(c *gin.Context)
 	GetAttackDetail(c *gin.Context)
 	BatchDeleteLogByIds(c *gin.Context)
+	UpdateStatusById(c *gin.Context)
 }
 
 type LogController struct {
@@ -130,13 +131,47 @@ func (l LogController) BatchDeleteLogByIds(c *gin.Context) {
 	}
 
 	// 删除接口
-	err := l.RaspAttackRepository.DeleteRaspAttack(req.Ids)
+	err := l.RaspAttackRepository.DeleteRaspAttack(req.Guids)
+	if err != nil {
+		response.Fail(c, nil, "删除日志失败: "+err.Error())
+		return
+	}
+	err = l.RaspAttackRepository.DeleteRaspDetail(req.Guids)
 	if err != nil {
 		response.Fail(c, nil, "删除日志失败: "+err.Error())
 		return
 	}
 
 	response.Success(c, nil, "删除日志成功")
+}
+
+func (l LogController) UpdateStatusById(c *gin.Context) {
+	var req vo.UpdateRaspStatusRequest
+	// 参数绑定
+	if err := c.ShouldBind(&req); err != nil {
+		response.Fail(c, nil, err.Error())
+		return
+	}
+	// 参数校验
+	if err := common.Validate.Struct(&req); err != nil {
+		errStr := err.(validator.ValidationErrors)[0].Translate(common.Trans)
+		response.Fail(c, nil, errStr)
+		return
+	}
+	// 更新状态
+	id := req.Id
+	attack, err := l.RaspAttackRepository.GetRaspAttackById(id)
+	if err != nil {
+		response.Fail(c, nil, "更新状态失败")
+		return
+	}
+	attack.HandleResult = req.Result
+	err = l.RaspAttackRepository.UpdateRaspAttack(attack)
+	if err != nil {
+		response.Fail(c, nil, "更新状态失败")
+		return
+	}
+	response.Success(c, nil, "更新状态成功")
 }
 
 // 详情处理过程
@@ -508,22 +543,13 @@ func (l LogController) handleAttackLog(req vo.RaspLogRequest) {
 		}
 		guid, _ := uuid.NewUUID()
 		attack.RowGuid = guid.String()
-		attack.RequestProtocol = attackDetail.Context.Protocol
-		attack.HttpMethod = attackDetail.Context.Method
 		attack.RemoteIp = attackDetail.Context.RemoteHost
-		attack.LocalIp = attackDetail.Context.LocalAddr
 		attack.RequestUri = attackDetail.Context.RequestURI
-		attack.RequestParameters = attackDetail.Context.Parameters
-		attack.Header = attackDetail.Context.Header
-		// TODO post body
-		attack.Body = attackDetail.Context.Body
 		attack.IsBlocked = attackDetail.IsBlocked
 		attack.Level = attackDetail.Level
+		attack.HandleResult = 0
 		attack.AttackType = attackDetail.AttackType
-		attack.CheckType = attackDetail.Algorithm
-		attack.StackTrace = attackDetail.StackTrace
 		attack.AttackTime = time.Unix(attackDetail.AttackTime/1000, 0)
-		attack.AttackParameters = attackDetail.Payload
 
 		// 构建攻击详情
 		detail.ParentGuid = attack.RowGuid
