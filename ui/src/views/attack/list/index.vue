@@ -175,12 +175,12 @@
           </el-descriptions>
           <el-descriptions title="" :column="2" direction="vertical" :label-style="{'text-align': 'center'}" border>
             <el-descriptions-item label="完整请求头">
-              {{ selectRecord.detail.context.header }}
+              <pre>{{ selectRecord.detail.context.header }}</pre>
             </el-descriptions-item>
           </el-descriptions>
           <el-descriptions title="" :column="2" direction="vertical" :label-style="{'text-align': 'center'}" border>
             <el-descriptions-item label="Form请求参数">
-              {{ selectRecord.detail.context.parameters }}
+              <pre>{{ selectRecord.detail.context.parameters }}</pre>
             </el-descriptions-item>
           </el-descriptions>
         </el-tab-pane>
@@ -410,8 +410,8 @@ export default {
 </script>
 
 <style scoped>
-.descriptions-item {
-  border-bottom-width: 0px;
-  border-top-width: 0px;
+pre {
+  word-wrap: break-word;
+  white-space: pre-wrap;
 }
 </style>
