@@ -67,11 +67,11 @@ func InitData() {
 	newMenus := make([]model.Menu, 0)
 
 	var rootId uint = 0
-	var hostId uint = 10
-	var attackId uint = 20
-	var moduleId uint = 30
-	var configId uint = 40
-	var systemId uint = 50
+	var hostId uint = 1000
+	var attackId uint = 2000
+	var moduleId uint = 3000
+	var configId uint = 4000
+	var systemId uint = 5000
 
 	componentStr := "component"
 	systemUserStr := "/system/user"
@@ -659,6 +659,13 @@ func InitData() {
 			Path:     "/host/delete/batch",
 			Category: "host",
 			Desc:     "批量删除实例列表",
+			Creator:  "系统",
+		},
+		{
+			Method:   "POST",
+			Path:     "/host/push/config",
+			Category: "host",
+			Desc:     "批量推送配置",
 			Creator:  "系统",
 		},
 		{

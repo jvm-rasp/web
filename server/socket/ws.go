@@ -283,6 +283,7 @@ func (manager *Manager) WsClient(ctx *gin.Context) {
 	go client.Write()
 	time.Sleep(time.Second * 15)
 	// 测试单个 client 发送数据
+	fmt.Println("......")
 	manager.Send(client.Id, client.Group, []byte("Send message ----"+time.Now().Format("2006-01-02 15:04:05")))
 }
 

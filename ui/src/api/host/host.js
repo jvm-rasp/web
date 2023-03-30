@@ -39,3 +39,11 @@ export function getProcesss(params) {
     params
   })
 }
+
+export function pushConfig(params) {
+  return request({
+    url: '/host/push/config',
+    method: 'post',
+    data: params
+  })
+}

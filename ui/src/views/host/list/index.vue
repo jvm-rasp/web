@@ -101,7 +101,9 @@
           <el-table-column show-overflow-tooltip sortable prop="startTime" label="启动时间" align="center" />
           <el-table-column show-overflow-tooltip sortable prop="status" label="保护状态" align="center">
             <template slot-scope="scope">
-              <el-tag size="small" :type="getAgentStatusColor(scope.row.status)" disable-transitions>{{ getAgentStatusText(scope.row.status) }}</el-tag>
+              <el-tag size="small" :type="getAgentStatusColor(scope.row.status)" disable-transitions>
+                {{ getAgentStatusText(scope.row.status) }}
+              </el-tag>
             </template>
           </el-table-column>
           <el-table-column show-overflow-tooltip sortable prop="cmdlineInfo" label="命令行信息" align="center" />
@@ -123,14 +125,37 @@
       </el-dialog>
 
       <!-- 配置下发对话框 -->
-      <el-dialog title="配置下发" :visible.sync="updateConfigVisible" />
+      <el-dialog title="配置下发" :visible.sync="updateConfigVisible" width="30%">
+        <el-form ref="configDialogForm" label-width="80px" size="small" :model="configFormData">
+          <el-form-item label="主机名称" prop="hostName">
+            <el-input v-model="configFormData.hostName" readonly />
+          </el-form-item>
+          <el-form-item label="配置名称" prop="configId">
+            <el-select v-model="configFormData.configId" clearable placeholder="前选择配置" width="100%">
+              <el-option
+                v-for="item in allConfigs"
+                :key="item.ID"
+                :label="item.name"
+                :value="item.ID"
+              />
+            </el-select>
+          </el-form-item>
+        </el-form>
+        <div slot="footer" class="dialog-footer">
+          <el-button size="mini" @click="cancelConfigForm()">取 消</el-button>
+          <el-button size="mini" :loading="submitConfigPushLoading" type="primary" @click="submitConfigPushForm()">确 定
+          </el-button>
+        </div>
+      </el-dialog>
+
     </el-card>
   </div>
 </template>
 
 <script>
 
-import { batchDeleteHost, getHosts, getProcesss } from '@/api/host/host'
+import { batchDeleteHost, getHosts, getProcesss, pushConfig } from '@/api/host/host'
+import { getConfigs } from '@/api/config/config'
 
 export default {
   name: 'Host',
@@ -143,6 +168,19 @@ export default {
         pageNum: 1,
         pageSize: 10
       },
+
+      allConfigs: [],
+      configFormData: {
+        hostName: '',
+        configId: ''
+      },
+
+      // rules: {
+      //   hostName: [
+      //     { required: true, message: '请输入活动名称', trigger: 'blur' },
+      //     { min: 3, max: 5, message: '长度在 3 到 5 个字符', trigger: 'blur' }
+      //   ],
+      // },
 
       // 表格数据
       tableData: [],
@@ -166,8 +204,8 @@ export default {
       processLoading: false,
 
       // 配置更新
-      updateConfigVisible: false
-
+      updateConfigVisible: false,
+      submitConfigPushLoading: false
     }
   },
   created() {
@@ -234,7 +272,61 @@ export default {
     },
 
     updateConfig(record) {
+      this.getAllConfig()
+      this.updateConfigVisible = true
+      this.configFormData.hostName = record.hostName
+      // todo 获取当前配置id以及名称
+      this.configFormData.configName1 = '[1]关闭配置'
+    },
 
+    async getAllConfig() {
+      const { data } = await getConfigs({
+        status: true,
+        pageNum: 1,
+        pageSize: 100
+      })
+      const tmp = data.list
+      for (let i = 0; i < tmp.length; i++) {
+        this.allConfigs.push({ ID: tmp[i].ID, name: tmp[i].name })
+      }
+    },
+
+    cancelConfigForm() {
+      this.updateConfigVisible = false
+      this.$refs['configDialogForm'].resetFields()
+    },
+
+    submitConfigPushForm() {
+      this.$refs['configDialogForm'].validate(async valid => {
+        if (valid) {
+          this.submitConfigPushLoading = true
+          let msg = ''
+          try {
+            const { message } = await pushConfig(
+              {
+                hostNames: [this.configFormData.hostName],
+                configId: this.configFormData.configId
+              }
+            )
+            msg = message
+          } finally {
+            this.submitConfigPushLoading = false
+          }
+          this.updateConfigVisible = false
+          this.$message({
+            showClose: true,
+            message: msg,
+            type: 'success'
+          })
+        } else {
+          this.$message({
+            showClose: true,
+            message: '表单校验失败',
+            type: 'error'
+          })
+          return false
+        }
+      })
     },
 
     // 批量删除
@@ -276,6 +368,7 @@ export default {
     batchUpdate() {
 
     },
+
     // 表格多选
     handleSelectionChange(val) {
       this.multipleSelection = val
@@ -294,16 +387,16 @@ export default {
     showHostAndProcessDetail(row) {
       this.showProcessInfoVisible = true
       this.currentHostName = row.hostName
-      this.getProcessTable(row)
+      this.getProcessTable()
     },
     // 分页
     processHandleSizeChange(val) {
       this.processParams.pageSize = val
-      this.getProcessTable(this.currentHostName)
+      this.getProcessTable()
     },
     processHandleCurrentChange(val) {
       this.processParams.pageNum = val
-      this.getProcessTable(this.currentHostName)
+      this.getProcessTable()
     },
     // 关闭配置创建
     closeProcessInfoVisible() {
@@ -339,6 +432,24 @@ export default {
 
 .delete-popover {
   margin-left: 10px;
+}
+
+.el-form-item {
+  margin-right: 0 !important;
+}
+
+.el-form-item__label {
+  position: absolute;
+}
+
+.el-form-item__content {
+  width: 100%;
+  padding-left: 80px;
+}
+
+.el-select,
+.el-input_inner {
+  width: 100%;
 }
 
 .show-pwd {

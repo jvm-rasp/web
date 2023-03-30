@@ -47,7 +47,7 @@ func main() {
 	// 开启socket监听
 	go socket.WebsocketManager.Start()
 	// todo 使用 send 往客户端发送消息即可
-	go socket.WebsocketManager.SendService()
+	// go socket.WebsocketManager.SendService()
 
 	// 注册所有路由
 	r := routes.InitRoutes()
