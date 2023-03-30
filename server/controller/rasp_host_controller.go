@@ -108,6 +108,7 @@ func (h RaspHostController) PushConfig(c *gin.Context) {
 		response.Fail(c, nil, "获取配置文本失败:"+err.Error())
 		return
 	}
+	// TODO 改成实际配置
 	content = []byte(DEFAULT_CONFIG)
 	for _, hostName := range req.HostNames {
 		// 先判断连接是否存在
@@ -115,7 +116,6 @@ func (h RaspHostController) PushConfig(c *gin.Context) {
 		if m != nil {
 			client := m[hostName]
 			if client != nil {
-				// client 存在
 				socket.WebsocketManager.Send(hostName, hostName, content)
 				response.Success(c, nil, "配置下发成功")
 				return

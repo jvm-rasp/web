@@ -31,12 +31,6 @@ func CORSMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		//defer func() {
-		//	if err := recover(); err != nil {
-		//		log.Printf("Panic info is: %v", err)
-		//	}
-		//}()
-
 		c.Next()
 	}
 }

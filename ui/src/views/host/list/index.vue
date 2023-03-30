@@ -175,13 +175,6 @@ export default {
         configId: ''
       },
 
-      // rules: {
-      //   hostName: [
-      //     { required: true, message: '请输入活动名称', trigger: 'blur' },
-      //     { min: 3, max: 5, message: '长度在 3 到 5 个字符', trigger: 'blur' }
-      //   ],
-      // },
-
       // 表格数据
       tableData: [],
       total: 0,
@@ -275,8 +268,7 @@ export default {
       this.getAllConfig()
       this.updateConfigVisible = true
       this.configFormData.hostName = record.hostName
-      // todo 获取当前配置id以及名称
-      this.configFormData.configName1 = '[1]关闭配置'
+      // TODO 获取当前配置id以及名称
     },
 
     async getAllConfig() {
