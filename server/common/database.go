@@ -29,7 +29,7 @@ func InitMysql() {
 
 // 自动迁移表结构
 func dbAutoMigrate() {
-	DB.AutoMigrate(
+	err := DB.AutoMigrate(
 		&model.User{},
 		&model.Role{},
 		&model.Menu{},
@@ -41,5 +41,9 @@ func dbAutoMigrate() {
 		&model.JavaProcessInfo{},
 		&model.RaspAttack{},
 		&model.RaspAttackDetail{},
+		&model.RaspFile{},
 	)
+	if err != nil {
+		return
+	}
 }

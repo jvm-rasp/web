@@ -1,53 +1,129 @@
 package controller
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
 	"os"
 	"path/filepath"
+	"server/common"
+	"server/model"
+	"server/repository"
 	"server/response"
+	"server/util"
+	"server/vo"
 )
 
 type IFileController interface {
 	Upload(c *gin.Context)
 	Download(c *gin.Context)
+	GetRaspFiles(c *gin.Context)
 }
 
 // DATA_DIR jar包存方路径
 const DATA_DIR = "data"
 
-// FileMap 存储jar包信息
-var FileMap = make(map[string]FileInfo)
-
-type FileInfo struct {
-	FileName      string
-	FileHash      string
-	DiskPath      string
-	DownLoadUrl   string
-	ModuleName    string
-	ModuleVersion string
-	UpdateTime    string
-}
+const FILE_PERM = 0755
 
 type FileController struct {
+	RaspFileRepository repository.IRaspFileRepository
 }
 
 func NewFileController() IFileController {
-	fileController := FileController{}
+	repository := repository.NewRaspFileRepository()
+	fileController := FileController{RaspFileRepository: repository}
 	return fileController
 }
 
 func (f FileController) Upload(c *gin.Context) {
-	file, _ := c.FormFile("file")
 	pwd, _ := os.Getwd()
-	err := c.SaveUploadedFile(file, filepath.Join(pwd, DATA_DIR, file.Filename))
-	if err != nil {
+	form, _ := c.MultipartForm()
+	files := form.File["files"]
+
+	// 创建data目录
+	dataPath := filepath.Join(pwd, DATA_DIR)
+	if exist, _ := fileExist(dataPath); !exist {
+		err := os.MkdirAll(dataPath, FILE_PERM)
+		if err != nil {
+			response.Fail(c, nil, err.Error())
+			return
+		}
+	}
+
+	for _, file := range files {
+		filePath := filepath.Join(dataPath, file.Filename)
+		err := c.SaveUploadedFile(file, filePath)
+		if err != nil {
+			response.Fail(c, nil, err.Error())
+			return
+		}
+
+		// 读取jar包mainfest文件
+		manifest, err := util.ReadFile(filePath)
+		if err != nil {
+			response.Fail(c, nil, err.Error())
+			return
+		}
+		hash, err := util.GetFileMd5(filePath)
+		if err != nil {
+			response.Fail(c, nil, err.Error())
+			return
+		}
+
+		fileInfo := &model.RaspFile{
+			FileName:      file.Filename,
+			FileHash:      hash,
+			DiskPath:      filePath,
+			DownLoadUrl:   "",
+			Creator:       manifest["Built-By"],
+			ModuleName:    manifest["ModuleName"],
+			ModuleVersion: manifest["ModuleVersion"],
+		}
+
+		// TODO 如果存在则更新
+		err = f.RaspFileRepository.CreateRaspFile(fileInfo)
+		if err != nil {
+			response.Fail(c, nil, err.Error())
+			return
+		}
+	}
+	response.Success(c, nil, "uploaded file success")
+}
+
+func (r FileController) GetRaspFiles(c *gin.Context) {
+	var req vo.RaspFileListRequest
+	// 参数绑定
+	if err := c.ShouldBind(&req); err != nil {
 		response.Fail(c, nil, err.Error())
 		return
 	}
-	response.Success(c, nil, fmt.Sprintf("'%s' uploaded!", file.Filename))
+	// 参数校验
+	if err := common.Validate.Struct(&req); err != nil {
+		errStr := err.(validator.ValidationErrors)[0].Translate(common.Trans)
+		response.Fail(c, nil, errStr)
+		return
+	}
+	// 获取
+	raspFiles, total, err := r.RaspFileRepository.GetRaspFiles(&req)
+	if err != nil {
+		response.Fail(c, nil, "获取jar包列表失败")
+		return
+	}
+	response.Success(c, gin.H{
+		"list": raspFiles, "total": total,
+	}, "获取jar包列表成功")
 }
 
 func (f FileController) Download(c *gin.Context) {
-	//
+	// TODO 接口不鉴权
+}
+
+func fileExist(path string) (bool, error) {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true, nil
+	}
+	if os.IsNotExist(err) {
+		return false, err
+	}
+	return false, nil
 }

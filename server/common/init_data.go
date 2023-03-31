@@ -757,6 +757,13 @@ func InitData() {
 			Desc:     "文件下载",
 			Creator:  "系统",
 		},
+		{
+			Method:   "POST",
+			Path:     "/file/list",
+			Category: "file",
+			Desc:     "文件列表",
+			Creator:  "系统",
+		},
 	}
 	newApi := make([]model.Api, 0)
 	newRoleCasbin := make([]model.RoleCasbin, 0)
