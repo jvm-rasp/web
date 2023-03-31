@@ -331,7 +331,6 @@ export default {
 
       // 已选择的模块
       selectedModuleId: [],
-      selectedModuleData: {},
 
       // 配置数据绑定
       bindConfigData: {
@@ -399,8 +398,7 @@ export default {
     },
 
     handleEdit(record) {
-      this.selectedModuleData = record
-      this.bindConfigData = record
+      this.bindConfigData = JSON.parse(JSON.stringify(record))
       this.selectedModuleId = []
       record.moduleConfigs.forEach((item) => {
         this.selectedModuleId.push(item.ID)

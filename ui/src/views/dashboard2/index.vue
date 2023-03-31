@@ -4,13 +4,13 @@
       <el-col :span="24">
         <el-card class="box-card">
           <el-descriptions title="攻击数据" :extra="currentDatetime" />
-          <el-col :xs="2" :sm="4" :md="6" :lg="8" :xl="10">
+          <el-col :span="8">
             <el-statistic group-separator="," :value="attackData.total" title="总攻击次数" />
           </el-col>
-          <el-col :xs="2" :sm="4" :md="6" :lg="8" :xl="10">
+          <el-col :span="8">
             <el-statistic group-separator="," :value="attackData.high" title="高危漏洞" />
           </el-col>
-          <el-col :xs="2" :sm="4" :md="6" :lg="8" :xl="10">
+          <el-col :span="8">
             <el-statistic group-separator="," :value="attackData.block" title="拦截漏洞" />
           </el-col>
         </el-card>
@@ -20,7 +20,7 @@
       <el-col :span="12">
         <el-card class="box-card">
           <div slot="header" class="clearfix">
-            <span>攻击趋势</span>
+            <span>近7天攻击趋势</span>
           </div>
           <div id="attack_trends" style="width: auto;height:400px;" />
         </el-card>

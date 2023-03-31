@@ -2,25 +2,30 @@
   <div>
     <el-card class="container-card" shadow="always">
       <!-- 条件搜索框 -->
-      <el-row>
-        <el-form size="mini" :inline="true" :model="params" class="demo-form-inline">
-          <el-form-item label="用户名">
-            <el-input v-model.trim="params.hostName" clearable placeholder="名称" @clear="search" />
+      <el-form size="medium" :inline="true" :model="params" class="demo-form-inline">
+        <el-col :span="6">
+          <el-form-item label="实例名称">
+            <el-input v-model.trim="params.hostName" clearable placeholder="实例名称" @clear="search" />
           </el-form-item>
-          <el-form-item label="IP">
+        </el-col>
+        <el-col :span="6">
+          <el-form-item label="实例IP">
             <el-input v-model.trim="params.ip" clearable placeholder="IP" @clear="search" />
           </el-form-item>
-          <el-form-item label="状态">
+        </el-col>
+        <el-col :span="6">
+          <el-form-item label="接入方式">
             <el-select v-model.trim="params.agentMode" clearable placeholder="接入模式" @change="search" @clear="search">
               <el-option label="动态" value="dynamic" />
               <el-option label="静态" value="static" />
               <el-option label="禁用" value="disable" />
+              <el-option label="全部" value="" />
             </el-select>
           </el-form-item>
+        </el-col>
+        <el-col :span="6">
           <el-form-item>
             <el-button :loading="loading" icon="el-icon-search" type="primary" @click="search">查询</el-button>
-          </el-form-item>
-          <el-form-item>
             <el-button
               :disabled="multipleSelection.length === 0"
               :loading="loading"
@@ -29,19 +34,17 @@
               @click="batchDelete"
             >批量删除
             </el-button>
-          </el-form-item>
-          <el-form-item>
             <el-button
               :disabled="multipleSelection.length === 0"
               :loading="loading"
               icon="el-icon-delete"
               type="warning"
               @click="batchUpdate"
-            >批量更新(TODO)
+            >批量更新
             </el-button>
           </el-form-item>
-        </el-form>
-      </el-row>
+        </el-col>
+      </el-form>
       <!-- 主机列表 -->
       <el-table
         v-loading="loading"
@@ -52,21 +55,28 @@
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="55" align="center" />
-        <el-table-column show-overflow-tooltip sortable prop="ID" label="ID" align="center" width="55" />
+        <el-table-column show-overflow-tooltip sortable prop="ID" label="实例ID" align="center" width="100" />
         <el-table-column show-overflow-tooltip sortable prop="hostName" label="实例名称" align="center" />
-        <el-table-column show-overflow-tooltip sortable prop="ip" label="IP" align="center" />
-        <el-table-column show-overflow-tooltip sortable prop="agentMode" label="接入方式" align="center">
+        <el-table-column show-overflow-tooltip sortable prop="ip" label="实例IP" width="150" align="center" />
+        <el-table-column show-overflow-tooltip sortable prop="agentMode" label="接入方式" width="120" align="center">
           <template slot-scope="scope">
-            <el-tag size="small" disable-transitions>
-              {{ scope.row.agentMode }}
+            <el-tag size="medium" :type="getAgentMode(scope.row.agentMode).color" disable-transitions>
+              {{ getAgentMode(scope.row.agentMode).value }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column show-overflow-tooltip sortable label="在线状态" width="120" align="center">
+          <template slot-scope="scope">
+            <el-tag size="medium" :type="isOnline(scope.row.heatbeatTime) === true ? 'success' : 'danger'" disable-transitions>
+              {{ isOnline(scope.row.heatbeatTime) ? '在线' : '离线' }}
             </el-tag>
           </template>
         </el-table-column>
         <el-table-column show-overflow-tooltip prop="version" label="RASP版本" align="center" width="100" />
         <el-table-column show-overflow-tooltip sortable prop="configId" label="配置ID" align="center" width="100" />
-        <el-table-column show-overflow-tooltip sortable prop="heatbeatTime" label="心跳时间" align="center" />
-        <el-table-column show-overflow-tooltip sortable prop="CreatedAt" label="注册时间" align="center" />
-        <el-table-column fixed="right" label="操作" align="center">
+        <el-table-column show-overflow-tooltip sortable prop="heatbeatTime" :formatter="dateFormat" label="心跳时间" width="180" align="center" />
+        <el-table-column show-overflow-tooltip sortable prop="CreatedAt" :formatter="dateFormat" label="注册时间" width="180" align="center" />
+        <el-table-column fixed="right" label="操作" width="180" align="center">
           <template slot-scope="scope">
             <el-button type="text" size="medium" @click="handleDelete(scope.row)">删除</el-button>
             <el-button type="text" size="medium" @click="showHostAndProcessDetail(scope.row)">详情</el-button>
@@ -156,6 +166,7 @@
 
 import { batchDeleteHost, getHosts, getProcesss, pushConfig } from '@/api/host/host'
 import { getConfigs } from '@/api/config/config'
+import moment from 'moment/moment'
 
 export default {
   name: 'Host',
@@ -412,6 +423,33 @@ export default {
       } else if (type === 'failed inject' || type === 'failed uninstall agent' || type === 'failed degrade') {
         return '安装失败'
       }
+    },
+    dateFormat(row, column) {
+      const date = row[column.property]
+      if (date === undefined) {
+        return ''
+      }
+      return moment(date).format('YYYY-MM-DD HH:mm:ss')
+    },
+    getAgentMode(mode) {
+      switch (mode) {
+        case 'static':
+          return { value: '静态', color: '' }
+        case 'dynamic':
+          return { value: '动态', color: 'success' }
+        case 'disable':
+          return { value: '禁用', color: 'info' }
+        case '':
+          return { value: '全部', color: '' }
+        default:
+          return { value: '未知', color: 'danger' }
+      }
+    },
+    isOnline(d1) {
+      const t1 = new Date(d1)
+      const t2 = new Date()
+      const diff = t2 - t1
+      return diff <= 5 * 60 * 1000
     }
   }
 }
