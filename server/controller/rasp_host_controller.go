@@ -109,6 +109,7 @@ func (h RaspHostController) PushConfig(c *gin.Context) {
 		return
 	}
 	// TODO 改成实际配置
+	// 批量下发考虑 所有主机的状态
 	content = []byte(DEFAULT_CONFIG)
 	for _, hostName := range req.HostNames {
 		// 先判断连接是否存在
@@ -121,6 +122,8 @@ func (h RaspHostController) PushConfig(c *gin.Context) {
 				return
 			}
 		}
+		response.Fail(c, nil, hostName+",配置下发失败: wbsocket连接不存在，请检查rasp在线状态")
+		return
 	}
 	response.Fail(c, nil, "配置下发失败")
 }

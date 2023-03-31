@@ -91,26 +91,18 @@
       <el-dialog title="创建配置" :visible.sync="createConfigVisible" width="50%">
         <el-form ref="createConfigForm" size="small" :model="bindConfigData" :rules="createConfigFormRules" label-width="100px">
           <el-row>
-            <el-col :span="8">
+            <el-col :span="12">
               <el-form-item label="配置名称" prop="name">
                 <el-input v-model.trim="bindConfigData.name" placeholder="配置名称" />
               </el-form-item>
             </el-col>
-            <el-col :span="9">
+            <el-col>
               <el-form-item label="接入模式" prop="agentMode">
                 <el-radio-group v-model="bindConfigData.agentMode">
                   <el-radio :label="1">动态</el-radio>
                   <el-radio :label="2">静态</el-radio>
                   <el-radio :label="0">关闭</el-radio>
                 </el-radio-group>
-              </el-form-item>
-            </el-col>
-            <el-col :span="7">
-              <el-form-item label="模块状态" prop="status">
-                <el-select v-model="bindConfigData.status" clearable placeholder="模块状态">
-                  <el-option label="启用" :value="true" />
-                  <el-option label="禁用" :value="false" />
-                </el-select>
               </el-form-item>
             </el-col>
           </el-row>
@@ -351,7 +343,7 @@ export default {
         operator: '',
         CreatedAt: '',
         UpdatedAt: '',
-        agentMode: '',
+        agentMode: '2',
         moduleConfigs: [],
         logPath: '',
         agentConfigs: {

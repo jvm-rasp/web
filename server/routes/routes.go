@@ -58,6 +58,7 @@ func InitRoutes() *gin.Engine {
 	InitRaspHostRoutes(apiGroup, authMiddleware)
 	InitJavaProcessInfoRoutes(apiGroup, authMiddleware)
 	InitRaspAttackRoutes(apiGroup, authMiddleware)
+	InitFileUploadRoutes(apiGroup, authMiddleware)
 	// 注册静态资源路由
 	InitStaticRouter(apiGroup, r)
 	common.Log.Info("初始化路由完成！")
