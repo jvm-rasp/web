@@ -30,7 +30,7 @@
           <router-link to="/">
             <el-dropdown-item>首页</el-dropdown-item>
           </router-link>
-          <a target="_blank" href="https://github.com/gnimli/go-web-mini/">
+          <a target="_blank" href="https://github.com/jvm-rasp/web.git">
             <el-dropdown-item>Github</el-dropdown-item>
           </a>
           <el-dropdown-item divided @click.native="logout">
