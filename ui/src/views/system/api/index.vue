@@ -12,9 +12,6 @@
           <el-select v-model.trim="params.method" clearable placeholder="请求方式" @change="search" @clear="search">
             <el-option label="GET[获取资源]" value="GET" />
             <el-option label="POST[新增资源]" value="POST" />
-            <el-option label="PUT[全部更新]" value="PUT" />
-            <el-option label="PATCH[增量更新]" value="PATCH" />
-            <el-option label="DELETE[删除资源]" value="DELETE" />
           </el-select>
         </el-form-item>
         <el-form-item label="创建人">
@@ -80,9 +77,6 @@
             <el-select v-model.trim="dialogFormData.method" placeholder="请选择请求方式">
               <el-option label="GET[获取资源]" value="GET" />
               <el-option label="POST[新增资源]" value="POST" />
-              <el-option label="PUT[全部更新]" value="PUT" />
-              <el-option label="PATCH[增量更新]" value="PATCH" />
-              <el-option label="DELETE[删除资源]" value="DELETE" />
             </el-select>
           </el-form-item>
           <el-form-item label="说明" prop="desc">
