@@ -26,9 +26,19 @@ func (h RaspFileRepository) GetRaspFiles(req *vo.RaspFileListRequest) ([]*model.
 	db := common.DB.Model(&model.RaspFile{}).Order("created_at DESC")
 
 	// 名称模糊查询
-	name := strings.TrimSpace(req.FileName)
+	name := strings.TrimSpace(req.ModuleName)
 	if name != "" {
-		db = db.Where("file_name LIKE ?", fmt.Sprintf("%%%s%%", name))
+		db = db.Where("module_name LIKE ?", fmt.Sprintf("%%%s%%", name))
+	}
+	// hash模糊查询
+	hash := strings.TrimSpace(req.FileHash)
+	if hash != "" {
+		db = db.Where("file_hash LIKE ?", fmt.Sprintf("%%%s%%", hash))
+	}
+	// 创建人模糊查询
+	creator := strings.TrimSpace(req.Creator)
+	if creator != "" {
+		db = db.Where("creator LIKE ?", fmt.Sprintf("%%%s%%", creator))
 	}
 
 	// 当pageNum > 0 且 pageSize > 0 才分页

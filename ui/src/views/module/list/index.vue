@@ -125,6 +125,22 @@
           label-width="100px"
         >
           <el-row>
+            <el-upload
+              class="upload-demo"
+              action="https://jsonplaceholder.typicode.com/posts/"
+              :on-preview="handlePreview"
+              :on-remove="handleRemove"
+              :before-remove="beforeRemove"
+              multiple
+              :limit="3"
+              :on-exceed="handleExceed"
+              :file-list="fileList"
+            >
+              <el-button size="small" type="primary">点击上传</el-button>
+              <div slot="tip" class="el-upload__tip">只能上传jpg/png文件，且不超过500kb</div>
+            </el-upload>
+          </el-row>
+          <el-row>
             <el-col span="12">
               <el-form-item label="模块名称" prop="moduleName">
                 <el-input v-model="bindModuleData.moduleName" placeholder="模块名称" />
@@ -157,20 +173,24 @@
               </el-form-item>
             </el-col>
           </el-row>
-          <el-form-item label="配置参数" prop="parameters">
-            <vue-json-editor
-              v-model="bindModuleData.parameters"
-              :show-btns="false"
-              :mode="'code'"
-              lang="zh"
-              @json-change="onJsonChange"
-              @json-save="onJsonSave"
-              @has-error="onError"
-            />
-          </el-form-item>
-          <el-form-item label="模块描述" prop="desc">
-            <el-input v-model="bindModuleData.desc" type="textarea" :rows="2" placeholder="模块描述" />
-          </el-form-item>
+          <el-row>
+            <el-form-item label="配置参数" prop="parameters">
+              <vue-json-editor
+                v-model="bindModuleData.parameters"
+                :show-btns="false"
+                :mode="'code'"
+                lang="zh"
+                @json-change="onJsonChange"
+                @json-save="onJsonSave"
+                @has-error="onError"
+              />
+            </el-form-item>
+          </el-row>
+          <el-row>
+            <el-form-item label="模块描述" prop="desc">
+              <el-input v-model="bindModuleData.desc" type="textarea" :rows="2" placeholder="模块描述" />
+            </el-form-item>
+          </el-row>
         </el-form>
         <div slot="footer" class="dialog-footer">
           <el-button size="mini" @click="closeCreateModule()">关 闭</el-button>
@@ -232,6 +252,7 @@
           </el-button>
         </div>
       </el-dialog>
+      <el-dialog title="上传防护模块" />
     </el-card>
   </div>
 </template>
@@ -291,7 +312,12 @@ export default {
       // 删除按钮弹出框
       popoverVisible: false,
       // 表格多选
-      multipleSelection: []
+      multipleSelection: [],
+      // 上传模块下载地址
+      fileList: [
+        { name: 'food.jpeg', url: 'https://fuss10.elemecdn.com/3/63/4e7f3a15429bfda99bce42a18cdd1jpeg.jpeg?imageMogr2/thumbnail/360x360/format/webp/quality/100' },
+        { name: 'food2.jpeg', url: 'https://fuss10.elemecdn.com/3/63/4e7f3a15429bfda99bce42a18cdd1jpeg.jpeg?imageMogr2/thumbnail/360x360/format/webp/quality/100' }
+      ]
     }
   },
   created() {
@@ -537,6 +563,20 @@ export default {
         return ''
       }
       return moment(date).format('YYYY-MM-DD HH:mm:ss')
+    },
+
+    // 上传模块
+    handleRemove(file, fileList) {
+      console.log(file, fileList)
+    },
+    handlePreview(file) {
+      console.log(file)
+    },
+    handleExceed(files, fileList) {
+      this.$message.warning(`当前限制选择 3 个文件，本次选择了 ${files.length} 个文件，共选择了 ${files.length + fileList.length} 个文件`)
+    },
+    beforeRemove(file, fileList) {
+      return this.$confirm(`确定移除 ${file.name}？`)
     }
   }
 }

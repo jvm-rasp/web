@@ -47,3 +47,19 @@ export function updateStatusById(params) {
     data: params
   })
 }
+
+export function getUploadFiles(params) {
+  return request({
+    url: '/file/list',
+    method: 'get',
+    params
+  })
+}
+
+export function batchDeleteFilesByIds(params) {
+  return request({
+    url: '/file/delete/batch',
+    method: 'post',
+    data: params
+  })
+}

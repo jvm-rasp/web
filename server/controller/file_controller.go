@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"server/common"
+	"server/config"
 	"server/model"
 	"server/repository"
 	"server/response"
@@ -17,10 +18,11 @@ type IFileController interface {
 	Upload(c *gin.Context)
 	Download(c *gin.Context)
 	GetRaspFiles(c *gin.Context)
+	Delete(c *gin.Context)
 }
 
 // DATA_DIR jar包存方路径
-const DATA_DIR = "data"
+const DATA_DIR = "upload"
 
 const FILE_PERM = 0755
 
@@ -73,7 +75,7 @@ func (f FileController) Upload(c *gin.Context) {
 			FileName:      file.Filename,
 			FileHash:      hash,
 			DiskPath:      filePath,
-			DownLoadUrl:   "",
+			DownLoadUrl:   "/" + config.Conf.System.UrlPathPrefix + "/file/download?file=" + file.Filename,
 			Creator:       manifest["Built-By"],
 			ModuleName:    manifest["ModuleName"],
 			ModuleVersion: manifest["ModuleVersion"],
@@ -115,6 +117,40 @@ func (r FileController) GetRaspFiles(c *gin.Context) {
 
 func (f FileController) Download(c *gin.Context) {
 	// TODO 接口不鉴权
+}
+
+func (f FileController) Delete(c *gin.Context) {
+	var req vo.RaspFileDeleteRequest
+	// 参数绑定
+	if err := c.ShouldBind(&req); err != nil {
+		response.Fail(c, nil, err.Error())
+		return
+	}
+	// 参数校验
+	if err := common.Validate.Struct(&req); err != nil {
+		errStr := err.(validator.ValidationErrors)[0].Translate(common.Trans)
+		response.Fail(c, nil, errStr)
+		return
+	}
+	// 删除附件
+	var list []*model.RaspFile
+	err := common.DB.Where("id IN (?)", req.Ids).Unscoped().Find(&list).Error
+	if err != nil {
+		response.Fail(c, nil, "删除文件失败")
+		return
+	}
+	for _, item := range list {
+		if err := os.Remove(item.DiskPath); err != nil {
+			response.Fail(c, nil, err.Error())
+		}
+	}
+	// 删除数据库
+	err = f.RaspFileRepository.DeleteRaspFile(req.Ids)
+	if err != nil {
+		response.Fail(c, nil, err.Error())
+		return
+	}
+	response.Success(c, nil, "删除文件成功")
 }
 
 func fileExist(path string) (bool, error) {

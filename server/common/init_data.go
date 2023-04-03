@@ -751,17 +751,24 @@ func InitData() {
 			Creator:  "系统",
 		},
 		{
-			Method:   "POST",
+			Method:   "GET",
 			Path:     "/file/download",
 			Category: "file",
 			Desc:     "文件下载",
 			Creator:  "系统",
 		},
 		{
-			Method:   "POST",
+			Method:   "GET",
 			Path:     "/file/list",
 			Category: "file",
 			Desc:     "文件列表",
+			Creator:  "系统",
+		},
+		{
+			Method:   "POST",
+			Path:     "/file/delete/batch",
+			Category: "file",
+			Desc:     "文件删除",
 			Creator:  "系统",
 		},
 	}

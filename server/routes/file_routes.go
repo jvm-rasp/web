@@ -13,9 +13,10 @@ func InitFileUploadRoutes(r *gin.RouterGroup, authMiddleware *jwt.GinJWTMiddlewa
 	router.Use(authMiddleware.MiddlewareFunc())
 	router.Use(middleware.CasbinMiddleware())
 	{
-		router.POST("/list", controller.GetRaspFiles)
+		router.GET("/list", controller.GetRaspFiles)
 		router.POST("/upload", controller.Upload)
-		router.POST("/download", controller.Download)
+		router.GET("/download", controller.Download)
+		router.POST("/delete/batch", controller.Delete)
 	}
 	return r
 }
