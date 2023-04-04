@@ -148,18 +148,6 @@ export default {
       // 上传模块
       uploadModuleVisible: false,
       submitCreateModuleLoading: false,
-      bindModuleData: {
-        ID: '',
-        moduleName: '',
-        moduleVersion: '',
-        downLoadURL: '',
-        md5: '',
-        moduleType: 1,
-        tag: '',
-        desc: '',
-        status: '',
-        parameters: {}
-      },
       fileList: [],
       // 编辑模块
       editModuleVisible: false,

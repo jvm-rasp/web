@@ -125,28 +125,14 @@
           label-width="100px"
         >
           <el-row>
-            <el-upload
-              class="upload-demo"
-              action="https://jsonplaceholder.typicode.com/posts/"
-              :on-preview="handlePreview"
-              :on-remove="handleRemove"
-              :before-remove="beforeRemove"
-              multiple
-              :limit="3"
-              :on-exceed="handleExceed"
-              :file-list="fileList"
-            >
-              <el-button size="small" type="primary">点击上传</el-button>
-              <div slot="tip" class="el-upload__tip">只能上传jpg/png文件，且不超过500kb</div>
-            </el-upload>
-          </el-row>
-          <el-row>
-            <el-col span="12">
+            <el-col :span="12">
               <el-form-item label="模块名称" prop="moduleName">
-                <el-input v-model="bindModuleData.moduleName" placeholder="模块名称" />
+                <el-input v-model="bindModuleData.moduleName" placeholder="模块名称">
+                  <i slot="suffix" class="el-input__icon el-icon-more" @click="openUploadForm" />
+                </el-input>
               </el-form-item>
             </el-col>
-            <el-col span="12">
+            <el-col :span="12">
               <el-form-item label="模块版本" prop="moduleVersion">
                 <el-input v-model="bindModuleData.moduleVersion" />
               </el-form-item>
@@ -162,12 +148,12 @@
             </el-col>
           </el-row>
           <el-row>
-            <el-col span="12">
+            <el-col :span="12">
               <el-form-item label="下载链接" prop="downLoadURL">
                 <el-input v-model="bindModuleData.downLoadURL" />
               </el-form-item>
             </el-col>
-            <el-col span="12">
+            <el-col :span="12">
               <el-form-item label="文件hash" prop="md5">
                 <el-input v-model="bindModuleData.md5" />
               </el-form-item>
@@ -252,7 +238,68 @@
           </el-button>
         </div>
       </el-dialog>
-      <el-dialog title="上传防护模块" />
+      <el-dialog title="选择防护模块" :visible.sync="selectUploadFileVisible" width="60%">
+        <div style="margin-bottom: 30px;">
+          <el-table
+            v-loading="loading"
+            :data="uploadFileTableData"
+            border
+            stripe
+            style="width: 100%;"
+            highlight-current-row
+            @current-change="updateCurrentUploadFile"
+          >
+            <!-- 单选方法,返回选中的表格行 -->
+            <el-table-column width="35" :resizable="false" align="center">
+              <template slot-scope="scope">
+                <el-radio v-model="selectedRadio" :label="scope.row.ID" style="color: #fff;" @change.native="setCurrentUploadFile(scope.row)" />
+              </template>
+            </el-table-column>
+            <el-table-column show-overflow-tooltip sortable prop="moduleName" label="模块名称" align="center" />
+            <el-table-column show-overflow-tooltip sortable prop="fileHash" label="模块hash" align="center" width="300" />
+            <el-table-column show-overflow-tooltip sortable prop="moduleVersion" label="版本" align="center" width="100">
+              <template slot-scope="scope">
+                <el-tag size="small" disable-transitions>
+                  {{ scope.row.moduleVersion }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column show-overflow-tooltip sortable prop="creator" label="创建人" align="center" />
+            <el-table-column
+              show-overflow-tooltip
+              sortable
+              prop="CreatedAt"
+              label="创建时间"
+              align="center"
+              :formatter="dateFormat"
+            />
+            <el-table-column
+              show-overflow-tooltip
+              sortable
+              prop="UpdatedAt"
+              label="更新时间"
+              align="center"
+              :formatter="dateFormat"
+            />
+          </el-table>
+          <!--分页配置-->
+          <el-pagination
+            :current-page="uploadFilesParams.pageNum"
+            :page-size="uploadFilesParams.pageSize"
+            :total="uploadFileTotal"
+            :page-sizes="[10, 20, 50, 100]"
+            layout="total, prev, pager, next, sizes"
+            background
+            style="margin-top: 10px;float:right;margin-bottom: 10px;"
+            @size-change="handleSizeChange2"
+            @current-change="handleCurrentChange2"
+          />
+        </div>
+        <div slot="footer" class="dialog-footer">
+          <el-button size="mini" @click="selectUploadFileVisible = false">关 闭</el-button>
+          <el-button size="mini" type="primary" @click="addSelectedFile">确 定</el-button>
+        </div>
+      </el-dialog>
     </el-card>
   </div>
 </template>
@@ -264,7 +311,7 @@ import {
   batchDeleteModuleByIds,
   createModule,
   deleteModule,
-  getModules,
+  getModules, getUploadFiles,
   updateModule,
   updateStatusById
 } from '@/api/module/module'
@@ -285,7 +332,9 @@ export default {
 
       // 表格数据
       tableData: [],
+      uploadFileTableData: [],
       total: 0,
+      uploadFileTotal: 0,
       loading: false,
 
       // 创建模块
@@ -313,11 +362,27 @@ export default {
       popoverVisible: false,
       // 表格多选
       multipleSelection: [],
-      // 上传模块下载地址
-      fileList: [
-        { name: 'food.jpeg', url: 'https://fuss10.elemecdn.com/3/63/4e7f3a15429bfda99bce42a18cdd1jpeg.jpeg?imageMogr2/thumbnail/360x360/format/webp/quality/100' },
-        { name: 'food2.jpeg', url: 'https://fuss10.elemecdn.com/3/63/4e7f3a15429bfda99bce42a18cdd1jpeg.jpeg?imageMogr2/thumbnail/360x360/format/webp/quality/100' }
-      ]
+      singleSelection: [],
+      // 选择上传防护模块
+      selectUploadFileVisible: false,
+      selectedRadio: '',
+      selectUploadData: {
+        ID: '',
+        moduleName: '',
+        fileHash: '',
+        moduleVersion: '',
+        creator: '',
+        CreatedAt: '',
+        UpdatedAt: '',
+        downLoadUrl: ''
+      },
+      uploadFilesParams: {
+        moduleName: '',
+        fileHash: '',
+        creator: '',
+        pageNum: 1,
+        pageSize: 10
+      }
     }
   },
   created() {
@@ -337,6 +402,17 @@ export default {
         const { data } = await getModules(this.params)
         this.tableData = data.list
         this.total = data.total
+      } finally {
+        this.loading = false
+      }
+    },
+    // 获取上传文件表格数据
+    async getUploadTableData() {
+      this.loading = true
+      try {
+        const { data } = await getUploadFiles(this.uploadFilesParams)
+        this.uploadFileTableData = data.list
+        this.uploadFileTotal = data.total
       } finally {
         this.loading = false
       }
@@ -544,9 +620,17 @@ export default {
       this.params.pageSize = val
       this.getModuleTableData()
     },
+    handleSizeChange2(val) {
+      this.uploadFilesParams.pageSize = val
+      this.getUploadTableData()
+    },
     handleCurrentChange(val) {
       this.params.pageNum = val
       this.getModuleTableData()
+    },
+    handleCurrentChange2(val) {
+      this.uploadFilesParams.pageNum = val
+      this.getUploadTableData()
     },
     getModuleType(type) {
       if (type === 1) {
@@ -566,17 +650,28 @@ export default {
     },
 
     // 上传模块
-    handleRemove(file, fileList) {
-      console.log(file, fileList)
+    openUploadForm() {
+      this.selectUploadFileVisible = true
+      this.getUploadTableData()
     },
-    handlePreview(file) {
-      console.log(file)
+    // 单选选中
+    setCurrentUploadFile(row) {
+      this.selectUploadData = row
     },
-    handleExceed(files, fileList) {
-      this.$message.warning(`当前限制选择 3 个文件，本次选择了 ${files.length} 个文件，共选择了 ${files.length + fileList.length} 个文件`)
+    // 点击选中的行也可以选中单选按钮
+    updateCurrentUploadFile(row) {
+      if (!row) return
+      this.selectedRadio = row.ID
+      this.selectUploadData = row
     },
-    beforeRemove(file, fileList) {
-      return this.$confirm(`确定移除 ${file.name}？`)
+    addSelectedFile() {
+      if (this.selectedRadio) {
+        this.bindModuleData.moduleName = this.selectUploadData.moduleName
+        this.bindModuleData.moduleVersion = this.selectUploadData.moduleVersion
+        this.bindModuleData.downLoadURL = location.origin + this.selectUploadData.downLoadUrl
+        this.bindModuleData.md5 = this.selectUploadData.fileHash
+      }
+      this.selectUploadFileVisible = false
     }
   }
 }
