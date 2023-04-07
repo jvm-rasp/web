@@ -17,6 +17,7 @@ func InitFileUploadRoutes(r *gin.RouterGroup, authMiddleware *jwt.GinJWTMiddlewa
 		router.POST("/upload", controller.Upload)
 		router.GET("/download", controller.Download)
 		router.POST("/delete/batch", controller.Delete)
+		router.GET("/getFileInfo/module", controller.GetModuleInfo)
 	}
 	return r
 }

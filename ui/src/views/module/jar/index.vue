@@ -15,8 +15,8 @@
             </el-form-item>
           </el-col>
           <el-col :span="6">
-            <el-form-item label="创建人">
-              <el-input v-model.trim="params.creator" clearable placeholder="创建人" @clear="search" />
+            <el-form-item label="文件类型">
+              <el-input v-model.trim="params.mimeType" clearable placeholder="文件类型" @clear="search" />
             </el-form-item>
           </el-col>
           <el-col :span="6">
@@ -49,16 +49,17 @@
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="55" align="center" />
-        <el-table-column show-overflow-tooltip sortable prop="moduleName" label="模块名称" align="center" />
-        <el-table-column show-overflow-tooltip sortable prop="fileHash" label="模块hash" align="center" width="300" />
-        <el-table-column show-overflow-tooltip sortable prop="moduleVersion" label="版本" align="center" width="100">
-          <template slot-scope="scope">
-            <el-tag size="small" disable-transitions>
-              {{ scope.row.moduleVersion }}
-            </el-tag>
-          </template>
-        </el-table-column>
+        <el-table-column show-overflow-tooltip sortable prop="fileName" label="文件名称" align="center" />
+        <el-table-column show-overflow-tooltip sortable prop="fileHash" label="文件hash" align="center" width="300" />
+        <!--        <el-table-column show-overflow-tooltip sortable prop="moduleVersion" label="版本" align="center" width="100">-->
+        <!--          <template slot-scope="scope">-->
+        <!--            <el-tag size="small" disable-transitions>-->
+        <!--              {{ scope.row.moduleVersion }}-->
+        <!--            </el-tag>-->
+        <!--          </template>-->
+        <!--        </el-table-column>-->
         <el-table-column show-overflow-tooltip sortable prop="creator" label="创建人" align="center" />
+        <el-table-column show-overflow-tooltip sortable prop="mimeType" label="文件类型" align="center" />
         <el-table-column
           show-overflow-tooltip
           sortable
@@ -105,7 +106,6 @@
           :before-remove="beforeRemove"
           :on-success="onUploadSuccess"
           multiple
-          accept=".jar"
           name="files"
           :limit="10"
           :on-exceed="handleExceed"
@@ -135,7 +135,7 @@ export default {
       params: {
         moduleName: '',
         fileHash: '',
-        creator: '',
+        mimeType: '',
         pageNum: 1,
         pageSize: 10
       },

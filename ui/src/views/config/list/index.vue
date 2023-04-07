@@ -497,14 +497,14 @@ export default {
         UpdatedAt: '',
         agentMode: '',
         moduleConfigs: [],
-        logPath: '',
+        logPath: '../logs',
         agentConfigs: {
           check_disable: false,
-          redirect_url: '',
-          block_status_code: '',
-          json_block_content: '',
-          xml_block_content: '',
-          html_block_content: ''
+          redirect_url: 'https://www.jrasp.com/block.html',
+          block_status_code: 500,
+          json_block_content: '{"controls":[],"status":{"code":"503","text":"您的请求可能存在攻击行为, 已被EpointRASP拦截</br>攻击类型: 【%attack_name%】</br>攻击时间: 【%attack_time%】","url":""}}',
+          xml_block_content: '<?xml version="1.0"?><doc><error>true</error><reason>Request blocked by EpointRASP</reason><attack_name>%attack_name%</attack_name><attack_time>%attack_time%</attack_time></doc>',
+          html_block_content: '<html class="no-js" style="background-color: transparent"><head><title>安全拦截信息</title><style>.blockquote, body, button, code, dd, div, dl, dt, fieldset, form, h1, h2, h3, h4, h5, h6, input, legend, li, ol, p, pre, td, textarea, th, ul{margin: 0;padding: 0;}body{font-size: 14px;font-family: \'Microsoft YaHei\';}.sys-panel-cover{position: absolute;top: 0;left: 0;width: 100%;height: 100%;background: #000;opacity: 0.6;filter: alpha(opacity=60);}.sys-panel.in-center{ position: absolute;top: 50%;left: 50%;margin-left: -240px;margin-top: -240px;}.sys-panel{border-radius: 5px;border: 1px solid #cdcdcd;background-color: #fff;box-shadow: 0 0 8px rgba(0,0,0,0.8);width: 550px;box-sizing: border-box;padding: 0 30px;padding-bottom:20px;}.sys-panel .panel-title.danger{color: #a94442;}.sys-panel .panel-hd{border-bottom: 1px solid #dcdcdc;}.sys-panel .panel-title{font-size: 18px;line-height: 2.5;}.sys-panel .panel-ft{border-top: 1px solid #dcdcdc;padding: 10px 0;}.sys-panel .alert{padding: 10px;border-radius: 3px;line-height: 1.8;border: 1px solid transparent;height:100px;}.sys-panel .alert-warn{color: #8a6d3b;background-color: #fcf8e3;border-color: #faebcc;}</style></head><body><form id="form1"><div class="sys-panel-cover"></div><div class="sys-panel in-center" id="err-panel"><div class="panel-hd mb20"><h4 class="panel-title danger">安全提示</h4></div><div class="panel-bd mb20"><p class="alert alert-warn">安全提示：您的请求可能存在攻击行为, 已被EpointRASP拦截</br>攻击类型: 【%attack_name%】</br>攻击时间: 【%attack_time%】</p></div></div></form></body></html>'
         },
         binFileUrl: '',
         binFileHash: ''

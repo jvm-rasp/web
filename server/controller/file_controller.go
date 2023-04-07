@@ -3,6 +3,7 @@ package controller
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
+	"github.com/h2non/filetype"
 	"os"
 	"path/filepath"
 	"server/common"
@@ -19,6 +20,7 @@ type IFileController interface {
 	Download(c *gin.Context)
 	GetRaspFiles(c *gin.Context)
 	Delete(c *gin.Context)
+	GetModuleInfo(c *gin.Context)
 }
 
 // DATA_DIR jar包存方路径
@@ -58,27 +60,29 @@ func (f FileController) Upload(c *gin.Context) {
 			response.Fail(c, nil, err.Error())
 			return
 		}
-
-		// 读取jar包mainfest文件
-		manifest, err := util.ReadFile(filePath)
-		if err != nil {
-			response.Fail(c, nil, err.Error())
-			return
-		}
+		// 判断文件类型
+		buf, _ := os.ReadFile(filePath)
+		kind, _ := filetype.Match(buf)
 		hash, err := util.GetFileMd5(filePath)
 		if err != nil {
 			response.Fail(c, nil, err.Error())
 			return
 		}
+		// 获取当前用户
+		ur := repository.NewUserRepository()
+		ctxUser, err := ur.GetCurrentUser(c)
+		if err != nil {
+			response.Fail(c, nil, "获取当前用户信息失败")
+			return
+		}
 
 		fileInfo := &model.RaspFile{
-			FileName:      file.Filename,
-			FileHash:      hash,
-			DiskPath:      filePath,
-			DownLoadUrl:   "/" + config.Conf.System.UrlPathPrefix + "/file/download?file=" + file.Filename,
-			Creator:       manifest["Built-By"],
-			ModuleName:    manifest["ModuleName"],
-			ModuleVersion: manifest["ModuleVersion"],
+			FileName:    file.Filename,
+			FileHash:    hash,
+			DiskPath:    filePath,
+			DownLoadUrl: "/" + config.Conf.System.UrlPathPrefix + "/file/download?file=" + file.Filename,
+			MimeType:    kind.MIME.Value,
+			Creator:     ctxUser.Username,
 		}
 
 		// TODO 如果存在则更新
@@ -151,6 +155,39 @@ func (f FileController) Delete(c *gin.Context) {
 		return
 	}
 	response.Success(c, nil, "删除文件成功")
+}
+
+func (f FileController) GetModuleInfo(c *gin.Context) {
+	var req vo.RaspFileInfoRequest
+	// 参数绑定
+	if err := c.ShouldBind(&req); err != nil {
+		response.Fail(c, nil, err.Error())
+		return
+	}
+	// 参数校验
+	if err := common.Validate.Struct(&req); err != nil {
+		errStr := err.(validator.ValidationErrors)[0].Translate(common.Trans)
+		response.Fail(c, nil, errStr)
+		return
+	}
+	// 获取文件路径
+	raspFile, err := f.RaspFileRepository.GetRaspFileById(req.Id)
+	if err != nil {
+		response.Fail(c, nil, "获取jar包信息失败")
+		return
+	}
+	// 读取jar包mainfest文件
+	manifest, err := util.ReadFile(raspFile.DiskPath)
+	if err != nil {
+		response.Fail(c, nil, err.Error())
+		return
+	}
+	defaultParameters, err := util.GetDefaultParameters(raspFile.DiskPath)
+	if err != nil {
+		response.Fail(c, nil, err.Error())
+		return
+	}
+	response.Success(c, gin.H{"manifest": manifest, "parameters": defaultParameters}, "读取文件信息成功")
 }
 
 func fileExist(path string) (bool, error) {

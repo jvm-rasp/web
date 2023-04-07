@@ -255,15 +255,15 @@
                 <el-radio v-model="selectedRadio" :label="scope.row.ID" style="color: #fff;" @change.native="setCurrentUploadFile(scope.row)" />
               </template>
             </el-table-column>
-            <el-table-column show-overflow-tooltip sortable prop="moduleName" label="模块名称" align="center" />
-            <el-table-column show-overflow-tooltip sortable prop="fileHash" label="模块hash" align="center" width="300" />
-            <el-table-column show-overflow-tooltip sortable prop="moduleVersion" label="版本" align="center" width="100">
-              <template slot-scope="scope">
-                <el-tag size="small" disable-transitions>
-                  {{ scope.row.moduleVersion }}
-                </el-tag>
-              </template>
-            </el-table-column>
+            <el-table-column show-overflow-tooltip sortable prop="fileName" label="文件名称" align="center" />
+            <el-table-column show-overflow-tooltip sortable prop="fileHash" label="文件hash" align="center" width="300" />
+            <!--            <el-table-column show-overflow-tooltip sortable prop="moduleVersion" label="版本" align="center" width="100">-->
+            <!--              <template slot-scope="scope">-->
+            <!--                <el-tag size="small" disable-transitions>-->
+            <!--                  {{ scope.row.moduleVersion }}-->
+            <!--                </el-tag>-->
+            <!--              </template>-->
+            <!--            </el-table-column>-->
             <el-table-column show-overflow-tooltip sortable prop="creator" label="创建人" align="center" />
             <el-table-column
               show-overflow-tooltip
@@ -310,7 +310,7 @@ import vueJsonEditor from 'vue-json-editor'
 import {
   batchDeleteModuleByIds,
   createModule,
-  deleteModule,
+  deleteModule, getModuleInfoById,
   getModules, getUploadFiles,
   updateModule,
   updateStatusById
@@ -379,7 +379,7 @@ export default {
       uploadFilesParams: {
         moduleName: '',
         fileHash: '',
-        creator: '',
+        mimeType: 'application/zip',
         pageNum: 1,
         pageSize: 10
       }
@@ -664,12 +664,14 @@ export default {
       this.selectedRadio = row.ID
       this.selectUploadData = row
     },
-    addSelectedFile() {
+    async addSelectedFile() {
       if (this.selectedRadio) {
-        this.bindModuleData.moduleName = this.selectUploadData.moduleName
-        this.bindModuleData.moduleVersion = this.selectUploadData.moduleVersion
+        const { data } = await getModuleInfoById({ id: this.selectUploadData.ID })
+        this.bindModuleData.moduleName = data.manifest.ModuleName
+        this.bindModuleData.moduleVersion = data.manifest.ModuleVersion
         this.bindModuleData.downLoadURL = location.origin + this.selectUploadData.downLoadUrl
         this.bindModuleData.md5 = this.selectUploadData.fileHash
+        this.bindModuleData.parameters = JSON.parse(data.parameters)
       }
       this.selectUploadFileVisible = false
     }

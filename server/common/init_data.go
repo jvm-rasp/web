@@ -771,6 +771,13 @@ func InitData() {
 			Desc:     "文件删除",
 			Creator:  "系统",
 		},
+		{
+			Method:   "GET",
+			Path:     "/file/getFileInfo/module",
+			Category: "file",
+			Desc:     "获取模块基本信息",
+			Creator:  "系统",
+		},
 	}
 	newApi := make([]model.Api, 0)
 	newRoleCasbin := make([]model.RoleCasbin, 0)

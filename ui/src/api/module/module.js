@@ -63,3 +63,11 @@ export function batchDeleteFilesByIds(params) {
     data: params
   })
 }
+
+export function getModuleInfoById(params) {
+  return request({
+    url: '/file/getFileInfo/module',
+    method: 'get',
+    params
+  })
+}

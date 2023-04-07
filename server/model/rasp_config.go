@@ -19,3 +19,28 @@ type RaspConfig struct {
 	BinFileUrl    string         `gorm:"type:varchar(255);comment:'守护进程下载地址'" json:"binFileUrl"`
 	BinFileHash   string         `gorm:"type:varchar(64);comment:'哈希值'" json:"binFileHash"`
 }
+
+type RaspFinalConfig struct {
+	AgentMode        string         `json:"agentMode"`
+	Version          string         `json:"version"`
+	ConfigId         uint           `json:"configId"`
+	ModuleAutoUpdate bool           `json:"moduleAutoUpdate"`
+	LogPath          string         `json:"logPath"`
+	RemoteHosts      string         `json:"remoteHosts"`
+	AgentConfigs     AgentConfig    `json:"agentConfigs"`
+	ModuleConfigs    []ModuleConfig `json:"moduleConfigs"`
+}
+
+type AgentConfig struct {
+	CheckDisable     bool   `json:"check_disable"`
+	RedirectUrl      string `json:"redirect_url"`
+	BlockStatusCode  int    `json:"block_status_code"`
+	JsonBlockContent string `json:"json_block_content"`
+	XmlBlockContent  string `json:"xml_block_content"`
+	HtmlBlockContent string `json:"html_block_content"`
+}
+
+type ModuleConfig struct {
+	ModuleName string                 `json:"moduleName"`
+	Parameters map[string]interface{} `json:"parameters"`
+}

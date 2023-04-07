@@ -80,3 +80,28 @@ func GetFileMd5(jarFile string) (string, error) {
 	}
 	return hex.EncodeToString(h.Sum(nil)), nil
 }
+
+func GetDefaultParameters(jarFile string) (string, error) {
+	r, err := zip.OpenReader(jarFile)
+	if err != nil {
+		return "", err
+	}
+	defer r.Close()
+	for _, f := range r.File {
+		if f.Name != "config/config.json" {
+			continue
+		}
+		rc, err := f.Open()
+		if err != nil {
+			return "", err
+		}
+		data, err := io.ReadAll(rc)
+		if err != nil {
+			return "", err
+		} else {
+			return string(data), nil
+		}
+
+	}
+	return "", ErrNotJAR
+}

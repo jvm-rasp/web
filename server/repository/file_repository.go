@@ -10,6 +10,7 @@ import (
 
 type IRaspFileRepository interface {
 	GetRaspFiles(req *vo.RaspFileListRequest) ([]*model.RaspFile, int64, error)
+	GetRaspFileById(id uint) (*model.RaspFile, error)
 	CreateRaspFile(files *model.RaspFile) error
 	DeleteRaspFile(ids []uint) error
 }
@@ -35,10 +36,10 @@ func (h RaspFileRepository) GetRaspFiles(req *vo.RaspFileListRequest) ([]*model.
 	if hash != "" {
 		db = db.Where("file_hash LIKE ?", fmt.Sprintf("%%%s%%", hash))
 	}
-	// 创建人模糊查询
-	creator := strings.TrimSpace(req.Creator)
-	if creator != "" {
-		db = db.Where("creator LIKE ?", fmt.Sprintf("%%%s%%", creator))
+	// 文件类型模糊查询
+	mimeType := strings.TrimSpace(req.MimeType)
+	if mimeType != "" {
+		db = db.Where("mime_type LIKE ?", fmt.Sprintf("%%%s%%", mimeType))
 	}
 
 	// 当pageNum > 0 且 pageSize > 0 才分页
@@ -56,6 +57,12 @@ func (h RaspFileRepository) GetRaspFiles(req *vo.RaspFileListRequest) ([]*model.
 		err = db.Find(&list).Error
 	}
 	return list, total, err
+}
+
+func (h RaspFileRepository) GetRaspFileById(id uint) (*model.RaspFile, error) {
+	var record *model.RaspFile
+	err := common.DB.Find(&record, "id = ?", id).Error
+	return record, err
 }
 
 func (h RaspFileRepository) CreateRaspFile(raspHost *model.RaspFile) error {

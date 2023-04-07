@@ -25,6 +25,8 @@ require (
 	gorm.io/gorm v1.24.6
 )
 
+require github.com/h2non/filetype v1.1.3 // indirect
+
 require (
 	github.com/Knetic/govaluate v3.0.1-0.20171022003610-9aa49832a739+incompatible // indirect
 	github.com/ahmetb/go-linq/v3 v3.2.0
