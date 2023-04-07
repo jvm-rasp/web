@@ -16,6 +16,10 @@ type RaspFileInfoRequest struct {
 	Id uint `json:"id" form:"id"`
 }
 
+type RaspFileDownloadRequest struct {
+	FileName string `json:"file" form:"file"`
+}
+
 type FileInfo struct {
 	FileName      string
 	FileHash      string

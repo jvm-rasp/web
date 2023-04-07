@@ -387,6 +387,13 @@ func InitData() {
 			Creator:  "系统",
 		},
 		{
+			Method:   "GET",
+			Path:     "/base/file/download",
+			Category: "file",
+			Desc:     "文件下载",
+			Creator:  "系统",
+		},
+		{
 			Method:   "POST",
 			Path:     "/user/info",
 			Category: "user",
@@ -748,13 +755,6 @@ func InitData() {
 			Path:     "/file/upload",
 			Category: "file",
 			Desc:     "文件上传",
-			Creator:  "系统",
-		},
-		{
-			Method:   "GET",
-			Path:     "/file/download",
-			Category: "file",
-			Desc:     "文件下载",
 			Creator:  "系统",
 		},
 		{

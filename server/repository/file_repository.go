@@ -11,6 +11,7 @@ import (
 type IRaspFileRepository interface {
 	GetRaspFiles(req *vo.RaspFileListRequest) ([]*model.RaspFile, int64, error)
 	GetRaspFileById(id uint) (*model.RaspFile, error)
+	GetRaspFileByName(fileName string) (*model.RaspFile, error)
 	CreateRaspFile(files *model.RaspFile) error
 	DeleteRaspFile(ids []uint) error
 }
@@ -62,6 +63,12 @@ func (h RaspFileRepository) GetRaspFiles(req *vo.RaspFileListRequest) ([]*model.
 func (h RaspFileRepository) GetRaspFileById(id uint) (*model.RaspFile, error) {
 	var record *model.RaspFile
 	err := common.DB.Find(&record, "id = ?", id).Error
+	return record, err
+}
+
+func (h RaspFileRepository) GetRaspFileByName(fileName string) (*model.RaspFile, error) {
+	var record *model.RaspFile
+	err := common.DB.Find(&record, "file_name = ?", fileName).Error
 	return record, err
 }
 

@@ -1,13 +1,13 @@
 package controller
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	"github.com/h2non/filetype"
 	"os"
 	"path/filepath"
 	"server/common"
-	"server/config"
 	"server/model"
 	"server/repository"
 	"server/response"
@@ -80,7 +80,7 @@ func (f FileController) Upload(c *gin.Context) {
 			FileName:    file.Filename,
 			FileHash:    hash,
 			DiskPath:    filePath,
-			DownLoadUrl: "/" + config.Conf.System.UrlPathPrefix + "/file/download?file=" + file.Filename,
+			DownLoadUrl: "/base/file/download?file=" + file.Filename,
 			MimeType:    kind.MIME.Value,
 			Creator:     ctxUser.Username,
 		}
@@ -121,6 +121,28 @@ func (r FileController) GetRaspFiles(c *gin.Context) {
 
 func (f FileController) Download(c *gin.Context) {
 	// TODO 接口不鉴权
+	var req vo.RaspFileDownloadRequest
+	// 参数绑定
+	if err := c.ShouldBind(&req); err != nil {
+		response.Fail(c, nil, err.Error())
+		return
+	}
+	// 参数校验
+	if err := common.Validate.Struct(&req); err != nil {
+		errStr := err.(validator.ValidationErrors)[0].Translate(common.Trans)
+		response.Fail(c, nil, errStr)
+		return
+	}
+	raspFile, err := f.RaspFileRepository.GetRaspFileByName(req.FileName)
+	if err != nil {
+		response.Fail(c, nil, "获取文件失败")
+		return
+	}
+
+	c.Writer.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=%s", raspFile.FileName))
+	c.Writer.Header().Add("Content-Type", "application/octet-stream")
+
+	c.File(raspFile.DiskPath)
 }
 
 func (f FileController) Delete(c *gin.Context) {

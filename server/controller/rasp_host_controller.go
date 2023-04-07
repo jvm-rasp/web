@@ -129,6 +129,7 @@ func (h RaspHostController) PushConfig(c *gin.Context) {
 	for _, item := range moduleConfigsFields {
 		var moduleConfig model.ModuleConfig
 		err = json.Unmarshal([]byte(item.Parameters.String()), &moduleConfig)
+		moduleConfig.DownLoadUrl = item.DownLoadURL
 		if err != nil {
 			response.Fail(c, nil, "获取配置文本失败:"+err.Error())
 			return
@@ -137,7 +138,6 @@ func (h RaspHostController) PushConfig(c *gin.Context) {
 	}
 	finalConfig := model.RaspFinalConfig{
 		AgentMode:        AgentMode[raspConfig.AgentMode],
-		Version:          "1.1.1",
 		ConfigId:         raspConfig.ID,
 		ModuleAutoUpdate: true,
 		LogPath:          raspConfig.LogPath,

@@ -41,6 +41,7 @@ type AgentConfig struct {
 }
 
 type ModuleConfig struct {
-	ModuleName string                 `json:"moduleName"`
-	Parameters map[string]interface{} `json:"parameters"`
+	ModuleName  string                 `json:"moduleName"`
+	DownLoadUrl string                 `json:"downLoadURL"`
+	Parameters  map[string]interface{} `json:"parameters"`
 }
