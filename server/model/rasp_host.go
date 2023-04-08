@@ -9,12 +9,12 @@ type RaspHost struct {
 	AgentMode             string  `gorm:"type:varchar(255);comment:'agent接入模式:disable;static;dynamic'" json:"agentMode"`
 	AgentInfo             string  `gorm:"type:varchar(65535);comment:'java agent信息'" json:"agentInfo"`
 	ConfigId              uint64  `gorm:"type:int(11);index;comment:'策略id'" json:"configId"`
-	HeatbeatTime          string  `gorm:"type:varchar(128);index;comment:'最近一次的心跳时间'" json:"heatbeatTime"`
+	HeartbeatTime         string  `gorm:"type:varchar(128);index;comment:'最近一次的心跳时间'" json:"heartbeatTime"`
 	InstallDir            string  `gorm:"type:varchar(255);comment:'可执行文件安装的绝对路径'" json:"installDir"`
 	Version               string  `gorm:"type:varchar(64);comment:'rasp 版本'" json:"version"`
 	ExeFileHash           string  `gorm:"type:varchar(255);comment:'可执行文件的hash'" json:"exeFileHash"`
 	AgentConfigUpdateTime string  `gorm:"type:varchar(128);comment:'agent 配置更新时间" json:"agentConfigUpdateTime"`
-	OsType                string  `gorm:"type:varchar(128);comment:'实例操作系统类型:darwin、windowns、linux等'" json:"osType"`
+	OsType                string  `gorm:"type:varchar(128);comment:'实例操作系统类型:darwin、windows、linux等'" json:"osType"`
 	TotalMem              float64 `gorm:"type:float64;comment:'实例总内存,单位GB'" json:"totalMem"`
 	CpuCounts             float64 `gorm:"type:float64;comment:'实例逻辑cpu数量'" json:"cpuCounts"`
 	FreeDisk              float64 `gorm:"type:float64;comment:'实例可用磁盘容量,单位GB'" json:"freeDisk"`

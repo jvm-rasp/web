@@ -47,3 +47,11 @@ export function pushConfig(params) {
     data: params
   })
 }
+
+export function updateConfig(params) {
+  return request({
+    url: '/host/update',
+    method: 'post',
+    data: params
+  })
+}

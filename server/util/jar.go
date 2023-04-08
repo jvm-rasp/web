@@ -103,5 +103,5 @@ func GetDefaultParameters(jarFile string) (string, error) {
 		}
 
 	}
-	return "", ErrNotJAR
+	return "", nil
 }

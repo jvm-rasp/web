@@ -198,12 +198,13 @@ func (f FileController) GetModuleInfo(c *gin.Context) {
 		response.Fail(c, nil, "获取jar包信息失败")
 		return
 	}
-	// 读取jar包mainfest文件
+	// 读取jar包manifest文件
 	manifest, err := util.ReadFile(raspFile.DiskPath)
 	if err != nil {
 		response.Fail(c, nil, err.Error())
 		return
 	}
+	// 获取默认参数配置
 	defaultParameters, err := util.GetDefaultParameters(raspFile.DiskPath)
 	if err != nil {
 		response.Fail(c, nil, err.Error())

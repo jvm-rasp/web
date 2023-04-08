@@ -17,6 +17,7 @@ type IRaspConfigController interface {
 	GetRaspConfigs(c *gin.Context)
 	BatchDeleteConfigByIds(c *gin.Context)
 	GetViperRaspConfig(c *gin.Context)
+	UpdateRaspConfigStatusById(c *gin.Context)
 }
 
 type RaspConfigController struct {
@@ -190,4 +191,42 @@ func (l RaspConfigController) GetViperRaspConfig(c *gin.Context) {
 		return
 	}
 	response.Success(c, gin.H{"key": name, "value": config.AgentConfigs}, "获取配置成功")
+}
+
+func (l RaspConfigController) UpdateRaspConfigStatusById(c *gin.Context) {
+	var req vo.UpdateRaspConfigStatusRequest
+	// 参数绑定
+	if err := c.ShouldBind(&req); err != nil {
+		response.Fail(c, nil, err.Error())
+		return
+	}
+	// 参数校验
+	if err := common.Validate.Struct(&req); err != nil {
+		errStr := err.(validator.ValidationErrors)[0].Translate(common.Trans)
+		response.Fail(c, nil, errStr)
+		return
+	}
+	// 获取当前用户
+	ur := repository.NewUserRepository()
+	ctxUser, err := ur.GetCurrentUser(c)
+	if err != nil {
+		response.Fail(c, nil, "获取当前用户信息失败")
+		return
+	}
+
+	id := req.ID
+	config, err := l.RaspConfigRepository.GetRaspConfigById(id)
+	if err != nil {
+		response.Fail(c, nil, "更新当前策略失败")
+		return
+	}
+	config.Status = !config.Status
+	config.Operator = ctxUser.Username
+
+	err = l.RaspConfigRepository.UpdateRaspConfig(config)
+	if err != nil {
+		response.Fail(c, nil, "更新当前策略失败")
+		return
+	}
+	response.Success(c, nil, "更新策略成功")
 }

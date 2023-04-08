@@ -1,7 +1,7 @@
 <template>
   <div>
     <el-card class="container-card" shadow="always">
-      <el-form size="mini" :inline="true" class="demo-form-inline">
+      <el-form :size="this.$store.getters.size" :inline="true" class="demo-form-inline">
         <el-form-item>
           <el-button :loading="loading" icon="el-icon-plus" type="warning" @click="create">新增</el-button>
         </el-form-item>
@@ -10,7 +10,7 @@
         </el-form-item>
       </el-form>
 
-      <el-table v-loading="loading" :tree-props="{children: 'children', hasChildren: 'hasChildren'}" row-key="ID" :data="tableData" border stripe style="width: 100%" @selection-change="handleSelectionChange">
+      <el-table v-loading="loading" :tree-props="{children: 'children', hasChildren: 'hasChildren'}" row-key="ID" :data="tableData" border stripe style="width: 100%" :size="this.$store.getters.size" @selection-change="handleSelectionChange">
         <el-table-column type="selection" width="55" align="center" />
         <el-table-column show-overflow-tooltip prop="title" label="菜单标题" width="150" />
         <el-table-column show-overflow-tooltip prop="name" label="名称" />

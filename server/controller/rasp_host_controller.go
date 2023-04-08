@@ -20,6 +20,7 @@ type IRaspHostController interface {
 	GetRaspHosts(c *gin.Context)
 	BatchDeleteHostByIds(c *gin.Context)
 	PushConfig(c *gin.Context)
+	UpdateConfig(c *gin.Context)
 }
 
 var AgentMode = map[uint]string{
@@ -130,6 +131,7 @@ func (h RaspHostController) PushConfig(c *gin.Context) {
 		var moduleConfig model.ModuleConfig
 		err = json.Unmarshal([]byte(item.Parameters.String()), &moduleConfig)
 		moduleConfig.DownLoadUrl = item.DownLoadURL
+		moduleConfig.Md5 = item.Md5
 		if err != nil {
 			response.Fail(c, nil, "获取配置文本失败:"+err.Error())
 			return
@@ -163,8 +165,37 @@ func (h RaspHostController) PushConfig(c *gin.Context) {
 				return
 			}
 		}
-		response.Fail(c, nil, hostName+",配置下发失败: wbsocket连接不存在，请检查rasp在线状态")
+		response.Fail(c, nil, hostName+",配置下发失败: websocket连接不存在，请检查rasp在线状态")
 		return
 	}
 	response.Fail(c, nil, "配置下发失败")
+}
+
+// 更新实例配置文件
+func (h RaspHostController) UpdateConfig(c *gin.Context) {
+	var req vo.UpdateRaspHostRequest
+	// 参数绑定
+	if err := c.ShouldBind(&req); err != nil {
+		response.Fail(c, nil, err.Error())
+		return
+	}
+	// 参数校验
+	if err := common.Validate.Struct(&req); err != nil {
+		errStr := err.(validator.ValidationErrors)[0].Translate(common.Trans)
+		response.Fail(c, nil, errStr)
+		return
+	}
+	host, err := h.RaspHostRepository.GetRaspHostById(req.Id)
+	if err != nil {
+		response.Fail(c, nil, "获取实例失败")
+		return
+	}
+	host.HostName = req.HostName
+	host.ConfigId = req.ConfigId
+	err = h.RaspHostRepository.UpdateRaspHost(host)
+	if err != nil {
+		response.Fail(c, nil, "更新实例失败")
+		return
+	}
+	response.Success(c, nil, "更新实例成功")
 }

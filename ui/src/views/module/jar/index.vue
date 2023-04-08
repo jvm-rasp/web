@@ -3,40 +3,32 @@
     <el-card class="container-card" shadow="always">
       <!-- 条件搜索框 -->
       <el-row>
-        <el-form size="medium" :inline="true" :model="params" class="demo-form-inline">
-          <el-col :span="6">
-            <el-form-item label="模块名称">
-              <el-input v-model.trim="params.moduleName" clearable placeholder="模块名称" @clear="search" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="6">
-            <el-form-item label="模块hash">
-              <el-input v-model.trim="params.fileHash" clearable placeholder="模块hash" @clear="search" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="6">
-            <el-form-item label="文件类型">
-              <el-input v-model.trim="params.mimeType" clearable placeholder="文件类型" @clear="search" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="6">
-            <el-form-item>
-              <el-button :loading="loading" icon="el-icon-search" type="primary" @click="search">查询</el-button>
-            </el-form-item>
-            <el-form-item>
-              <el-button :loading="loading" icon="el-icon-plus" type="warning" @click="upload">批量上传</el-button>
-            </el-form-item>
-            <el-form-item>
-              <el-button
-                :disabled="multipleSelection.length === 0"
-                :loading="loading"
-                icon="el-icon-delete"
-                type="danger"
-                @click="batchDelete"
-              >批量删除
-              </el-button>
-            </el-form-item>
-          </el-col>
+        <el-form :size="this.$store.getters.size" :inline="true" :model="params" class="demo-form-inline">
+          <el-form-item label="模块名称">
+            <el-input v-model.trim="params.moduleName" clearable placeholder="模块名称" @clear="search" />
+          </el-form-item>
+          <el-form-item label="模块hash">
+            <el-input v-model.trim="params.fileHash" clearable placeholder="模块hash" @clear="search" />
+          </el-form-item>
+          <el-form-item label="文件类型">
+            <el-input v-model.trim="params.mimeType" clearable placeholder="文件类型" @clear="search" />
+          </el-form-item>
+          <el-form-item>
+            <el-button :loading="loading" icon="el-icon-search" type="primary" @click="search">查询</el-button>
+          </el-form-item>
+          <el-form-item>
+            <el-button :loading="loading" icon="el-icon-plus" type="warning" @click="upload">批量上传</el-button>
+          </el-form-item>
+          <el-form-item>
+            <el-button
+              :disabled="multipleSelection.length === 0"
+              :loading="loading"
+              icon="el-icon-delete"
+              type="danger"
+              @click="batchDelete"
+            >批量删除
+            </el-button>
+          </el-form-item>
         </el-form>
       </el-row>
       <!-- 配置列表 -->
@@ -46,18 +38,17 @@
         border
         stripe
         style="width: 100%"
+        :size="this.$store.getters.size"
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="55" align="center" />
+        <el-table-column label="序号" type="index" width="50" align="center">
+          <template slot-scope="scope">
+            {{ (params.pageNum - 1) * params.pageSize + scope.$index + 1 }}
+          </template>
+        </el-table-column>
         <el-table-column show-overflow-tooltip sortable prop="fileName" label="文件名称" align="center" />
         <el-table-column show-overflow-tooltip sortable prop="fileHash" label="文件hash" align="center" width="300" />
-        <!--        <el-table-column show-overflow-tooltip sortable prop="moduleVersion" label="版本" align="center" width="100">-->
-        <!--          <template slot-scope="scope">-->
-        <!--            <el-tag size="small" disable-transitions>-->
-        <!--              {{ scope.row.moduleVersion }}-->
-        <!--            </el-tag>-->
-        <!--          </template>-->
-        <!--        </el-table-column>-->
         <el-table-column show-overflow-tooltip sortable prop="creator" label="创建人" align="center" />
         <el-table-column show-overflow-tooltip sortable prop="mimeType" label="文件类型" align="center" />
         <el-table-column

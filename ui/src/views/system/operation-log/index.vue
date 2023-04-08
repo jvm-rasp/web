@@ -1,7 +1,7 @@
 <template>
   <div>
     <el-card class="container-card" shadow="always">
-      <el-form size="mini" :inline="true" :model="params" class="demo-form-inline">
+      <el-form :size="this.$store.getters.size" :inline="true" :model="params" class="demo-form-inline">
         <el-form-item label="请求人">
           <el-input v-model.trim="params.username" clearable placeholder="请求人" @clear="search" />
         </el-form-item>
@@ -22,7 +22,7 @@
         </el-form-item>
       </el-form>
 
-      <el-table v-loading="loading" :data="tableData" border stripe style="width: 100%" @selection-change="handleSelectionChange">
+      <el-table v-loading="loading" :data="tableData" border stripe style="width: 100%" :size="this.$store.getters.size" @selection-change="handleSelectionChange">
         <el-table-column type="selection" width="55" align="center" />
         <el-table-column show-overflow-tooltip sortable prop="username" label="请求人" />
         <el-table-column show-overflow-tooltip sortable prop="ip" label="IP地址" />
@@ -32,11 +32,7 @@
             <el-tag size="small" :type="scope.row.status | statusTagFilter" disable-transitions>{{ scope.row.status }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column show-overflow-tooltip sortable prop="startTime" label="发起时间">
-          <template slot-scope="scope">
-            {{ parseGoTime(scope.row.startTime) }}
-          </template>
-        </el-table-column>
+        <el-table-column show-overflow-tooltip sortable prop="CreatedAt" label="发起时间" :formatter="dateFormat" />
         <el-table-column show-overflow-tooltip sortable prop="timeCost" label="请求耗时(ms)" align="center">
           <template slot-scope="scope">
             <el-tag size="small" :type="scope.row.timeCost | timeCostTagFilter" disable-transitions>{{ scope.row.timeCost }}</el-tag>
@@ -72,6 +68,7 @@
 <script>
 import { getOperationLogs, batchDeleteOperationLogByIds } from '@/api/system/operationLog'
 import { parseGoTime } from '@/utils'
+import moment from 'moment/moment'
 
 export default {
   name: 'OperationLog',
@@ -215,6 +212,13 @@ export default {
     handleCurrentChange(val) {
       this.params.pageNum = val
       this.getTableData()
+    },
+    dateFormat(row, column) {
+      const date = row[column.property]
+      if (date === undefined) {
+        return ''
+      }
+      return moment(date).format('YYYY-MM-DD HH:mm:ss')
     }
   }
 }

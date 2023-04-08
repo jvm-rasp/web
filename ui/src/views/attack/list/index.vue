@@ -1,48 +1,43 @@
 <template>
   <div id="root">
     <el-card class="container-card" shadow="always">
-      <el-form size="medium" :inline="true" :model="params" class="demo-form-inline">
-        <el-col :span="6">
-          <el-form-item label="实例名称">
-            <el-input v-model="params.hostName" placeholder="请输入主机名" />
-          </el-form-item>
-        </el-col>
-        <el-col :span="6">
-          <el-form-item label="阻断状态">
-            <el-select v-model="params.isBlocked" placeholder="请选择">
-              <el-option label="放行" :value="false" />
-              <el-option label="阻断" :value="true" />
-              <el-option label="全部" value="" />
-            </el-select>
-          </el-form-item>
-        </el-col>
-        <el-col :span="6">
-          <el-form-item label="处理状态">
-            <el-select v-model="params.handleResult" placeholder="请选择">
-              <el-option label="未处理" :value="handleStatus['未处理']" />
-              <el-option label="已确认" :value="handleStatus['已确认']" />
-              <el-option label="误报" :value="handleStatus['误报']" />
-              <el-option label="忽略" :value="handleStatus['忽略']" />
-              <el-option label="全部" value="" />
-            </el-select>
-          </el-form-item>
-        </el-col>
-        <el-col :span="6">
-          <el-form-item>
-            <el-button type="primary" @click="onSearch">查询</el-button>
-            <el-button type="primary" @click="onClear">重置</el-button>
-          </el-form-item>
-          <el-form-item>
-            <el-button
-              :disabled="multipleSelection.length === 0"
-              :loading="loading"
-              icon="el-icon-delete"
-              type="danger"
-              @click="batchDelete"
-            >批量删除
-            </el-button>
-          </el-form-item>
-        </el-col>
+      <!-- 条件搜索框 -->
+      <el-form :size="this.$store.getters.size" :inline="true" :model="params" class="demo-form-inline">
+        <el-form-item label="实例名称">
+          <el-input v-model="params.hostName" placeholder="请输入主机名" />
+        </el-form-item>
+        <el-form-item label="阻断状态">
+          <el-select v-model="params.isBlocked" placeholder="请选择">
+            <el-option label="放行" :value="false" />
+            <el-option label="阻断" :value="true" />
+            <el-option label="全部" value="" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="处理状态">
+          <el-select v-model="params.handleResult" placeholder="请选择">
+            <el-option label="未处理" :value="handleStatus['未处理']" />
+            <el-option label="已确认" :value="handleStatus['已确认']" />
+            <el-option label="误报" :value="handleStatus['误报']" />
+            <el-option label="忽略" :value="handleStatus['忽略']" />
+            <el-option label="全部" value="" />
+          </el-select>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" icon="el-icon-search" @click="onSearch">查询</el-button>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="warning" icon="el-icon-refresh" @click="onClear">重置</el-button>
+        </el-form-item>
+        <el-form-item>
+          <el-button
+            :disabled="multipleSelection.length === 0"
+            :loading="loading"
+            icon="el-icon-delete"
+            type="danger"
+            @click="batchDelete"
+          >批量删除
+          </el-button>
+        </el-form-item>
       </el-form>
       <el-table
         v-loading="loading"
@@ -50,9 +45,15 @@
         border
         stripe
         style="width: 100%"
+        :size="this.$store.getters.size"
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="55" align="center" />
+        <el-table-column label="序号" type="index" width="50" align="center">
+          <template slot-scope="scope">
+            {{ (params.pageNum - 1) * params.pageSize + scope.$index + 1 }}
+          </template>
+        </el-table-column>
         <el-table-column prop="attackTime" label="攻击时间" width="180" :formatter="dateFormat" align="center" />
         <el-table-column prop="hostName" label="实例名称" width="150" align="center" />
         <el-table-column prop="attackType" label="攻击类型" width="180" align="center">

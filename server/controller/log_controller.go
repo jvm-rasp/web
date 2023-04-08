@@ -217,9 +217,9 @@ func (l LogController) handleDaemonLog(req vo.RaspLogRequest) {
 
 func (l LogController) handleStartupLog(req vo.RaspLogRequest) {
 	host := &model.RaspHost{
-		HostName:     req.HostName,
-		Ip:           req.Ip,
-		HeatbeatTime: req.Ts,
+		HostName:      req.HostName,
+		Ip:            req.Ip,
+		HeartbeatTime: req.Ts,
 	}
 	dbData, err := l.RaspHostRepository.QueryRaspHost(host.HostName)
 	if err != nil {
@@ -294,7 +294,7 @@ func (l LogController) handleHostEnvLog(req vo.RaspLogRequest) {
 	host.BuildDateTime = buildDateTime
 	host.BuildGitBranch = buildGitBranch
 	host.BuildGitBranch = buildGitCommit
-	host.HeatbeatTime = req.Ts
+	host.HeartbeatTime = req.Ts
 
 	if len(dbData) == 0 {
 		err := l.RaspHostRepository.CreateRaspHost(host)
@@ -325,7 +325,7 @@ func (l LogController) handleHeartbeatLog(req vo.RaspLogRequest) {
 		host = dbData[0]
 	}
 
-	host.HeatbeatTime = req.Ts
+	host.HeartbeatTime = req.Ts
 
 	if len(dbData) == 0 {
 		err = l.RaspHostRepository.CreateRaspHost(host)

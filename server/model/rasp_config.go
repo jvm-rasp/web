@@ -22,7 +22,6 @@ type RaspConfig struct {
 
 type RaspFinalConfig struct {
 	AgentMode        string         `json:"agentMode"`
-	Version          string         `json:"version"`
 	ConfigId         uint           `json:"configId"`
 	ModuleAutoUpdate bool           `json:"moduleAutoUpdate"`
 	LogPath          string         `json:"logPath"`
@@ -44,4 +43,5 @@ type ModuleConfig struct {
 	ModuleName  string                 `json:"moduleName"`
 	DownLoadUrl string                 `json:"downLoadURL"`
 	Parameters  map[string]interface{} `json:"parameters"`
+	Md5         string                 `json:"md5"`
 }

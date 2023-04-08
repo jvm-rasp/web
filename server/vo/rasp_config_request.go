@@ -45,3 +45,7 @@ type RaspConfigRequest struct {
 type DeleteRaspConfigRequest struct {
 	Ids []uint `json:"ids" form:"ids"`
 }
+
+type UpdateRaspConfigStatusRequest struct {
+	ID uint `json:"id" form:"id" validate:"required,min=1,max=32"`
+}

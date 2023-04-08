@@ -44,3 +44,10 @@ export function batchDeleteConfigByIds(params) {
   })
 }
 
+export function updateStatusById(params) {
+  return request({
+    url: '/config/update/status',
+    method: 'post',
+    data: params
+  })
+}

@@ -3,44 +3,36 @@
     <el-card class="container-card" shadow="always">
       <!-- 条件搜索框 -->
       <el-row>
-        <el-form size="medium" :inline="true" :model="params" class="demo-form-inline">
-          <el-col :span="6">
-            <el-form-item label="名称">
-              <el-input v-model.trim="params.name" clearable placeholder="名称" @clear="search" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="6">
-            <el-form-item label="状态">
-              <el-select v-model.trim="params.status" clearable placeholder="状态" @change="search" @clear="search">
-                <el-option label="启用" value="true" />
-                <el-option label="禁用" value="false" />
-                <el-option label="全部" value="" />
-              </el-select>
-            </el-form-item>
-          </el-col>
-          <el-col :span="6">
-            <el-form-item label="创建人">
-              <el-input v-model.trim="params.creator" clearable placeholder="创建人" @clear="search" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="6">
-            <el-form-item>
-              <el-button :loading="loading" icon="el-icon-search" type="primary" @click="search">查询</el-button>
-            </el-form-item>
-            <el-form-item>
-              <el-button :loading="loading" icon="el-icon-plus" type="warning" @click="create">新增</el-button>
-            </el-form-item>
-            <el-form-item>
-              <el-button
-                :disabled="multipleSelection.length === 0"
-                :loading="loading"
-                icon="el-icon-delete"
-                type="danger"
-                @click="batchDelete"
-              >批量删除
-              </el-button>
-            </el-form-item>
-          </el-col>
+        <el-form :size="this.$store.getters.size" :inline="true" :model="params" class="demo-form-inline">
+          <el-form-item label="名称">
+            <el-input v-model.trim="params.name" clearable placeholder="名称" @clear="search" />
+          </el-form-item>
+          <el-form-item label="状态">
+            <el-select v-model.trim="params.status" clearable placeholder="状态" @change="search" @clear="search">
+              <el-option label="启用" value="true" />
+              <el-option label="禁用" value="false" />
+              <el-option label="全部" value="" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="创建人">
+            <el-input v-model.trim="params.creator" clearable placeholder="创建人" @clear="search" />
+          </el-form-item>
+          <el-form-item>
+            <el-button :loading="loading" icon="el-icon-search" type="primary" @click="search">查询</el-button>
+          </el-form-item>
+          <el-form-item>
+            <el-button :loading="loading" icon="el-icon-plus" type="warning" @click="create">新增</el-button>
+          </el-form-item>
+          <el-form-item>
+            <el-button
+              :disabled="multipleSelection.length === 0"
+              :loading="loading"
+              icon="el-icon-delete"
+              type="danger"
+              @click="batchDelete"
+            >批量删除
+            </el-button>
+          </el-form-item>
         </el-form>
       </el-row>
       <!-- 配置列表 -->
@@ -50,9 +42,15 @@
         border
         stripe
         style="width: 100%"
+        :size="this.$store.getters.size"
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="55" align="center" />
+        <el-table-column label="序号" type="index" width="50" align="center">
+          <template slot-scope="scope">
+            {{ (params.pageNum - 1) * params.pageSize + scope.$index + 1 }}
+          </template>
+        </el-table-column>
         <el-table-column show-overflow-tooltip sortable prop="moduleName" label="模块名称" align="center" />
         <el-table-column show-overflow-tooltip sortable prop="moduleType" label="模块类型" align="center">
           <template slot-scope="scope">

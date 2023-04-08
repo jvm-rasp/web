@@ -17,8 +17,8 @@ func InitRaspModuleRoutes(r *gin.RouterGroup, authMiddleware *jwt.GinJWTMiddlewa
 		router.GET("/list", raspModuleController.GetRaspModules)
 		router.POST("/delete", raspModuleController.DeleteModuleById)
 		router.POST("/update", raspModuleController.UpdateRaspModules)
-		router.DELETE("/delete/batch", raspModuleController.BatchDeleteModuleByIds)
-		router.POST("/update/status",raspModuleController.UpdateRaspModuleStatusById)
+		router.POST("/delete/batch", raspModuleController.BatchDeleteModuleByIds)
+		router.POST("/update/status", raspModuleController.UpdateRaspModuleStatusById)
 	}
 	return r
 }

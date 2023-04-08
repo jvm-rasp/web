@@ -1,7 +1,7 @@
 <template>
   <div>
     <el-card class="container-card" shadow="always">
-      <el-form size="mini" :inline="true" :model="params" class="demo-form-inline">
+      <el-form :size="this.$store.getters.size" :inline="true" :model="params" class="demo-form-inline">
         <el-form-item label="用户名">
           <el-input v-model.trim="params.username" clearable placeholder="用户名" @clear="search" />
         </el-form-item>
@@ -28,7 +28,7 @@
         </el-form-item>
       </el-form>
 
-      <el-table v-loading="loading" :data="tableData" border stripe style="width: 100%" @selection-change="handleSelectionChange">
+      <el-table v-loading="loading" :data="tableData" border stripe style="width: 100%" :size="this.$store.getters.size" @selection-change="handleSelectionChange">
         <el-table-column type="selection" width="55" align="center" />
         <el-table-column show-overflow-tooltip sortable prop="username" label="用户名" />
         <el-table-column show-overflow-tooltip sortable prop="nickname" label="昵称" />

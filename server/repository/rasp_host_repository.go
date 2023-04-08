@@ -15,6 +15,8 @@ type IRaspHostRepository interface {
 	DeleteRaspHost(ids []uint) error
 	QueryRaspHost(hostName string) ([]*model.RaspHost, error)
 	UpdateRaspHostByHostName(host *model.RaspHost) error
+	UpdateRaspHost(host *model.RaspHost) error
+	GetRaspHostById(id uint) (*model.RaspHost, error)
 }
 
 type RaspHostRepository struct {
@@ -100,4 +102,15 @@ func (h RaspHostRepository) UpdateRaspHostByHostName(host *model.RaspHost) error
 	}
 	err := common.DB.Model(host).Where("host_name = ?", host.HostName).Updates(host).Error
 	return err
+}
+
+func (h RaspHostRepository) UpdateRaspHost(host *model.RaspHost) error {
+	err := common.DB.Model(host).Updates(host).Error
+	return err
+}
+
+func (h RaspHostRepository) GetRaspHostById(id uint) (*model.RaspHost, error) {
+	var host *model.RaspHost
+	err := common.DB.Model(&model.RaspHost{}).Where("id = ?", id).Find(&host).Error
+	return host, err
 }

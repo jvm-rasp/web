@@ -612,6 +612,13 @@ func InitData() {
 		},
 		{
 			Method:   "POST",
+			Path:     "/config/update/status",
+			Category: "config",
+			Desc:     "更新配置状态",
+			Creator:  "系统",
+		},
+		{
+			Method:   "POST",
 			Path:     "/config/delete/batch",
 			Category: "config",
 			Desc:     "批量删除配置",
@@ -685,6 +692,13 @@ func InitData() {
 			Path:     "/host/push/config",
 			Category: "host",
 			Desc:     "批量推送配置",
+			Creator:  "系统",
+		},
+		{
+			Method:   "POST",
+			Path:     "/host/update",
+			Category: "host",
+			Desc:     "更新主机配置",
 			Creator:  "系统",
 		},
 		{

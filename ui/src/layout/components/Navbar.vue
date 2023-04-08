@@ -6,16 +6,18 @@
 
     <div class="right-menu">
       <template v-if="device!=='mobile'">
-        <search id="header-search" class="right-menu-item" />
-
-        <error-log class="errLog-container right-menu-item hover-effect" />
-
-        <screenfull id="screenfull" class="right-menu-item hover-effect" />
-
-        <el-tooltip content="Global Size" effect="dark" placement="bottom">
+        <el-tooltip content="搜索" effect="dark" placement="bottom">
+          <search id="header-search" class="right-menu-item" />
+        </el-tooltip>
+        <el-tooltip content="错误日志" effect="dark" placement="bottom">
+          <error-log class="errLog-container right-menu-item hover-effect" />
+        </el-tooltip>
+        <el-tooltip content="全屏" effect="dark" placement="bottom">
+          <screenfull id="screenfull" class="right-menu-item hover-effect" />
+        </el-tooltip>
+        <el-tooltip content="全局大小" effect="dark" placement="bottom">
           <size-select id="size-select" class="right-menu-item hover-effect" />
         </el-tooltip>
-
       </template>
 
       <el-dropdown class="avatar-container right-menu-item hover-effect" trigger="click">

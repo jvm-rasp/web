@@ -3,44 +3,36 @@
     <el-card class="container-card" shadow="always">
       <!-- 条件搜索框 -->
       <el-row>
-        <el-form size="medium" :inline="true" :model="params" class="demo-form-inline">
-          <el-col :span="6">
-            <el-form-item label="名称">
-              <el-input v-model.trim="params.name" clearable placeholder="名称" @clear="search" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="6">
-            <el-form-item label="状态">
-              <el-select v-model.trim="params.status" clearable placeholder="状态" @change="search" @clear="search">
-                <el-option label="可用" value="true" />
-                <el-option label="禁用" value="false" />
-                <el-option label="全部" value="" />
-              </el-select>
-            </el-form-item>
-          </el-col>
-          <el-col :span="6">
-            <el-form-item label="创建人">
-              <el-input v-model.trim="params.creator" clearable placeholder="创建人" @clear="search" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="6">
-            <el-form-item>
-              <el-button :loading="loading" icon="el-icon-search" type="primary" @click="search">查询</el-button>
-            </el-form-item>
-            <el-form-item>
-              <el-button :loading="loading" icon="el-icon-plus" type="warning" @click="create">新增</el-button>
-            </el-form-item>
-            <el-form-item>
-              <el-button
-                :disabled="multipleSelection.length === 0"
-                :loading="loading"
-                icon="el-icon-delete"
-                type="danger"
-                @click="batchDelete"
-              >批量删除
-              </el-button>
-            </el-form-item>
-          </el-col>
+        <el-form :size="this.$store.getters.size" :inline="true" :model="params" class="demo-form-inline">
+          <el-form-item label="配置名称">
+            <el-input v-model.trim="params.name" clearable placeholder="名称" @clear="search" />
+          </el-form-item>
+          <el-form-item label="配置状态">
+            <el-select v-model.trim="params.status" clearable placeholder="状态" @change="search" @clear="search">
+              <el-option label="可用" value="true" />
+              <el-option label="禁用" value="false" />
+              <el-option label="全部" value="" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="创建人">
+            <el-input v-model.trim="params.creator" clearable placeholder="创建人" @clear="search" />
+          </el-form-item>
+          <el-form-item>
+            <el-button :loading="loading" icon="el-icon-search" type="primary" @click="search">查询</el-button>
+          </el-form-item>
+          <el-form-item>
+            <el-button :loading="loading" icon="el-icon-plus" type="warning" @click="create">新增</el-button>
+          </el-form-item>
+          <el-form-item>
+            <el-button
+              :disabled="multipleSelection.length === 0"
+              :loading="loading"
+              icon="el-icon-delete"
+              type="danger"
+              @click="batchDelete"
+            >批量删除
+            </el-button>
+          </el-form-item>
         </el-form>
       </el-row>
       <!-- 配置列表 -->
@@ -50,17 +42,27 @@
         border
         stripe
         style="width: 100%"
+        :size="this.$store.getters.size"
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="55" align="center" />
-        <el-table-column show-overflow-tooltip sortable prop="ID" with="55" label="配置ID" align="center" />
+        <el-table-column label="序号" type="index" width="50" align="center">
+          <template slot-scope="scope">
+            {{ (params.pageNum - 1) * params.pageSize + scope.$index + 1 }}
+          </template>
+        </el-table-column>
         <el-table-column show-overflow-tooltip sortable prop="name" label="配置名称" align="center" />
         <el-table-column show-overflow-tooltip sortable prop="desc" label="配置描述" align="center" />
         <el-table-column show-overflow-tooltip sortable prop="status" label="配置状态" align="center">
-          <template slot-scope="scope">
-            <el-tag size="small" :type="scope.row.status ? 'success':'danger'" disable-transitions>
-              {{ scope.row.status ? '可用' : '禁用' }}
-            </el-tag>
+          <template slot-scope="scope" label="配置状态" align="center">
+            <el-switch
+              v-model="scope.row.status"
+              active-color="#13ce66"
+              inactive-color="grey"
+              :active-value="true"
+              :inactive-value="false"
+              @change="switchChange($event,scope.row,scope.$index)"
+            />
           </template>
         </el-table-column>
         <el-table-column show-overflow-tooltip sortable prop="creator" label="创建人" align="center" />
@@ -96,7 +98,7 @@
                 <el-input v-model.trim="bindConfigData.name" placeholder="配置名称" />
               </el-form-item>
             </el-col>
-            <el-col>
+            <el-col :span="12">
               <el-form-item label="接入模式" prop="agentMode">
                 <el-radio-group v-model="bindConfigData.agentMode">
                   <el-radio :label="1">动态</el-radio>
@@ -188,26 +190,18 @@
       <el-dialog title="修改配置" :visible.sync="editConfigVisible" width="50%">
         <el-form ref="editConfigForm" size="small" :model="bindConfigData" :rules="createConfigFormRules" label-width="100px">
           <el-row>
-            <el-col :span="8">
+            <el-col :span="12">
               <el-form-item label="配置名称" prop="name">
                 <el-input v-model.trim="bindConfigData.name" placeholder="配置名称" />
               </el-form-item>
             </el-col>
-            <el-col :span="9">
+            <el-col :span="12">
               <el-form-item label="接入模式" prop="agentMode">
                 <el-radio-group v-model="bindConfigData.agentMode">
                   <el-radio :label="1">动态</el-radio>
                   <el-radio :label="2">静态</el-radio>
                   <el-radio :label="0">关闭</el-radio>
                 </el-radio-group>
-              </el-form-item>
-            </el-col>
-            <el-col :span="7">
-              <el-form-item label="模块状态" prop="status">
-                <el-select v-model="bindConfigData.status" clearable placeholder="模块状态">
-                  <el-option label="启用" :value="true" />
-                  <el-option label="禁用" :value="false" />
-                </el-select>
               </el-form-item>
             </el-col>
           </el-row>
@@ -294,7 +288,7 @@
 </template>
 
 <script>
-import { getConfigs, createConfig, batchDeleteConfigByIds, updateConfig } from '@/api/config/config'
+import { getConfigs, createConfig, batchDeleteConfigByIds, updateConfig, updateStatusById } from '@/api/config/config'
 import vueJsonEditor from 'vue-json-editor'
 import { getModules } from '@/api/module/module'
 import moment from 'moment/moment'
@@ -665,12 +659,16 @@ export default {
         this.loading = false
       }
 
-      this.getConfigTableData()
+      await this.getConfigTableData()
       this.$message({
         showClose: true,
         message: msg,
         type: 'success'
       })
+    },
+
+    switchChange(e, row, index) {
+      updateStatusById({ id: row.ID })
     },
 
     // 分页
