@@ -68,8 +68,8 @@
         </el-table-column>
         <el-table-column show-overflow-tooltip sortable label="在线状态" width="120" align="center">
           <template slot-scope="scope">
-            <el-tag size="medium" :type="isOnline(scope.row.heatbeatTime) === true ? 'success' : 'danger'" disable-transitions>
-              {{ isOnline(scope.row.heatbeatTime) ? '在线' : '离线' }}
+            <el-tag size="medium" :type="isOnline(scope.row.heartbeatTime) === true ? 'success' : 'danger'" disable-transitions>
+              {{ isOnline(scope.row.heartbeatTime) ? '在线' : '离线' }}
             </el-tag>
           </template>
         </el-table-column>
@@ -286,7 +286,7 @@ export default {
       this.updateConfigVisible = true
       this.configFormData.hostName = record.hostName
       this.configFormData.hostId = record.ID
-      this.configFormData.configId = record.configId
+      this.configFormData.configId = record.configId === 0 ? '无' : record.configId
       // TODO 获取当前配置id以及名称
     },
 
@@ -475,7 +475,7 @@ export default {
       if (matches.length > 0) {
         return matches[0].name
       } else {
-        return configId
+        return '无'
       }
     }
   }
