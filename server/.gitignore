@@ -12,7 +12,7 @@ go_build_server
 
 jrasp.db
 
-data
+upload
 
 resources/html
 

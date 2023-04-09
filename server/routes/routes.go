@@ -41,6 +41,11 @@ func InitRoutes() *gin.Engine {
 		panic(fmt.Sprintf("初始化JWT中间件失败：%v", err))
 	}
 
+	// ssl
+	if config.Conf.Ssl.Enable {
+		r.Use(middleware.TlsHandler())
+	}
+
 	// 路由分组
 	apiGroup := r.Group("/" + config.Conf.System.UrlPathPrefix)
 

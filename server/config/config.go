@@ -23,6 +23,7 @@ type config struct {
 	Casbin    *CasbinConfig    `mapstructure:"casbin" json:"casbin"`
 	Jwt       *JwtConfig       `mapstructure:"jwt" json:"jwt"`
 	RateLimit *RateLimitConfig `mapstructure:"rate-limit" json:"rateLimit"`
+	Ssl       *Ssl             `mapstructure:"ssl" json:"ssl"`
 }
 
 // 设置读取配置信息
@@ -102,4 +103,10 @@ type JwtConfig struct {
 type RateLimitConfig struct {
 	FillInterval int64 `mapstructure:"fill-interval" json:"fillInterval"`
 	Capacity     int64 `mapstructure:"capacity" json:"capacity"`
+}
+
+type Ssl struct {
+	Enable   bool
+	KeyFile  string
+	CertFile string
 }

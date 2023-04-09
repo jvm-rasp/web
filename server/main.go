@@ -68,8 +68,16 @@ func main() {
 	// Initializing the server in a goroutine so that
 	// it won't block the graceful shutdown handling below
 	go func() {
-		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			common.Log.Fatalf("listen: %s\n", err)
+		// 服务连接
+		if config.Conf.Ssl.Enable {
+			if err := srv.ListenAndServeTLS(config.Conf.Ssl.CertFile, config.Conf.Ssl.KeyFile); err != nil && err != http.ErrServerClosed {
+				common.Log.Fatalf("listen: %s\n", err)
+			}
+		} else {
+			if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+				common.Log.Fatalf("listen: %s\n", err)
+
+			}
 		}
 	}()
 

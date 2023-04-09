@@ -2,9 +2,6 @@ package controller
 
 import (
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/go-playground/validator/v10"
-	"github.com/h2non/filetype"
 	"os"
 	"path/filepath"
 	"server/common"
@@ -13,6 +10,10 @@ import (
 	"server/response"
 	"server/util"
 	"server/vo"
+
+	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
+	"github.com/h2non/filetype"
 )
 
 type IFileController interface {
