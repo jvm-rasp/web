@@ -52,7 +52,7 @@ rate-limit:
 
 ssl:
   # https开关,默认关闭
-  enable: false
+  enable: true
   # ssl 证书key
   keyFile: keyFile.key
   # ssl 证书路径

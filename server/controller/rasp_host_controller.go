@@ -138,12 +138,18 @@ func (h RaspHostController) PushConfig(c *gin.Context) {
 		}
 		moduleConfigs = append(moduleConfigs, moduleConfig)
 	}
+	var scheme string
+	if config.Conf.Ssl.Enable {
+		scheme = "wss"
+	} else {
+		scheme = "ws"
+	}
 	finalConfig := model.RaspFinalConfig{
 		AgentMode:        AgentMode[raspConfig.AgentMode],
 		ConfigId:         raspConfig.ID,
 		ModuleAutoUpdate: true,
 		LogPath:          raspConfig.LogPath,
-		RemoteHosts:      path.Join(fmt.Sprintf("%v:%v", util.GetDefaultIp(), config.Conf.System.Port), config.Conf.System.UrlPathPrefix),
+		RemoteHosts:      path.Join(fmt.Sprintf("%v://%v:%v", scheme, util.GetDefaultIp(), config.Conf.System.Port), config.Conf.System.UrlPathPrefix),
 		AgentConfigs:     agentConfigsFields,
 		ModuleConfigs:    moduleConfigs,
 	}
