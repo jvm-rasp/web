@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
-	"path"
 	"server/common"
 	"server/config"
 	"server/model"
@@ -149,7 +148,7 @@ func (h RaspHostController) PushConfig(c *gin.Context) {
 		ConfigId:         raspConfig.ID,
 		ModuleAutoUpdate: true,
 		LogPath:          raspConfig.LogPath,
-		RemoteHosts:      path.Join(fmt.Sprintf("%v://%v:%v", scheme, util.GetDefaultIp(), config.Conf.System.Port), config.Conf.System.UrlPathPrefix),
+		RemoteHosts:      fmt.Sprintf("%v://%v:%v/%v", scheme, util.GetDefaultIp(), config.Conf.System.Port, config.Conf.System.UrlPathPrefix),
 		AgentConfigs:     agentConfigsFields,
 		ModuleConfigs:    moduleConfigs,
 	}

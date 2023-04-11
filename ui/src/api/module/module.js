@@ -35,7 +35,7 @@ export function deleteModule(params) {
 export function batchDeleteModuleByIds(params) {
   return request({
     url: '/module/delete/batch',
-    method: 'delete',
+    method: 'post',
     data: params
   })
 }
