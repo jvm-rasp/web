@@ -13,6 +13,7 @@ import (
 	"server/socket"
 	"server/util"
 	"server/vo"
+	"strings"
 )
 
 type IRaspHostController interface {
@@ -129,7 +130,17 @@ func (h RaspHostController) PushConfig(c *gin.Context) {
 	for _, item := range moduleConfigsFields {
 		var moduleConfig model.ModuleConfig
 		err = json.Unmarshal([]byte(item.Parameters.String()), &moduleConfig)
-		moduleConfig.DownLoadUrl = item.DownLoadURL
+		// 如果是外部下载地址则直接赋值
+		if strings.HasPrefix(item.DownLoadURL, "http://") || strings.HasPrefix(item.DownLoadURL, "https://") {
+			moduleConfig.DownLoadUrl = item.DownLoadURL
+		} else {
+			moduleConfig.DownLoadUrl = fmt.Sprintf("%v://%v:%v/%v%v",
+				util.Ternary(config.Conf.Ssl.Enable, "https", "http"),
+				util.GetDefaultIp(),
+				config.Conf.System.Port,
+				config.Conf.System.UrlPathPrefix,
+				item.DownLoadURL)
+		}
 		moduleConfig.Md5 = item.Md5
 		if err != nil {
 			response.Fail(c, nil, "获取配置文本失败:"+err.Error())
@@ -137,20 +148,18 @@ func (h RaspHostController) PushConfig(c *gin.Context) {
 		}
 		moduleConfigs = append(moduleConfigs, moduleConfig)
 	}
-	var scheme string
-	if config.Conf.Ssl.Enable {
-		scheme = "wss"
-	} else {
-		scheme = "ws"
-	}
 	finalConfig := model.RaspFinalConfig{
 		AgentMode:        AgentMode[raspConfig.AgentMode],
 		ConfigId:         raspConfig.ID,
 		ModuleAutoUpdate: true,
 		LogPath:          raspConfig.LogPath,
-		RemoteHosts:      fmt.Sprintf("%v://%v:%v/%v", scheme, util.GetDefaultIp(), config.Conf.System.Port, config.Conf.System.UrlPathPrefix),
-		AgentConfigs:     agentConfigsFields,
-		ModuleConfigs:    moduleConfigs,
+		RemoteHosts: fmt.Sprintf("%v://%v:%v/%v",
+			util.Ternary(config.Conf.Ssl.Enable, "wss", "ws"),
+			util.GetDefaultIp(),
+			config.Conf.System.Port,
+			config.Conf.System.UrlPathPrefix),
+		AgentConfigs:  agentConfigsFields,
+		ModuleConfigs: moduleConfigs,
 	}
 
 	content, err := json.Marshal(finalConfig)

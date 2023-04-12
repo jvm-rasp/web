@@ -71,7 +71,8 @@ func InitData() {
 	var attackId uint = 2000
 	var moduleId uint = 3000
 	var configId uint = 4000
-	var systemId uint = 5000
+	var logId uint = 5000
+	var systemId uint = 6000
 
 	componentStr := "component"
 	systemUserStr := "/system/user"
@@ -192,6 +193,31 @@ func InitData() {
 			Component: "/config/list/index",
 			Sort:      configId + 1,
 			ParentId:  &configId,
+			Roles:     roles,
+			Creator:   "系统",
+		},
+		{
+			Model:     gorm.Model{ID: logId},
+			Name:      "Log",
+			Title:     "日志管理",
+			Icon:      &componentStr,
+			Path:      "/log",
+			Component: "Layout",
+			Redirect:  &systemUserStr,
+			Sort:      logId,
+			ParentId:  &rootId,
+			Roles:     roles,
+			Creator:   "系统",
+		},
+		{
+			Model:     gorm.Model{ID: logId + 1},
+			Name:      "List",
+			Title:     "错误日志",
+			Icon:      &listStr,
+			Path:      "list",
+			Component: "/log/list/index",
+			Sort:      logId + 1,
+			ParentId:  &logId,
 			Roles:     roles,
 			Creator:   "系统",
 		},
@@ -790,6 +816,20 @@ func InitData() {
 			Path:     "/file/getFileInfo/module",
 			Category: "file",
 			Desc:     "获取模块基本信息",
+			Creator:  "系统",
+		},
+		{
+			Method:   "GET",
+			Path:     "/rasp-log/list",
+			Category: "logs",
+			Desc:     "获取rasp日志信息",
+			Creator:  "系统",
+		},
+		{
+			Method:   "POST",
+			Path:     "/rasp-log/delete/batch",
+			Category: "logs",
+			Desc:     "批量删除rasp日志",
 			Creator:  "系统",
 		},
 	}

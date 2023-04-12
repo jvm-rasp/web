@@ -53,6 +53,13 @@
         </el-table-column>
         <el-table-column show-overflow-tooltip sortable prop="name" label="配置名称" align="center" />
         <el-table-column show-overflow-tooltip sortable prop="desc" label="配置描述" align="center" />
+        <el-table-column show-overflow-tooltip sortable prop="agentMode" label="接入模式" align="center">
+          <template slot-scope="scope">
+            <el-tag size="small" :type="getAgentModeColor(scope.row.agentMode)" disable-transitions>
+              {{ getAgentModeLabel(scope.row.agentMode) }}
+            </el-tag>
+          </template>
+        </el-table-column>
         <el-table-column show-overflow-tooltip sortable prop="status" label="配置状态" align="center">
           <template slot-scope="scope" label="配置状态" align="center">
             <el-switch
@@ -224,7 +231,7 @@
             </el-col>
             <el-col :span="12">
               <el-form-item label="阻断状态码" label-width="120px" prop="agentConfigs.block_status_code">
-                <el-input v-model.trim="bindConfigData.agentConfigs.block_status_code" placeholder="阻断状态码" />
+                <el-input v-model.number="bindConfigData.agentConfigs.block_status_code" placeholder="阻断状态码" />
               </el-form-item>
             </el-col>
           </el-row>
@@ -365,11 +372,11 @@ export default {
       createConfigFormRules: {
         name: [
           { required: true, message: '请输入配置名称', trigger: 'blur' },
-          { min: 2, max: 20, message: '长度在 2 到 20 个字符', trigger: 'blur' }
+          { min: 2, max: 200, message: '长度在 2 到 20 个字符', trigger: 'blur' }
         ],
         desc: [
           { required: true, message: '请输入配置描述', trigger: 'blur' },
-          { min: 6, max: 30, message: '长度在 6 到 30 个字符', trigger: 'blur' }
+          { min: 6, max: 300, message: '长度在 6 到 30 个字符', trigger: 'blur' }
         ]
       },
 
@@ -377,7 +384,13 @@ export default {
       // 删除按钮弹出框
       popoverVisible: false,
       // 表格多选
-      multipleSelection: []
+      multipleSelection: [],
+      // agent模式
+      agentMode: {
+        '关闭': 0,
+        '动态': 1,
+        '静态': 2
+      }
     }
   },
   created() {
@@ -686,6 +699,29 @@ export default {
         return ''
       }
       return moment(date).format('YYYY-MM-DD HH:mm:ss')
+    },
+    getAgentModeColor(status) {
+      switch (status) {
+        case 0:
+          return 'danger'
+        case 1:
+          return ''
+        case 2:
+          return 'success'
+        case 3:
+          return 'info'
+        default:
+          return 'danger'
+      }
+    },
+    getAgentModeLabel(status) {
+      for (const k in this.agentMode) {
+        const val = this.agentMode[k]
+        if (val === status) {
+          return k
+        }
+      }
+      return '未知'
     }
   }
 }

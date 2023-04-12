@@ -34,16 +34,19 @@ type LogController struct {
 	RaspHostRepository    repository.IRaspHostRepository
 	JavaProcessRepository repository.IJavaProcessInfoRepository
 	RaspAttackRepository  repository.IRaspAttackRepository
+	RaspErrorRepository   repository.IRaspErrorLogsRepository
 }
 
-func NewRaspLogController() ILogController {
+func NewLogController() ILogController {
 	repository1 := repository.NewRaspHostRepository()
 	repository2 := repository.NewJavaProcessInfoRepository()
 	repository3 := repository.NewRaspAttackRepository()
+	repository4 := repository.NewRaspErrorLogsRepository()
 	controller := LogController{
 		RaspHostRepository:    repository1,
 		JavaProcessRepository: repository2,
 		RaspAttackRepository:  repository3,
+		RaspErrorRepository:   repository4,
 	}
 	return controller
 }
@@ -58,13 +61,14 @@ func (l LogController) ReportLog(c *gin.Context) {
 	case vo.JRASP_DAEMON:
 		l.handleDaemonLog(req)
 	case vo.JRASP_AGENT:
+		l.handleAgentErrorLog(req)
 	case vo.JRASP_MODULE:
-		l.handleErrortLog(req)
 	case vo.JRASP_ATTACK:
 		l.handleAttackLog(req)
 	default:
 		panic(errors.New("unknown topic: " + req.Fields.KafkaTopic))
 	}
+	l.handleErrorLog(req.Fields.KafkaTopic, req)
 }
 
 func (l LogController) GetAttackLogs(c *gin.Context) {
@@ -401,13 +405,13 @@ func (l LogController) handleAgentInitAndUnloadLog(req vo.RaspLogRequest) {
 		panic(err)
 	}
 
-	pid := detailMap["pid"].(int)
+	pid := detailMap["pid"].(float64)
 	startTime := detailMap["startTime"].(string)
 	status := detailMap["status"].(string)
 
 	process := &model.JavaProcessInfo{
 		Status:    status,
-		Pid:       pid,
+		Pid:       int(pid),
 		StartTime: startTime,
 		HostName:  req.HostName,
 	}
@@ -493,20 +497,79 @@ func (l LogController) handleRemoveJavaProcessLog(req vo.RaspLogRequest) {
 	}
 }
 
-func (l LogController) handleErrortLog(req vo.RaspLogRequest) {
-	grok, _ := grok.New()
-	maps, err := grok.Parse(pattern, req.Message)
+func (l LogController) handleErrorLog(topic string, req vo.RaspLogRequest) {
+	switch topic {
+	case vo.JRASP_AGENT:
+		l.handleAgentErrorLog(req)
+	case vo.JRASP_DAEMON:
+		l.handleDaemonErrorLog(req)
+	case vo.JRASP_MODULE:
+		l.handleModuleErrorLog(req)
+	case vo.JRASP_ATTACK:
+	default:
+		panic(errors.New("unknown topic: " + req.Fields.KafkaTopic))
+	}
+}
+
+func (l LogController) handleAgentErrorLog(req vo.RaspLogRequest) {
+	Grok, _ := grok.New()
+	maps, err := Grok.Parse(pattern, req.Message)
 	if err != nil {
 		// 不匹配的日志输出
 		common.Log.Warnf(req.Message)
 		return
 	}
-
-	level := maps["level"]
-	if level == "ERROR" || level == "ERR" {
-		// 错误日志输出
-		common.Log.Error(req.Message)
+	if maps["level"] == "INFO" {
 		return
+	}
+	errorLogs := &model.RaspErrorLogs{
+		Topic:   vo.JRASP_AGENT,
+		Time:    maps["time"],
+		Level:   maps["level"],
+		Message: req.Message,
+	}
+	err = l.RaspErrorRepository.CreateRaspLogs(errorLogs)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func (l LogController) handleDaemonErrorLog(req vo.RaspLogRequest) {
+	if req.Level == "INFO" {
+		return
+	}
+	errorLogs := &model.RaspErrorLogs{
+		Topic:   vo.JRASP_DAEMON,
+		Time:    req.Ts,
+		Level:   req.Level,
+		Message: req.Message,
+	}
+	err := l.RaspErrorRepository.CreateRaspLogs(errorLogs)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func (l LogController) handleModuleErrorLog(req vo.RaspLogRequest) {
+	Grok, _ := grok.New()
+	maps, err := Grok.Parse(pattern, req.Message)
+	if err != nil {
+		// 不匹配的日志输出
+		common.Log.Warnf(req.Message)
+		return
+	}
+	if maps["level"] == "INFO" {
+		return
+	}
+	errorLogs := &model.RaspErrorLogs{
+		Topic:   vo.JRASP_MODULE,
+		Time:    maps["time"],
+		Level:   maps["level"],
+		Message: req.Message,
+	}
+	err = l.RaspErrorRepository.CreateRaspLogs(errorLogs)
+	if err != nil {
+		panic(err)
 	}
 }
 

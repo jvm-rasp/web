@@ -9,7 +9,7 @@ import (
 
 // 注册基础路由
 func InitBaseRoutes(r *gin.RouterGroup, authMiddleware *jwt.GinJWTMiddleware) gin.IRoutes {
-	logController := controller.NewRaspLogController()
+	logController := controller.NewLogController()
 	configController := controller.NewRaspConfigController()
 	fileController := controller.NewFileController()
 	router := r.Group("/base")

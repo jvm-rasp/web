@@ -314,7 +314,6 @@ import {
   updateStatusById
 } from '@/api/module/module'
 import moment from 'moment'
-import { getRootPath } from '@/utils/url'
 
 export default {
   name: 'Module',
@@ -668,7 +667,7 @@ export default {
         const { data } = await getModuleInfoById({ id: this.selectUploadData.ID })
         this.bindModuleData.moduleName = data.manifest.ModuleName
         this.bindModuleData.moduleVersion = data.manifest.ModuleVersion
-        this.bindModuleData.downLoadURL = getRootPath() + this.selectUploadData.downLoadUrl
+        this.bindModuleData.downLoadURL = this.selectUploadData.downLoadUrl
         this.bindModuleData.md5 = this.selectUploadData.fileHash
         this.bindModuleData.parameters = JSON.parse(data.parameters)
       }
