@@ -18,6 +18,7 @@ type IRaspConfigController interface {
 	BatchDeleteConfigByIds(c *gin.Context)
 	GetViperRaspConfig(c *gin.Context)
 	UpdateRaspConfigStatusById(c *gin.Context)
+	UpdateRaspConfigDefaultById(c *gin.Context)
 }
 
 type RaspConfigController struct {
@@ -221,6 +222,49 @@ func (l RaspConfigController) UpdateRaspConfigStatusById(c *gin.Context) {
 		return
 	}
 	config.Status = !config.Status
+	config.Operator = ctxUser.Username
+
+	err = l.RaspConfigRepository.UpdateRaspConfig(config)
+	if err != nil {
+		response.Fail(c, nil, "更新当前策略失败")
+		return
+	}
+	response.Success(c, nil, "更新策略成功")
+}
+
+func (l RaspConfigController) UpdateRaspConfigDefaultById(c *gin.Context) {
+	var req vo.UpdateRaspConfigDefaultRequest
+	// 参数绑定
+	if err := c.ShouldBind(&req); err != nil {
+		response.Fail(c, nil, err.Error())
+		return
+	}
+	// 参数校验
+	if err := common.Validate.Struct(&req); err != nil {
+		errStr := err.(validator.ValidationErrors)[0].Translate(common.Trans)
+		response.Fail(c, nil, errStr)
+		return
+	}
+	// 全部设置为非默认
+	if err := common.DB.Model(&model.RaspConfig{}).Where("1=1").Updates(map[string]interface{}{"is_default": false}).Error; err != nil {
+		response.Fail(c, nil, "更新默认策略失败")
+		return
+	}
+
+	// 获取当前用户
+	ur := repository.NewUserRepository()
+	ctxUser, err := ur.GetCurrentUser(c)
+	if err != nil {
+		response.Fail(c, nil, "获取当前用户信息失败")
+		return
+	}
+	id := req.ID
+	config, err := l.RaspConfigRepository.GetRaspConfigById(id)
+	if err != nil {
+		response.Fail(c, nil, "更新当前策略失败")
+		return
+	}
+	config.IsDefault = req.IsDefault
 	config.Operator = ctxUser.Username
 
 	err = l.RaspConfigRepository.UpdateRaspConfig(config)

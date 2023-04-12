@@ -645,6 +645,13 @@ func InitData() {
 		},
 		{
 			Method:   "POST",
+			Path:     "/config/update/default",
+			Category: "config",
+			Desc:     "更新配置默认状态",
+			Creator:  "系统",
+		},
+		{
+			Method:   "POST",
 			Path:     "/config/delete/batch",
 			Category: "config",
 			Desc:     "批量删除配置",

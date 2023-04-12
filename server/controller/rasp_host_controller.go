@@ -2,6 +2,7 @@ package controller
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -21,6 +22,8 @@ type IRaspHostController interface {
 	BatchDeleteHostByIds(c *gin.Context)
 	PushConfig(c *gin.Context)
 	UpdateConfig(c *gin.Context)
+	PushHostsConfig(hostList []string, content []byte) []string
+	GeneratePushConfig(configId uint) ([]byte, error)
 }
 
 var AgentMode = map[uint]string{
@@ -107,11 +110,41 @@ func (h RaspHostController) PushConfig(c *gin.Context) {
 	}
 
 	// TODO 新建发布记录表
+	// 生成推送的配置
 	configId := req.ConfigId
+	content, err := h.GeneratePushConfig(configId)
+	if err != nil {
+		response.Fail(c, nil, "生成配置文件失败")
+		return
+	}
+	h.PushHostsConfig(req.HostNames, content)
+	response.Success(c, nil, "配置下发成功")
+	return
+}
+
+func (h RaspHostController) PushHostsConfig(hostList []string, content []byte) []string {
+	var offlineHosts []string
+	// 批量下发考虑 所有主机的状态
+	for _, hostName := range hostList {
+		// 先判断连接是否存在
+		m := socket.WebsocketManager.Group[hostName]
+		if m != nil {
+			client := m[hostName]
+			if client != nil {
+				socket.WebsocketManager.Send(hostName, hostName, content)
+			}
+		} else {
+			common.Log.Warnf("主机: %v,配置下发失败: websocket连接不存在，请检查rasp在线状态", hostName)
+			offlineHosts = append(offlineHosts, hostName)
+		}
+	}
+	return offlineHosts
+}
+
+func (h RaspHostController) GeneratePushConfig(configId uint) ([]byte, error) {
 	raspConfig, err := h.RaspConfigRepository.GetRaspConfigById(configId)
 	if err != nil {
-		response.Fail(c, nil, "配置不存在")
-		return
+		return nil, errors.New("获取配置文本失败:" + err.Error())
 	}
 	// 合并成一个完成的配置文件
 	var agentConfigsFields model.AgentConfig
@@ -119,13 +152,11 @@ func (h RaspHostController) PushConfig(c *gin.Context) {
 	var moduleConfigs []model.ModuleConfig
 	err = json.Unmarshal([]byte(raspConfig.AgentConfigs.String()), &agentConfigsFields)
 	if err != nil {
-		response.Fail(c, nil, "获取配置文本失败:"+err.Error())
-		return
+		return nil, errors.New("获取配置文本失败:" + err.Error())
 	}
 	err = json.Unmarshal([]byte(raspConfig.ModuleConfigs.String()), &moduleConfigsFields)
 	if err != nil {
-		response.Fail(c, nil, "获取配置文本失败:"+err.Error())
-		return
+		return nil, errors.New("获取配置文本失败:" + err.Error())
 	}
 	for _, item := range moduleConfigsFields {
 		var moduleConfig model.ModuleConfig
@@ -143,8 +174,7 @@ func (h RaspHostController) PushConfig(c *gin.Context) {
 		}
 		moduleConfig.Md5 = item.Md5
 		if err != nil {
-			response.Fail(c, nil, "获取配置文本失败:"+err.Error())
-			return
+			return nil, errors.New("获取配置文本失败:" + err.Error())
 		}
 		moduleConfigs = append(moduleConfigs, moduleConfig)
 	}
@@ -164,25 +194,9 @@ func (h RaspHostController) PushConfig(c *gin.Context) {
 
 	content, err := json.Marshal(finalConfig)
 	if err != nil {
-		response.Fail(c, nil, "获取配置文本失败:"+err.Error())
-		return
+		return nil, errors.New("获取配置文本失败:" + err.Error())
 	}
-	// 批量下发考虑 所有主机的状态
-	for _, hostName := range req.HostNames {
-		// 先判断连接是否存在
-		m := socket.WebsocketManager.Group[hostName]
-		if m != nil {
-			client := m[hostName]
-			if client != nil {
-				socket.WebsocketManager.Send(hostName, hostName, content)
-				response.Success(c, nil, "配置下发成功")
-				return
-			}
-		}
-		response.Fail(c, nil, hostName+",配置下发失败: websocket连接不存在，请检查rasp在线状态")
-		return
-	}
-	response.Fail(c, nil, "配置下发失败")
+	return content, nil
 }
 
 // 更新实例配置文件

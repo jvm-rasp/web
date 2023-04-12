@@ -51,3 +51,11 @@ export function updateStatusById(params) {
     data: params
   })
 }
+
+export function updateDefaultById(params) {
+  return request({
+    url: '/config/update/default',
+    method: 'post',
+    data: params
+  })
+}

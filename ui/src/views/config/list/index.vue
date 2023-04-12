@@ -60,6 +60,18 @@
             </el-tag>
           </template>
         </el-table-column>
+        <el-table-column show-overflow-tooltip sortable prop="isDefault" label="设为默认" align="center">
+          <template slot-scope="scope">
+            <el-switch
+              v-model="scope.row.isDefault"
+              active-color="#13ce66"
+              inactive-color="grey"
+              :active-value="true"
+              :inactive-value="false"
+              @change="switchDefaultConfig($event,scope.row,scope.$index)"
+            />
+          </template>
+        </el-table-column>
         <el-table-column show-overflow-tooltip sortable prop="status" label="配置状态" align="center">
           <template slot-scope="scope" label="配置状态" align="center">
             <el-switch
@@ -295,7 +307,14 @@
 </template>
 
 <script>
-import { getConfigs, createConfig, batchDeleteConfigByIds, updateConfig, updateStatusById } from '@/api/config/config'
+import {
+  getConfigs,
+  createConfig,
+  batchDeleteConfigByIds,
+  updateConfig,
+  updateStatusById,
+  updateDefaultById
+} from '@/api/config/config'
 import vueJsonEditor from 'vue-json-editor'
 import { getModules } from '@/api/module/module'
 import moment from 'moment/moment'
@@ -641,7 +660,7 @@ export default {
           this.loading = false
         }
 
-        this.getConfigTableData()
+        await this.getConfigTableData()
         this.$message({
           showClose: true,
           message: msg,
@@ -661,27 +680,19 @@ export default {
       this.multipleSelection = val
     },
 
-    // 单个删除
-    async singleDelete(Id) {
-      this.loading = true
-      let msg = ''
-      try {
-        const { message } = await batchDeleteConfigByIds({ ids: [Id] })
-        msg = message
-      } finally {
-        this.loading = false
-      }
-
-      await this.getConfigTableData()
-      this.$message({
-        showClose: true,
-        message: msg,
-        type: 'success'
-      })
-    },
-
     switchChange(e, row, index) {
       updateStatusById({ id: row.ID })
+    },
+
+    async switchDefaultConfig(e, row, index) {
+      const { message, code } = await updateDefaultById({ id: row.ID, isDefault: e })
+      const type = code === 200 ? 'success' : 'error'
+      this.$message({
+        showClose: true,
+        message: message,
+        type: type
+      })
+      await this.getConfigTableData()
     },
 
     // 分页

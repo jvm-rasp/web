@@ -11,7 +11,7 @@ import (
 
 type IRaspHostRepository interface {
 	GetRaspHosts(req *vo.RaspHostListRequest) ([]*model.RaspHost, int64, error)
-	CreateRaspHost(host *model.RaspHost) error
+	CreateRaspHost(host *model.RaspHost) (uint, error)
 	DeleteRaspHost(ids []uint) error
 	QueryRaspHost(hostName string) ([]*model.RaspHost, error)
 	UpdateRaspHostByHostName(host *model.RaspHost) error
@@ -71,9 +71,19 @@ func (h RaspHostRepository) GetRaspHosts(req *vo.RaspHostListRequest) ([]*model.
 	return list, total, err
 }
 
-func (h RaspHostRepository) CreateRaspHost(raspHost *model.RaspHost) error {
+func (h RaspHostRepository) CreateRaspHost(raspHost *model.RaspHost) (uint, error) {
+	// 先获取默认策略
+	var list []*model.RaspConfig
+	result := common.DB.Model(&model.RaspConfig{}).Where("is_default = ?", true).Find(&list)
+	if result.Error != nil {
+		return 0, result.Error
+	}
+	if len(list) > 0 {
+		record := list[0]
+		raspHost.ConfigId = record.ID
+	}
 	err := common.DB.Create(raspHost).Error
-	return err
+	return raspHost.ConfigId, err
 }
 
 func (h RaspHostRepository) DeleteRaspHost(ids []uint) error {

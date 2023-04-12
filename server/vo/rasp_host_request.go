@@ -16,7 +16,7 @@ type DeleteRaspHostRequest struct {
 type UpdateRaspHostRequest struct {
 	Id       uint   `json:"id" form:"id" validate:"required"`
 	HostName string `json:"hostName" form:"hostName"`
-	ConfigId uint64 `json:"configId" form:"configId"`
+	ConfigId uint   `json:"configId" form:"configId"`
 }
 
 type PushConfigRequest struct {

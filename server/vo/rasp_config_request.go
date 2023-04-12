@@ -49,3 +49,8 @@ type DeleteRaspConfigRequest struct {
 type UpdateRaspConfigStatusRequest struct {
 	ID uint `json:"id" form:"id" validate:"required,min=1,max=32"`
 }
+
+type UpdateRaspConfigDefaultRequest struct {
+	ID        uint `json:"id" form:"id" validate:"required,min=1,max=32"`
+	IsDefault bool `json:"isDefault" form:"isDefault" validate:"boolean"`
+}

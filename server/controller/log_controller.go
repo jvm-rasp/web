@@ -35,6 +35,7 @@ type LogController struct {
 	JavaProcessRepository repository.IJavaProcessInfoRepository
 	RaspAttackRepository  repository.IRaspAttackRepository
 	RaspErrorRepository   repository.IRaspErrorLogsRepository
+	RaspConfigRepository  repository.IRaspConfigRepository
 }
 
 func NewLogController() ILogController {
@@ -42,11 +43,13 @@ func NewLogController() ILogController {
 	repository2 := repository.NewJavaProcessInfoRepository()
 	repository3 := repository.NewRaspAttackRepository()
 	repository4 := repository.NewRaspErrorLogsRepository()
+	repository5 := repository.NewRaspConfigRepository()
 	controller := LogController{
 		RaspHostRepository:    repository1,
 		JavaProcessRepository: repository2,
 		RaspAttackRepository:  repository3,
 		RaspErrorRepository:   repository4,
+		RaspConfigRepository:  repository5,
 	}
 	return controller
 }
@@ -239,9 +242,18 @@ func (l LogController) handleStartupLog(req vo.RaspLogRequest) {
 	host.AgentMode = detailMap["agentMode"]
 
 	if len(dbData) <= 0 {
-		err = l.RaspHostRepository.CreateRaspHost(host)
+		configId, err := l.RaspHostRepository.CreateRaspHost(host)
 		if err != nil {
 			panic(err)
+		}
+		// 推送默认配置
+		if configId != 0 {
+			hostController := NewRaspHostController()
+			content, err := hostController.GeneratePushConfig(configId)
+			if err != nil {
+				panic(err)
+			}
+			hostController.PushHostsConfig([]string{host.HostName}, content)
 		}
 		return
 	}
@@ -301,9 +313,18 @@ func (l LogController) handleHostEnvLog(req vo.RaspLogRequest) {
 	host.HeartbeatTime = req.Ts
 
 	if len(dbData) == 0 {
-		err := l.RaspHostRepository.CreateRaspHost(host)
+		configId, err := l.RaspHostRepository.CreateRaspHost(host)
 		if err != nil {
 			panic(err)
+		}
+		// 推送默认配置
+		if configId != 0 {
+			hostController := NewRaspHostController()
+			content, err := hostController.GeneratePushConfig(configId)
+			if err != nil {
+				panic(err)
+			}
+			hostController.PushHostsConfig([]string{host.HostName}, content)
 		}
 	} else {
 		err := l.RaspHostRepository.UpdateRaspHostByHostName(host)
@@ -332,9 +353,18 @@ func (l LogController) handleHeartbeatLog(req vo.RaspLogRequest) {
 	host.HeartbeatTime = req.Ts
 
 	if len(dbData) == 0 {
-		err = l.RaspHostRepository.CreateRaspHost(host)
+		configId, err := l.RaspHostRepository.CreateRaspHost(host)
 		if err != nil {
 			panic(err)
+		}
+		// 推送默认配置
+		if configId != 0 {
+			hostController := NewRaspHostController()
+			content, err := hostController.GeneratePushConfig(configId)
+			if err != nil {
+				panic(err)
+			}
+			hostController.PushHostsConfig([]string{host.HostName}, content)
 		}
 	} else {
 		err := l.RaspHostRepository.UpdateRaspHostByHostName(host)
@@ -439,7 +469,7 @@ func (l LogController) handleUpdateConfigId(req vo.RaspLogRequest) {
 	}
 	host := &model.RaspHost{
 		HostName: req.HostName,
-		ConfigId: uint64(configId),
+		ConfigId: uint(configId),
 	}
 	err = l.RaspHostRepository.UpdateRaspHostByHostName(host)
 	if err != nil {

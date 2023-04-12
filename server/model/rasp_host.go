@@ -8,7 +8,7 @@ type RaspHost struct {
 	Ip                    string  `gorm:"type:varchar(255);index;comment:'ip地址'" json:"ip"`
 	AgentMode             string  `gorm:"type:varchar(255);comment:'agent接入模式:disable;static;dynamic'" json:"agentMode"`
 	AgentInfo             string  `gorm:"type:varchar(65535);comment:'java agent信息'" json:"agentInfo"`
-	ConfigId              uint64  `gorm:"type:int(11);index;comment:'策略id'" json:"configId"`
+	ConfigId              uint    `gorm:"type:int(11);index;comment:'策略id'" json:"configId"`
 	HeartbeatTime         string  `gorm:"type:varchar(128);index;comment:'最近一次的心跳时间'" json:"heartbeatTime"`
 	InstallDir            string  `gorm:"type:varchar(255);comment:'可执行文件安装的绝对路径'" json:"installDir"`
 	Version               string  `gorm:"type:varchar(64);comment:'rasp 版本'" json:"version"`

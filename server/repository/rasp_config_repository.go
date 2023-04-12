@@ -17,6 +17,7 @@ type IRaspConfigRepository interface {
 	UpdateRaspConfig(config *model.RaspConfig) error
 	DeleteRaspConfig(ids []uint) error
 	GetRaspConfig(hostName string) (*model.RaspConfig, error)
+	GetRaspDefaultConfig() (*model.RaspConfig, error)
 }
 
 type RaspConfigRepository struct {
@@ -101,4 +102,10 @@ func (a RaspConfigRepository) GetRaspConfig(hostName string) (*model.RaspConfig,
 		return nil, errors.New("no config find in db, hostName: " + hostName)
 	}
 	return list[0], err
+}
+
+func (a RaspConfigRepository) GetRaspDefaultConfig() (*model.RaspConfig, error) {
+	var record *model.RaspConfig
+	err := common.DB.Find(&record, "is_default = ?", true).Error
+	return record, err
 }

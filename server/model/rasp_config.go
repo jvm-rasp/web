@@ -18,6 +18,7 @@ type RaspConfig struct {
 	AgentConfigs  datatypes.JSON `gorm:"type:text;comment:'Agent配置信息'" json:"agentConfigs"`
 	BinFileUrl    string         `gorm:"type:varchar(255);comment:'守护进程下载地址'" json:"binFileUrl"`
 	BinFileHash   string         `gorm:"type:varchar(64);comment:'哈希值'" json:"binFileHash"`
+	IsDefault     bool           `gorm:"type:tinyint(1);default:0;comment:'默认策略'" json:"isDefault"`
 }
 
 type RaspFinalConfig struct {
