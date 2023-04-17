@@ -139,6 +139,15 @@
             </el-col>
           </el-row>
           <el-row>
+            <el-form-item label="高级配置">
+              <el-switch
+                v-model="showAdvanced"
+                :active-value="true"
+                :inactive-value="false"
+              />
+            </el-form-item>
+          </el-row>
+          <el-row v-if="showAdvanced">
             <el-col :span="12">
               <el-form-item label="阻断反馈链接" label-width="120px" prop="agentConfigs.redirect_url">
                 <el-input v-model.trim="bindConfigData.agentConfigs.redirect_url" placeholder="配置名称" />
@@ -150,42 +159,42 @@
               </el-form-item>
             </el-col>
           </el-row>
-          <el-row>
+          <el-row v-if="showAdvanced">
             <el-col :span="24">
               <el-form-item label="json阻断文本" label-width="120px" prop="agentConfigs.json_block_content">
                 <el-input v-model.trim="bindConfigData.agentConfigs.json_block_content" placeholder="json格式的阻断文本" />
               </el-form-item>
             </el-col>
           </el-row>
-          <el-row>
+          <el-row v-if="showAdvanced">
             <el-col :span="24">
               <el-form-item label="xml阻断文本" label-width="120px" prop="agentConfigs.xml_block_content">
                 <el-input v-model.trim="bindConfigData.agentConfigs.xml_block_content" placeholder="xml格式的阻断文本" />
               </el-form-item>
             </el-col>
           </el-row>
-          <el-row>
+          <el-row v-if="showAdvanced">
             <el-col :span="24">
               <el-form-item label="html阻断文本" label-width="120px" prop="agentConfigs.html_block_content">
                 <el-input v-model.trim="bindConfigData.agentConfigs.html_block_content" placeholder="html格式的阻断文本" />
               </el-form-item>
             </el-col>
           </el-row>
-          <el-row>
+          <el-row v-if="showAdvanced">
             <el-col :span="24">
               <el-form-item label="日志文件路径" label-width="120px" prop="logPath">
                 <el-input v-model.trim="bindConfigData.logPath" placeholder="日志文件路径" />
               </el-form-item>
             </el-col>
           </el-row>
-          <el-row>
+          <el-row v-if="showAdvanced">
             <el-col :span="24">
               <el-form-item label="守护进程URL" label-width="120px" prop="binFileUrl">
                 <el-input v-model.trim="bindConfigData.binFileUrl" placeholder="守护进程下载链接" />
               </el-form-item>
             </el-col>
           </el-row>
-          <el-row>
+          <el-row v-if="showAdvanced">
             <el-col :span="24">
               <el-form-item label="守护进程hash" label-width="120px" prop="binFileHash">
                 <el-input v-model.trim="bindConfigData.binFileHash" placeholder="守护进程文件hash" />
@@ -236,6 +245,15 @@
             </el-col>
           </el-row>
           <el-row>
+            <el-form-item label="高级配置">
+              <el-switch
+                v-model="showAdvanced"
+                :active-value="true"
+                :inactive-value="false"
+              />
+            </el-form-item>
+          </el-row>
+          <el-row v-if="showAdvanced">
             <el-col :span="12">
               <el-form-item label="阻断反馈链接" label-width="120px" prop="agentConfigs.redirect_url">
                 <el-input v-model.trim="bindConfigData.agentConfigs.redirect_url" placeholder="配置名称" />
@@ -247,42 +265,42 @@
               </el-form-item>
             </el-col>
           </el-row>
-          <el-row>
+          <el-row v-if="showAdvanced">
             <el-col :span="24">
               <el-form-item label="json阻断文本" label-width="120px" prop="agentConfigs.json_block_content">
                 <el-input v-model.trim="bindConfigData.agentConfigs.json_block_content" placeholder="json格式的阻断文本" />
               </el-form-item>
             </el-col>
           </el-row>
-          <el-row>
+          <el-row v-if="showAdvanced">
             <el-col :span="24">
               <el-form-item label="xml阻断文本" label-width="120px" prop="agentConfigs.xml_block_content">
                 <el-input v-model.trim="bindConfigData.agentConfigs.xml_block_content" placeholder="xml格式的阻断文本" />
               </el-form-item>
             </el-col>
           </el-row>
-          <el-row>
+          <el-row v-if="showAdvanced">
             <el-col :span="24">
               <el-form-item label="html阻断文本" label-width="120px" prop="agentConfigs.html_block_content">
                 <el-input v-model.trim="bindConfigData.agentConfigs.html_block_content" placeholder="html格式的阻断文本" />
               </el-form-item>
             </el-col>
           </el-row>
-          <el-row>
+          <el-row v-if="showAdvanced">
             <el-col :span="24">
               <el-form-item label="日志文件路径" label-width="120px" prop="logPath">
                 <el-input v-model.trim="bindConfigData.logPath" placeholder="日志文件路径" />
               </el-form-item>
             </el-col>
           </el-row>
-          <el-row>
+          <el-row v-if="showAdvanced">
             <el-col :span="24">
               <el-form-item label="守护进程URL" label-width="120px" prop="binFileUrl">
                 <el-input v-model.trim="bindConfigData.binFileUrl" placeholder="守护进程下载链接" />
               </el-form-item>
             </el-col>
           </el-row>
-          <el-row>
+          <el-row v-if="showAdvanced">
             <el-col :span="24">
               <el-form-item label="守护进程hash" label-width="120px" prop="binFileHash">
                 <el-input v-model.trim="bindConfigData.binFileHash" placeholder="守护进程文件hash" />
@@ -337,6 +355,7 @@ export default {
       // 模块查询参数
       moduleQueryParams: {
         name: '',
+        status: true,
         pageNum: 1,
         pageSize: 1000
       },
@@ -409,7 +428,8 @@ export default {
         '关闭': 0,
         '动态': 1,
         '静态': 2
-      }
+      },
+      showAdvanced: false
     }
   },
   created() {
