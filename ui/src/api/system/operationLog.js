@@ -13,7 +13,7 @@ export function getOperationLogs(params) {
 export function batchDeleteOperationLogByIds(data) {
   return request({
     url: '/log/operation/delete/batch',
-    method: 'get',
+    method: 'post',
     data
   })
 }
