@@ -29,7 +29,7 @@ export function createMenu(data) {
 export function updateMenuById(Id, data) {
   return request({
     url: '/menu/update/' + Id,
-    method: 'get',
+    method: 'post',
     data
   })
 }

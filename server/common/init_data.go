@@ -539,7 +539,7 @@ func InitData() {
 			Creator:  "系统",
 		},
 		{
-			Method:   "GET",
+			Method:   "POST",
 			Path:     "/menu/update/:menuId",
 			Category: "menu",
 			Desc:     "更新菜单",
