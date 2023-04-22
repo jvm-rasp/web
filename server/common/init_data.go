@@ -74,24 +74,37 @@ func InitData() {
 	var logId uint = 5000
 	var systemId uint = 6000
 
-	componentStr := "component"
 	systemUserStr := "/system/user"
-	userStr := "user"
-	peoplesStr := "peoples"
-	treeTableStr := "tree-table"
-	treeStr := "tree"
-	documentationStr := "documentation"
-	listStr := "list"
+	attackLogStr := "/attack/list"
+    // direct
+    configDirectStr :="/config/list"
+    hostDirectStr :="/host/list"
+    // TODO 其他菜单页面的重定向需要修改
+
+	// icon 配置
+	hostIcon :="host"
+	moduleIcon :="module"
+    attackLogIcon :="attackLog"
+    jarIcon :="jar"
+    listIcon :="list2"
+    jsonIcon :="json"
+    runLogIcon :="runLog"
+    systemIcon :="system"
+    apiIcon :="api"
+    apiLogIcon :="apiLog"
+    menuIcon :="menu"
+    roleIcon :="role"
+    userIcon :="user"
 
 	menus := []model.Menu{
 		{
 			Model:     gorm.Model{ID: hostId},
 			Name:      "Host",
 			Title:     "实例管理",
-			Icon:      &componentStr,
+			Icon:      &hostIcon,
 			Path:      "/host",
 			Component: "Layout",
-			Redirect:  &systemUserStr,
+			Redirect:  &hostDirectStr,
 			Sort:      hostId,
 			ParentId:  &rootId,
 			Roles:     roles,
@@ -101,7 +114,7 @@ func InitData() {
 			Model:     gorm.Model{ID: hostId + 1},
 			Name:      "List",
 			Title:     "实例列表",
-			Icon:      &listStr,
+			Icon:      &listIcon,
 			Path:      "list",
 			Component: "/host/list/index",
 			Sort:      hostId + 1,
@@ -113,10 +126,10 @@ func InitData() {
 			Model:     gorm.Model{ID: attackId},
 			Name:      "Attack",
 			Title:     "攻击告警",
-			Icon:      &componentStr,
+			Icon:      &attackLogIcon,
 			Path:      "/attack",
 			Component: "Layout",
-			Redirect:  &systemUserStr,
+			Redirect:  &attackLogStr,
 			Sort:      attackId,
 			ParentId:  &rootId,
 			Roles:     roles,
@@ -126,7 +139,7 @@ func InitData() {
 			Model:     gorm.Model{ID: attackId + 1},
 			Name:      "List",
 			Title:     "日志列表",
-			Icon:      &listStr,
+			Icon:      &listIcon,
 			Path:      "list",
 			Component: "/attack/list/index",
 			Sort:      attackId + 1,
@@ -138,7 +151,7 @@ func InitData() {
 			Model:     gorm.Model{ID: moduleId},
 			Name:      "Module",
 			Title:     "模块配置",
-			Icon:      &componentStr,
+			Icon:      &moduleIcon,
 			Path:      "/module",
 			Component: "Layout",
 			Redirect:  &systemUserStr,
@@ -151,7 +164,7 @@ func InitData() {
 			Model:     gorm.Model{ID: moduleId + 1},
 			Name:      "List",
 			Title:     "模块列表",
-			Icon:      &listStr,
+			Icon:      &listIcon,
 			Path:      "list",
 			Component: "/module/list/index",
 			Sort:      moduleId + 1,
@@ -163,7 +176,7 @@ func InitData() {
 			Model:     gorm.Model{ID: moduleId + 2},
 			Name:      "Jar",
 			Title:     "jar包管理",
-			Icon:      &listStr,
+			Icon:      &jarIcon,
 			Path:      "jar",
 			Component: "/module/jar/index",
 			Sort:      moduleId + 2,
@@ -175,10 +188,10 @@ func InitData() {
 			Model:     gorm.Model{ID: configId},
 			Name:      "Config",
 			Title:     "策略配置",
-			Icon:      &componentStr,
+			Icon:      &jsonIcon,
 			Path:      "/config",
 			Component: "Layout",
-			Redirect:  &systemUserStr,
+			Redirect:  &configDirectStr,
 			Sort:      configId,
 			ParentId:  &rootId,
 			Roles:     roles,
@@ -188,7 +201,7 @@ func InitData() {
 			Model:     gorm.Model{ID: configId + 1},
 			Name:      "List",
 			Title:     "策略列表",
-			Icon:      &listStr,
+			Icon:      &listIcon,
 			Path:      "list",
 			Component: "/config/list/index",
 			Sort:      configId + 1,
@@ -200,7 +213,7 @@ func InitData() {
 			Model:     gorm.Model{ID: logId},
 			Name:      "Log",
 			Title:     "日志管理",
-			Icon:      &componentStr,
+			Icon:      &runLogIcon,
 			Path:      "/log",
 			Component: "Layout",
 			Redirect:  &systemUserStr,
@@ -213,7 +226,7 @@ func InitData() {
 			Model:     gorm.Model{ID: logId + 1},
 			Name:      "List",
 			Title:     "错误日志",
-			Icon:      &listStr,
+			Icon:      &listIcon,
 			Path:      "list",
 			Component: "/log/list/index",
 			Sort:      logId + 1,
@@ -225,7 +238,7 @@ func InitData() {
 			Model:     gorm.Model{ID: systemId},
 			Name:      "System",
 			Title:     "系统管理",
-			Icon:      &componentStr,
+			Icon:      &systemIcon,
 			Path:      "/system",
 			Component: "Layout",
 			Redirect:  &systemUserStr,
@@ -238,7 +251,7 @@ func InitData() {
 			Model:     gorm.Model{ID: systemId + 1},
 			Name:      "User",
 			Title:     "用户管理",
-			Icon:      &userStr,
+			Icon:      &userIcon,
 			Path:      "user",
 			Component: "/system/user/index",
 			Sort:      systemId + 1,
@@ -250,7 +263,7 @@ func InitData() {
 			Model:     gorm.Model{ID: systemId + 2},
 			Name:      "Role",
 			Title:     "角色管理",
-			Icon:      &peoplesStr,
+			Icon:      &roleIcon,
 			Path:      "role",
 			Component: "/system/role/index",
 			Sort:      systemId + 2,
@@ -262,7 +275,7 @@ func InitData() {
 			Model:     gorm.Model{ID: systemId + 3},
 			Name:      "Menu",
 			Title:     "菜单管理",
-			Icon:      &treeTableStr,
+			Icon:      &menuIcon,
 			Path:      "menu",
 			Component: "/system/menu/index",
 			Sort:      systemId + 3,
@@ -274,7 +287,7 @@ func InitData() {
 			Model:     gorm.Model{ID: systemId + 4},
 			Name:      "Api",
 			Title:     "接口管理",
-			Icon:      &treeStr,
+			Icon:      &apiIcon,
 			Path:      "api",
 			Component: "/system/api/index",
 			Sort:      systemId + 4,
@@ -286,7 +299,7 @@ func InitData() {
 			Model:     gorm.Model{ID: systemId + 5},
 			Name:      "OperationLog",
 			Title:     "操作日志",
-			Icon:      &documentationStr,
+			Icon:      &apiLogIcon,
 			Path:      "operation-log",
 			Component: "/system/operation-log/index",
 			Sort:      systemId + 5,
