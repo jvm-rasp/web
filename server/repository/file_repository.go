@@ -30,7 +30,7 @@ func (h RaspFileRepository) GetRaspFiles(req *vo.RaspFileListRequest) ([]*model.
 	// 名称模糊查询
 	name := strings.TrimSpace(req.ModuleName)
 	if name != "" {
-		db = db.Where("module_name LIKE ?", fmt.Sprintf("%%%s%%", name))
+		db = db.Where("file_name LIKE ?", fmt.Sprintf("%%%s%%", name))
 	}
 	// hash模糊查询
 	hash := strings.TrimSpace(req.FileHash)
