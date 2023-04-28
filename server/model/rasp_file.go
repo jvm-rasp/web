@@ -4,6 +4,7 @@ import "gorm.io/gorm"
 
 type RaspFile struct {
 	gorm.Model
+	Timestamp   string `gorm:"type:varchar(255);index;comment:'文件上传时间'" json:"timestamp"`
 	FileName    string `gorm:"type:varchar(255);index;comment:'文件名称'" json:"fileName"`
 	FileHash    string `gorm:"type:varchar(1024);comment:'文件Hash'" json:"fileHash"`
 	DiskPath    string `gorm:"type:varchar(1024);comment:'磁盘路径'" json:"diskPath"`

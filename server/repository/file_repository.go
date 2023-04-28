@@ -11,9 +11,11 @@ import (
 type IRaspFileRepository interface {
 	GetRaspFiles(req *vo.RaspFileListRequest) ([]*model.RaspFile, int64, error)
 	GetRaspFileById(id uint) (*model.RaspFile, error)
-	GetRaspFileByName(fileName string) (*model.RaspFile, error)
+	GetRaspFileByName(fileName string) (*model.RaspFile, int64, error)
+	GetRaspFileByHash(fileHash string) (*model.RaspFile, error)
 	CreateRaspFile(files *model.RaspFile) error
 	DeleteRaspFile(ids []uint) error
+	UpdateRaspFile(raspHost *model.RaspFile) error
 }
 
 type RaspFileRepository struct {
@@ -66,9 +68,16 @@ func (h RaspFileRepository) GetRaspFileById(id uint) (*model.RaspFile, error) {
 	return record, err
 }
 
-func (h RaspFileRepository) GetRaspFileByName(fileName string) (*model.RaspFile, error) {
+func (h RaspFileRepository) GetRaspFileByName(fileName string) (*model.RaspFile, int64, error) {
 	var record *model.RaspFile
-	err := common.DB.Find(&record, "file_name = ?", fileName).Error
+	var count int64
+	err := common.DB.Find(&record, "file_name = ?", fileName).Count(&count).Error
+	return record, count, err
+}
+
+func (h RaspFileRepository) GetRaspFileByHash(fileHash string) (*model.RaspFile, error) {
+	var record *model.RaspFile
+	err := common.DB.Find(&record, "file_hash = ?", fileHash).Error
 	return record, err
 }
 
@@ -79,5 +88,10 @@ func (h RaspFileRepository) CreateRaspFile(raspHost *model.RaspFile) error {
 
 func (h RaspFileRepository) DeleteRaspFile(ids []uint) error {
 	err := common.DB.Where("id IN (?)", ids).Unscoped().Delete(&model.RaspFile{}).Error
+	return err
+}
+
+func (h RaspFileRepository) UpdateRaspFile(raspHost *model.RaspFile) error {
+	err := common.DB.Save(raspHost).Error
 	return err
 }

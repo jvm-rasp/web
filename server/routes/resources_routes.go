@@ -27,12 +27,24 @@ func (h *HtmlHandler) Index(c *gin.Context) {
 	return
 }
 
+func (h *HtmlHandler) Logo(c *gin.Context) {
+	c.Data(200, "image/svg+xml", resources.Svg)
+	return
+}
+
+func (h *HtmlHandler) Favicon(c *gin.Context) {
+	c.Data(200, "image/vnd.microsoft.icon", resources.Favicon)
+	return
+}
+
 func InitStaticRouter(r *gin.RouterGroup, engine *gin.Engine) gin.IRoutes {
 	r.StaticFS("/static", http.FS(common.NewResource()))
 	html := NewHtmlHandler()
 	router := r.Group("/")
 	{
 		router.GET("", html.Index)
+		router.GET("/webmini.svg", html.Logo)
+		router.GET("/favicon.ico", html.Favicon)
 	}
 	// 解决刷新404问题
 	//engine.NoRoute(html.RedirectIndex)

@@ -13,7 +13,7 @@ import (
 // 操作日志channel
 var OperationLogChan = make(chan *model.OperationLog, 30)
 
-var SkipRecordPath = []string{"/", "", "/static/*filepath"}
+var SkipRecordPath = []string{"/", "", "/webmini.svg", "/favicon.ico", "/static/*filepath"}
 
 func OperationLogMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {

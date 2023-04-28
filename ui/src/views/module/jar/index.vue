@@ -70,6 +70,7 @@
         <el-table-column fixed="right" label="操作" align="center">
           <template slot-scope="scope">
             <el-button type="text" size="medium" @click="handleDelete(scope.row)">删除</el-button>
+            <el-button type="text" size="medium" @click="handleDownload(scope.row)">下载</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -98,7 +99,7 @@
           :on-success="onUploadSuccess"
           multiple
           name="files"
-          :limit="10"
+          :limit="50"
           :on-exceed="handleExceed"
           :file-list="fileList"
         >
@@ -117,6 +118,7 @@ import {
 } from '@/api/module/module'
 import moment from 'moment'
 import { getToken } from '@/utils/auth'
+import { getRootPath } from '@/utils/url'
 
 export default {
   name: 'Module',
@@ -212,6 +214,10 @@ export default {
           message: '已取消删除'
         })
       })
+    },
+
+    handleDownload(record) {
+      window.open(getRootPath() + record.downLoadUrl, '_blank')
     },
 
     // 批量删除

@@ -10,6 +10,8 @@ import (
 	"server/response"
 	"server/util"
 	"server/vo"
+	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -40,12 +42,12 @@ func NewFileController() IFileController {
 }
 
 func (f FileController) Upload(c *gin.Context) {
-	pwd, _ := os.Getwd()
+	//pwd, _ := os.Getwd()
 	form, _ := c.MultipartForm()
 	files := form.File["files"]
 
 	// 创建data目录
-	dataPath := filepath.Join(pwd, DATA_DIR)
+	dataPath := filepath.Join(DATA_DIR)
 	if exist, _ := fileExist(dataPath); !exist {
 		err := os.MkdirAll(dataPath, FILE_PERM)
 		if err != nil {
@@ -55,8 +57,18 @@ func (f FileController) Upload(c *gin.Context) {
 	}
 
 	for _, file := range files {
-		filePath := filepath.Join(dataPath, file.Filename)
-		err := c.SaveUploadedFile(file, filePath)
+		// 创建时间戳
+		ts := strconv.FormatInt(time.Now().Unix(), 10)
+		// 创建目录树
+		dir := filepath.Join(dataPath, file.Filename, ts)
+		err := os.MkdirAll(dir, os.ModePerm)
+		if err != nil {
+			response.Fail(c, nil, err.Error())
+			return
+		}
+		filePath := filepath.Join(dir, file.Filename)
+		// 保存至本地磁盘
+		err = c.SaveUploadedFile(file, filePath)
 		if err != nil {
 			response.Fail(c, nil, err.Error())
 			return
@@ -78,16 +90,16 @@ func (f FileController) Upload(c *gin.Context) {
 		}
 
 		fileInfo := &model.RaspFile{
+			Timestamp:   ts,
 			FileName:    file.Filename,
 			FileHash:    hash,
 			DiskPath:    filePath,
-			DownLoadUrl: "/base/file/download?file=" + file.Filename,
+			DownLoadUrl: "/base/file/download?hash=" + hash,
 			MimeType:    kind.MIME.Value,
 			Creator:     ctxUser.Username,
 		}
-
-		// TODO 如果存在则更新
 		err = f.RaspFileRepository.CreateRaspFile(fileInfo)
+
 		if err != nil {
 			response.Fail(c, nil, err.Error())
 			return
@@ -134,7 +146,7 @@ func (f FileController) Download(c *gin.Context) {
 		response.Fail(c, nil, errStr)
 		return
 	}
-	raspFile, err := f.RaspFileRepository.GetRaspFileByName(req.FileName)
+	raspFile, err := f.RaspFileRepository.GetRaspFileByHash(req.FileHash)
 	if err != nil {
 		response.Fail(c, nil, "获取文件失败")
 		return

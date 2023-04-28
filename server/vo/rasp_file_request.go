@@ -17,7 +17,7 @@ type RaspFileInfoRequest struct {
 }
 
 type RaspFileDownloadRequest struct {
-	FileName string `json:"file" form:"file"`
+	FileHash string `json:"hash" form:"hash"`
 }
 
 type FileInfo struct {
