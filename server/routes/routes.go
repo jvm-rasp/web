@@ -22,6 +22,9 @@ func InitRoutes() *gin.Engine {
 	// r := gin.New()
 	// r.Use(gin.Recovery())
 
+	// 静态文件缓存中间件
+	r.Use(middleware.CacheControlMiddleware())
+
 	// 启用限流中间件
 	// 默认每50毫秒填充一个令牌，最多填充200个
 	fillInterval := time.Duration(config.Conf.RateLimit.FillInterval)
