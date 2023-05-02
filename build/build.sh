@@ -55,6 +55,8 @@ program=$(basename ${moduleName})
 
 cd ${projectpath} || exit 1
 
+go mod tidy || exit 1
+
 # sqlite 不支持交叉编译
 # Binary was compiled with 'CGO_ENABLED=0', go-sqlite3 requires cgo to work
 go build -v -ldflags "$flags" -o ${projectpath}/$program  || exit 1
@@ -88,6 +90,6 @@ zip_name="jrasp-server-bin-$(date +"%Y%m%d%H%M%S").tar.gz"
 
 tar -zcvf ${zip_name} server/
 
-echo "${zip_name} finish."
+echo "$zip_name finish."
 
 exit 0
