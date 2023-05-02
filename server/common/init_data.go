@@ -679,6 +679,13 @@ func InitData() {
 		},
 		{
 			Method:   "POST",
+			Path:     "/config/push",
+			Category: "config",
+			Desc:     "批量推送配置",
+			Creator:  "系统",
+		},
+		{
+			Method:   "POST",
 			Path:     "/module/create",
 			Category: "module",
 			Desc:     "创建模块",

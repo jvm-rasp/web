@@ -463,17 +463,32 @@ func (l LogController) handleAgentConfigUpdateLog(req vo.RaspLogRequest) {
 }
 
 func (l LogController) handleUpdateConfigId(req vo.RaspLogRequest) {
-	configId, err := strconv.ParseInt(req.Detail, 10, 32)
-	if err != nil {
-		return
-	}
-	host := &model.RaspHost{
-		HostName: req.HostName,
-		ConfigId: uint(configId),
-	}
-	err = l.RaspHostRepository.UpdateRaspHostByHostName(host)
+	// 获取configId
+	detailMap := make(map[string]uint)
+	err := json.Unmarshal([]byte(req.Detail), &detailMap)
 	if err != nil {
 		panic(err)
+	}
+	configId := detailMap["configId"]
+	if err != nil {
+		panic(err)
+	}
+	dbData, err := l.RaspHostRepository.QueryRaspHost(req.HostName)
+	if err != nil {
+		panic(err)
+	}
+	if len(dbData) > 0 {
+		dbConfigId := dbData[0].ConfigId
+		if dbConfigId != configId {
+			hostController := NewRaspHostController()
+			content, err := hostController.GeneratePushConfig(dbConfigId)
+			if err != nil {
+				panic(err)
+			}
+			hostController.PushHostsConfig([]string{req.HostName}, content)
+		}
+	} else {
+		common.Log.Warnf("主机: %v 不存在, 无法推送消息", req.HostName)
 	}
 }
 

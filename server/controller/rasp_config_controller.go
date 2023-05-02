@@ -19,6 +19,7 @@ type IRaspConfigController interface {
 	GetViperRaspConfig(c *gin.Context)
 	UpdateRaspConfigStatusById(c *gin.Context)
 	UpdateRaspConfigDefaultById(c *gin.Context)
+	PushRaspConfig(c *gin.Context)
 }
 
 type RaspConfigController struct {
@@ -273,4 +274,43 @@ func (l RaspConfigController) UpdateRaspConfigDefaultById(c *gin.Context) {
 		return
 	}
 	response.Success(c, nil, "更新策略成功")
+}
+
+func (l RaspConfigController) PushRaspConfig(c *gin.Context) {
+	var req vo.PushRaspConfigRequest
+	// 参数绑定
+	if err := c.ShouldBind(&req); err != nil {
+		response.Fail(c, nil, err.Error())
+		return
+	}
+	// 参数校验
+	if err := common.Validate.Struct(&req); err != nil {
+		errStr := err.(validator.ValidationErrors)[0].Translate(common.Trans)
+		response.Fail(c, nil, errStr)
+		return
+	}
+	// 生成推送的配置信息
+	hostController := NewRaspHostController()
+	hostRepository := repository.NewRaspHostRepository()
+	content, err := hostController.GeneratePushConfig(req.ID)
+	if err != nil {
+		response.Fail(c, nil, "推送配置失败")
+		return
+	}
+	// 先更新数据库中的配置Id
+	hostList, _, err := hostRepository.GetRaspHosts(new(vo.RaspHostListRequest))
+	var hostNameList []string
+	for _, item := range hostList {
+		item.ConfigId = req.ID
+		err = hostRepository.UpdateRaspHost(item)
+		if err != nil {
+			common.Log.Errorf("更新配置Id失败, %v", err)
+			continue
+		}
+		hostNameList = append(hostNameList, item.HostName)
+	}
+	// 开始推送最新的配置
+	hostController.PushHostsConfig(hostNameList, content)
+
+	response.Success(c, nil, "推送策略成功")
 }

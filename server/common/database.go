@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 	"server/model"
 )
 
@@ -12,7 +13,9 @@ var DB *gorm.DB
 
 // 初始化mysql数据库
 func InitMysql() {
-	db, err := gorm.Open(sqlite.Open("jrasp.db"), &gorm.Config{})
+	db, err := gorm.Open(sqlite.Open("jrasp.db"), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Silent),
+	})
 	if err != nil {
 		Log.Panicf("初始化mysql数据库异常: %v", err)
 		panic(fmt.Errorf("初始化mysql数据库异常: %v", err))

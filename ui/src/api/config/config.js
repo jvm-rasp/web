@@ -59,3 +59,11 @@ export function updateDefaultById(params) {
     data: params
   })
 }
+
+export function pushConfigById(params) {
+  return request({
+    url: '/config/push',
+    method: 'post',
+    data: params
+  })
+}

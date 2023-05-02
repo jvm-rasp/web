@@ -90,6 +90,7 @@
         <el-table-column show-overflow-tooltip sortable prop="CreatedAt" label="创建时间" align="center" :formatter="dateFormat" />
         <el-table-column fixed="right" label="操作" align="center">
           <template slot-scope="scope">
+            <el-button type="text" size="medium" @click="handlePush(scope.row)">推送</el-button>
             <el-button type="text" size="medium" @click="handleDelete(scope.row)">删除</el-button>
             <el-button type="text" size="medium" @click="handleEdit(scope.row)">修改</el-button>
           </template>
@@ -331,7 +332,7 @@ import {
   batchDeleteConfigByIds,
   updateConfig,
   updateStatusById,
-  updateDefaultById
+  updateDefaultById, pushConfigById
 } from '@/api/config/config'
 import vueJsonEditor from 'vue-json-editor'
 import { getModules } from '@/api/module/module'
@@ -481,6 +482,30 @@ export default {
           showClose: true,
           type: 'info',
           message: '已取消删除'
+        })
+      })
+    },
+
+    handlePush(record) {
+      this.$confirm('确定推送此配置至所有服务器?', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(async res => {
+        this.loading = true
+        let msg = ''
+        try {
+          // TODO 批量推送配置
+          const { message } = await pushConfigById({ id: record.ID })
+          msg = message
+        } finally {
+          this.loading = false
+        }
+        await this.getConfigTableData()
+        this.$message({
+          showClose: true,
+          message: msg,
+          type: 'success'
         })
       })
     },

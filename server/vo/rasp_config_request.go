@@ -54,3 +54,7 @@ type UpdateRaspConfigDefaultRequest struct {
 	ID        uint `json:"id" form:"id" validate:"required,min=1,max=32"`
 	IsDefault bool `json:"isDefault" form:"isDefault" validate:"boolean"`
 }
+
+type PushRaspConfigRequest struct {
+	ID uint `json:"id" form:"id" validate:"required,min=1,max=32"`
+}
