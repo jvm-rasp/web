@@ -14,6 +14,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/gookit/goutil v0.6.8
 	github.com/h2non/filetype v1.1.3
+	github.com/hashicorp/mdns v1.0.5
 	github.com/juju/ratelimit v1.0.1
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/spf13/viper v1.7.1
@@ -25,6 +26,11 @@ require (
 	gorm.io/datatypes v1.1.1
 	gorm.io/driver/sqlite v1.4.4
 	gorm.io/gorm v1.24.6
+)
+
+require (
+	github.com/miekg/dns v1.1.41 // indirect
+	golang.org/x/net v0.8.0 // indirect
 )
 
 require (
