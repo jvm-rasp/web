@@ -1,11 +1,12 @@
 package vo
 
 type RaspFileListRequest struct {
-	ModuleName string `json:"moduleName" form:"moduleName"`
-	FileHash   string `json:"fileHash" form:"fileHash"`
-	MimeType   string `json:"mimeType" form:"mimeType"`
-	PageNum    uint   `json:"pageNum" form:"pageNum"`
-	PageSize   uint   `json:"pageSize" form:"pageSize"`
+	FileName string `json:"fileName" form:"fileName"`
+	Creator  string `json:"creator" form:"creator"`
+	FileHash string `json:"fileHash" form:"fileHash"`
+	MimeType string `json:"mimeType" form:"mimeType"`
+	PageNum  uint   `json:"pageNum" form:"pageNum"`
+	PageSize uint   `json:"pageSize" form:"pageSize"`
 }
 
 type RaspFileDeleteRequest struct {

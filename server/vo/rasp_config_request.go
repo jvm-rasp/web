@@ -11,8 +11,8 @@ type CreateRaspConfigRequest struct {
 	ModuleConfigs datatypes.JSON `json:"moduleConfigs" form:"moduleConfigs"`
 	LogPath       string         `json:"logPath" form:"logPath" validate:"required,min=2,max=32"`
 	AgentConfigs  datatypes.JSON `json:"agentConfigs" form:"agentConfigs"`
-	BinFileUrl    string         `json:"binFileUrl" form:"binFileUrl"`
-	BinFileHash   string         `json:"binFileHash" form:"binFileHash"`
+	RaspBinInfo   datatypes.JSON `json:"raspBinInfo" form:"raspBinInfo"`
+	RaspLibInfo   datatypes.JSON `json:"raspLibInfo" form:"raspLibInfo"`
 }
 
 type UpdateRaspConfigRequest struct {
@@ -24,8 +24,8 @@ type UpdateRaspConfigRequest struct {
 	ModuleConfigs datatypes.JSON `json:"moduleConfigs" form:"moduleConfigs"`
 	LogPath       string         `json:"logPath" form:"logPath" validate:"required,min=2,max=32"`
 	AgentConfigs  datatypes.JSON `json:"agentConfigs" form:"agentConfigs"`
-	BinFileUrl    string         `json:"binFileUrl" form:"binFileUrl"`
-	BinFileHash   string         `json:"binFileHash" form:"binFileHash"`
+	RaspBinInfo   datatypes.JSON `json:"raspBinInfo" form:"raspBinInfo"`
+	RaspLibInfo   datatypes.JSON `json:"raspLibInfo" form:"raspLibInfo"`
 }
 
 // 获取接口列表结构体

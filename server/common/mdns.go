@@ -28,11 +28,11 @@ func NewMDNSServer() *MDNSServer {
 
 func (s *MDNSServer) NewService() {
 	// Setup our service export
-	instance, _ := os.Hostname()
+	instance := "admin"
 	port := config.Conf.System.Port
-	hostName := ""
+	hostName, _ := os.Hostname()
 	domain := ""
-	serviceName := "rasp.server"
+	serviceName := "jrasp"
 
 	protocol := util.Ternary(config.Conf.Ssl.Enable, "wss", "ws")
 	ip := util.GetDefaultIp()
@@ -42,7 +42,7 @@ func (s *MDNSServer) NewService() {
 		net.ParseIP(ip),
 	}
 	var err error
-	s.service, err = mdns.NewMDNSService(instance, serviceName, domain, hostName, port, ips, txt)
+	s.service, err = mdns.NewMDNSService(instance, serviceName, domain, hostName+".", port, ips, txt)
 	if err != nil {
 		panic(err)
 	}

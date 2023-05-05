@@ -30,9 +30,14 @@ func (h RaspFileRepository) GetRaspFiles(req *vo.RaspFileListRequest) ([]*model.
 	db := common.DB.Model(&model.RaspFile{}).Order("created_at DESC")
 
 	// 名称模糊查询
-	name := strings.TrimSpace(req.ModuleName)
+	name := strings.TrimSpace(req.FileName)
 	if name != "" {
 		db = db.Where("file_name LIKE ?", fmt.Sprintf("%%%s%%", name))
+	}
+	// 创建人模糊查询
+	creator := strings.TrimSpace(req.Creator)
+	if creator != "" {
+		db = db.Where("creator LIKE ?", fmt.Sprintf("%%%s%%", creator))
 	}
 	// hash模糊查询
 	hash := strings.TrimSpace(req.FileHash)

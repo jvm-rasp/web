@@ -238,6 +238,20 @@
       </el-dialog>
       <el-dialog title="选择防护模块" :visible.sync="selectUploadFileVisible" width="60%">
         <div style="margin-bottom: 30px;">
+          <!-- 条件搜索框 -->
+          <el-row>
+            <el-form :size="this.$store.getters.size" :inline="true" :model="uploadFilesParams" class="demo-form-inline">
+              <el-form-item label="文件名称">
+                <el-input v-model.trim="uploadFilesParams.fileName" clearable placeholder="文件名称" @clear="filesSearch" />
+              </el-form-item>
+              <el-form-item label="创建人">
+                <el-input v-model.trim="uploadFilesParams.creator" clearable placeholder="创建人" @clear="filesSearch" />
+              </el-form-item>
+              <el-form-item>
+                <el-button :loading="loading" icon="el-icon-search" type="primary" :size="this.$store.getters.size" @click="filesSearch">查询</el-button>
+              </el-form-item>
+            </el-form>
+          </el-row>
           <el-table
             v-loading="loading"
             :data="uploadFileTableData"
@@ -366,7 +380,7 @@ export default {
       selectedRadio: '',
       selectUploadData: {
         ID: '',
-        moduleName: '',
+        fileName: '',
         fileHash: '',
         moduleVersion: '',
         creator: '',
@@ -375,7 +389,8 @@ export default {
         downLoadUrl: ''
       },
       uploadFilesParams: {
-        moduleName: '',
+        fileName: '',
+        creator: '',
         fileHash: '',
         mimeType: 'application/zip',
         pageNum: 1,
@@ -391,6 +406,12 @@ export default {
     search() {
       this.params.pageNum = 1
       this.getModuleTableData()
+    },
+
+    // 上传模块查询
+    filesSearch() {
+      this.uploadFilesParams.pageNum = 1
+      this.getUploadTableData()
     },
 
     // 获取表格数据

@@ -35,14 +35,17 @@ var AgentMode = map[uint]string{
 type RaspHostController struct {
 	RaspHostRepository   repository.IRaspHostRepository
 	RaspConfigRepository repository.IRaspConfigRepository
+	RaspFileRepository   repository.IRaspFileRepository
 }
 
 func NewRaspHostController() IRaspHostController {
 	raspHostRepository := repository.NewRaspHostRepository()
 	raspConfigRepository := repository.NewRaspConfigRepository()
+	raspFileRepository := repository.NewRaspFileRepository()
 	raspHostController := RaspHostController{
 		RaspHostRepository:   raspHostRepository,
 		RaspConfigRepository: raspConfigRepository,
+		RaspFileRepository:   raspFileRepository,
 	}
 	return raspHostController
 }
@@ -148,8 +151,16 @@ func (h RaspHostController) GeneratePushConfig(configId uint) ([]byte, error) {
 	}
 	// 合并成一个完成的配置文件
 	var agentConfigsFields model.AgentConfig
+	var raspLibInfo model.ZipFileInfo
+	var raspBinInfo model.ZipFileInfo
+
 	var moduleConfigsFields []model.RaspModule
 	var moduleConfigs []model.ModuleConfig
+	var downloadPrefix = fmt.Sprintf("%v://%v:%v/%v",
+		util.Ternary(config.Conf.Ssl.Enable, "https", "http"),
+		util.GetDefaultIp(),
+		config.Conf.System.Port,
+		config.Conf.System.UrlPathPrefix)
 	err = json.Unmarshal([]byte(raspConfig.AgentConfigs.String()), &agentConfigsFields)
 	if err != nil {
 		return nil, errors.New("获取配置文本失败:" + err.Error())
@@ -158,6 +169,41 @@ func (h RaspHostController) GeneratePushConfig(configId uint) ([]byte, error) {
 	if err != nil {
 		return nil, errors.New("获取配置文本失败:" + err.Error())
 	}
+	err = json.Unmarshal([]byte(raspConfig.RaspLibInfo.String()), &raspLibInfo)
+	if err != nil {
+		return nil, errors.New("获取配置文本失败:" + err.Error())
+	}
+	err = json.Unmarshal([]byte(raspConfig.RaspBinInfo.String()), &raspBinInfo)
+	if err != nil {
+		return nil, errors.New("获取配置文本失败:" + err.Error())
+	}
+	// 添加raspLibInfo子文件信息
+	if raspLibInfo.Md5 != "" {
+		raspLibInfo.DownloadUrl = util.Ternary(raspLibInfo.Md5 == "", "", fmt.Sprintf("%v%v", downloadPrefix, raspLibInfo.DownloadUrl)).(string)
+		file, err := h.RaspFileRepository.GetRaspFileByHash(raspLibInfo.Md5)
+		if err != nil {
+			return nil, errors.New("获取配置文本失败:" + err.Error())
+		}
+		zipItemInfo, err := util.GetZipItemInfo(file.DiskPath)
+		if err != nil {
+			return nil, errors.New("获取配置文本失败:" + err.Error())
+		}
+		raspLibInfo.ItemsInfo = zipItemInfo
+	}
+	// 添加raspBinInfo子文件信息
+	if raspBinInfo.Md5 != "" {
+		raspBinInfo.DownloadUrl = util.Ternary(raspBinInfo.Md5 == "", "", fmt.Sprintf("%v%v", downloadPrefix, raspBinInfo.DownloadUrl)).(string)
+		file, err := h.RaspFileRepository.GetRaspFileByHash(raspBinInfo.Md5)
+		if err != nil {
+			return nil, errors.New("获取配置文本失败:" + err.Error())
+		}
+		zipItemInfo, err := util.GetZipItemInfo(file.DiskPath)
+		if err != nil {
+			return nil, errors.New("获取配置文本失败:" + err.Error())
+		}
+		raspBinInfo.ItemsInfo = zipItemInfo
+	}
+	// 添加模块参数信息
 	for _, item := range moduleConfigsFields {
 		var moduleConfig model.ModuleConfig
 		err = json.Unmarshal([]byte(item.Parameters.String()), &moduleConfig)
@@ -165,12 +211,7 @@ func (h RaspHostController) GeneratePushConfig(configId uint) ([]byte, error) {
 		if strings.HasPrefix(item.DownLoadURL, "http://") || strings.HasPrefix(item.DownLoadURL, "https://") {
 			moduleConfig.DownLoadUrl = item.DownLoadURL
 		} else {
-			moduleConfig.DownLoadUrl = fmt.Sprintf("%v://%v:%v/%v%v",
-				util.Ternary(config.Conf.Ssl.Enable, "https", "http"),
-				util.GetDefaultIp(),
-				config.Conf.System.Port,
-				config.Conf.System.UrlPathPrefix,
-				item.DownLoadURL)
+			moduleConfig.DownLoadUrl = fmt.Sprintf("%v%v", downloadPrefix, item.DownLoadURL)
 		}
 		moduleConfig.Md5 = item.Md5
 		if err != nil {
@@ -188,8 +229,10 @@ func (h RaspHostController) GeneratePushConfig(configId uint) ([]byte, error) {
 			util.GetDefaultIp(),
 			config.Conf.System.Port,
 			config.Conf.System.UrlPathPrefix),
-		AgentConfigs:  agentConfigsFields,
-		ModuleConfigs: moduleConfigs,
+		AgentConfigs:   agentConfigsFields,
+		RaspLibConfigs: raspLibInfo,
+		RaspBinConfigs: raspBinInfo,
+		ModuleConfigs:  moduleConfigs,
 	}
 
 	content, err := json.Marshal(finalConfig)
