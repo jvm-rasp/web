@@ -189,16 +189,30 @@
             </el-col>
           </el-row>
           <el-row v-if="showAdvanced">
-            <el-col :span="24">
-              <el-form-item label="守护进程URL" label-width="120px" prop="binFileUrl">
-                <el-input v-model.trim="bindConfigData.binFileUrl" placeholder="守护进程下载链接" />
+            <el-col :span="12">
+              <el-form-item label="RASP Bin更新包" label-width="120px" prop="binFileUrl">
+                <el-input v-model.trim="bindConfigData.raspBinInfo.downLoadUrl" placeholder="RASP Bin更新包下载链接">
+                  <i slot="suffix" class="el-input__icon el-icon-more" @click="openUploadForm('raspBinInfo')" />
+                </el-input>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="文件hash" label-width="120px" prop="binFileHash">
+                <el-input v-model.trim="bindConfigData.raspBinInfo.md5" placeholder="RASP Bin更新包hash" />
               </el-form-item>
             </el-col>
           </el-row>
           <el-row v-if="showAdvanced">
-            <el-col :span="24">
-              <el-form-item label="守护进程hash" label-width="120px" prop="binFileHash">
-                <el-input v-model.trim="bindConfigData.binFileHash" placeholder="守护进程文件hash" />
+            <el-col :span="12">
+              <el-form-item label="RASP Lib更新包" label-width="120px" prop="binFileUrl">
+                <el-input v-model.trim="bindConfigData.raspLibInfo.downLoadUrl" placeholder="RASP Lib更新包下载链接">
+                  <i slot="suffix" class="el-input__icon el-icon-more" @click="openUploadForm('raspLibInfo')" />
+                </el-input>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="文件hash" label-width="120px" prop="binFileHash">
+                <el-input v-model.trim="bindConfigData.raspLibInfo.md5" placeholder="RASP Lib更新包hash" />
               </el-form-item>
             </el-col>
           </el-row>
@@ -295,16 +309,30 @@
             </el-col>
           </el-row>
           <el-row v-if="showAdvanced">
-            <el-col :span="24">
-              <el-form-item label="守护进程URL" label-width="120px" prop="binFileUrl">
-                <el-input v-model.trim="bindConfigData.binFileUrl" placeholder="守护进程下载链接" />
+            <el-col :span="12">
+              <el-form-item label="RASP Bin更新包" label-width="120px" prop="binFileUrl">
+                <el-input v-model.trim="bindConfigData.raspBinInfo.downLoadUrl" placeholder="RASP Bin更新包下载链接">
+                  <i slot="suffix" class="el-input__icon el-icon-more" @click="openUploadForm('raspBinInfo')" />
+                </el-input>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="文件hash" label-width="120px" prop="binFileHash">
+                <el-input v-model.trim="bindConfigData.raspBinInfo.md5" placeholder="RASP Bin更新包hash" />
               </el-form-item>
             </el-col>
           </el-row>
           <el-row v-if="showAdvanced">
-            <el-col :span="24">
-              <el-form-item label="守护进程hash" label-width="120px" prop="binFileHash">
-                <el-input v-model.trim="bindConfigData.binFileHash" placeholder="守护进程文件hash" />
+            <el-col :span="12">
+              <el-form-item label="RASP Lib更新包" label-width="120px" prop="binFileUrl">
+                <el-input v-model.trim="bindConfigData.raspLibInfo.downLoadUrl" placeholder="RASP Lib更新包下载链接">
+                  <i slot="suffix" class="el-input__icon el-icon-more" @click="openUploadForm('raspLibInfo')" />
+                </el-input>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="文件hash" label-width="120px" prop="binFileHash">
+                <el-input v-model.trim="bindConfigData.raspLibInfo.md5" placeholder="RASP Lib更新包hash" />
               </el-form-item>
             </el-col>
           </el-row>
@@ -321,6 +349,76 @@
           <el-button size="mini" :loading="submitCreateConfigLoading" type="primary" @click="editConfigForm()">更 新</el-button>
         </div>
       </el-dialog>
+      <!-- 选择更新模块-->
+      <el-dialog title="选择模块" :visible.sync="selectUploadFileVisible" width="60%">
+        <div style="margin-bottom: 30px;">
+          <!-- 条件搜索框 -->
+          <el-row>
+            <el-form :size="this.$store.getters.size" :inline="true" :model="uploadFilesParams" class="demo-form-inline">
+              <el-form-item label="文件名称">
+                <el-input v-model.trim="uploadFilesParams.fileName" clearable placeholder="文件名称" @clear="filesSearch" />
+              </el-form-item>
+              <el-form-item label="创建人">
+                <el-input v-model.trim="uploadFilesParams.creator" clearable placeholder="创建人" @clear="filesSearch" />
+              </el-form-item>
+              <el-form-item>
+                <el-button :loading="loading" icon="el-icon-search" type="primary" :size="this.$store.getters.size" @click="filesSearch">查询</el-button>
+              </el-form-item>
+            </el-form>
+          </el-row>
+          <el-table
+            v-loading="loading"
+            :data="uploadFileTableData"
+            border
+            stripe
+            style="width: 100%;"
+            highlight-current-row
+            @current-change="updateCurrentUploadFile"
+          >
+            <!-- 单选方法,返回选中的表格行 -->
+            <el-table-column width="35" :resizable="false" align="center">
+              <template slot-scope="scope">
+                <el-radio v-model="selectedRadio" :label="scope.row.ID" style="color: #fff;" @change.native="setCurrentUploadFile(scope.row)" />
+              </template>
+            </el-table-column>
+            <el-table-column show-overflow-tooltip sortable prop="fileName" label="文件名称" align="center" />
+            <el-table-column show-overflow-tooltip sortable prop="fileHash" label="文件hash" align="center" width="300" />
+            <el-table-column show-overflow-tooltip sortable prop="creator" label="创建人" align="center" />
+            <el-table-column
+              show-overflow-tooltip
+              sortable
+              prop="CreatedAt"
+              label="创建时间"
+              align="center"
+              :formatter="dateFormat"
+            />
+            <el-table-column
+              show-overflow-tooltip
+              sortable
+              prop="UpdatedAt"
+              label="更新时间"
+              align="center"
+              :formatter="dateFormat"
+            />
+          </el-table>
+          <!--分页配置-->
+          <el-pagination
+            :current-page="uploadFilesParams.pageNum"
+            :page-size="uploadFilesParams.pageSize"
+            :total="uploadFileTotal"
+            :page-sizes="[10, 20, 50, 100]"
+            layout="total, prev, pager, next, sizes"
+            background
+            style="margin-top: 10px;float:right;margin-bottom: 10px;"
+            @size-change="handleSizeChange2"
+            @current-change="handleCurrentChange2"
+          />
+        </div>
+        <div slot="footer" class="dialog-footer">
+          <el-button size="mini" @click="closeSelectUploadFileDialog">关 闭</el-button>
+          <el-button size="mini" type="primary" @click="addSelectedFile">确 定</el-button>
+        </div>
+      </el-dialog>
     </el-card>
   </div>
 </template>
@@ -335,7 +433,7 @@ import {
   updateDefaultById, pushConfigById
 } from '@/api/config/config'
 import vueJsonEditor from 'vue-json-editor'
-import { getModules } from '@/api/module/module'
+import { getModules, getUploadFiles } from '@/api/module/module'
 import moment from 'moment/moment'
 
 export default {
@@ -360,9 +458,32 @@ export default {
         pageNum: 1,
         pageSize: 1000
       },
+      // 上传附件查询参数
+      uploadFilesParams: {
+        fileName: '',
+        creator: '',
+        fileHash: '',
+        mimeType: '',
+        pageNum: 1,
+        pageSize: 10
+      },
+      selectedRadio: '',
+      selectUploadData: {
+        ID: '',
+        fileName: '',
+        fileHash: '',
+        moduleVersion: '',
+        creator: '',
+        CreatedAt: '',
+        UpdatedAt: '',
+        downLoadUrl: ''
+      },
       // 表格数据
       tableData: [],
+      // 上传附件表格数据
+      uploadFileTableData: [],
       total: 0,
+      uploadFileTotal: 0,
       loading: false,
 
       // 可用模块
@@ -393,10 +514,18 @@ export default {
           xml_block_content: '',
           html_block_content: ''
         },
-        binFileUrl: '',
-        binFileHash: ''
+        raspBinInfo: {
+          fileName: '',
+          downLoadUrl: '',
+          md5: ''
+        },
+        raspLibInfo: {
+          fileName: '',
+          downLoadUrl: '',
+          md5: ''
+        }
       },
-
+      selectKeyName: null,
       isIndeterminate: true,
       checkAll: false,
 
@@ -406,6 +535,7 @@ export default {
       // 创建配置
       createConfigVisible: false,
       submitCreateConfigLoading: false,
+      selectUploadFileVisible: false,
 
       // 配置项约束
       createConfigFormRules: {
@@ -442,6 +572,11 @@ export default {
     search() {
       this.params.pageNum = 1
       this.getConfigTableData()
+    },
+    // 上传模块查询
+    filesSearch() {
+      this.uploadFilesParams.pageNum = 1
+      this.getUploadTableData()
     },
 
     handleEdit(record) {
@@ -577,8 +712,16 @@ export default {
           xml_block_content: '<?xml version="1.0"?><doc><error>true</error><reason>Request blocked by EpointRASP</reason><attack_name>%attack_name%</attack_name><attack_time>%attack_time%</attack_time></doc>',
           html_block_content: '<html class="no-js" style="background-color: transparent"><head><title>安全拦截信息</title><style>.blockquote, body, button, code, dd, div, dl, dt, fieldset, form, h1, h2, h3, h4, h5, h6, input, legend, li, ol, p, pre, td, textarea, th, ul{margin: 0;padding: 0;}body{font-size: 14px;font-family: \'Microsoft YaHei\';}.sys-panel-cover{position: absolute;top: 0;left: 0;width: 100%;height: 100%;background: #000;opacity: 0.6;filter: alpha(opacity=60);}.sys-panel.in-center{ position: absolute;top: 50%;left: 50%;margin-left: -240px;margin-top: -240px;}.sys-panel{border-radius: 5px;border: 1px solid #cdcdcd;background-color: #fff;box-shadow: 0 0 8px rgba(0,0,0,0.8);width: 550px;box-sizing: border-box;padding: 0 30px;padding-bottom:20px;}.sys-panel .panel-title.danger{color: #a94442;}.sys-panel .panel-hd{border-bottom: 1px solid #dcdcdc;}.sys-panel .panel-title{font-size: 18px;line-height: 2.5;}.sys-panel .panel-ft{border-top: 1px solid #dcdcdc;padding: 10px 0;}.sys-panel .alert{padding: 10px;border-radius: 3px;line-height: 1.8;border: 1px solid transparent;height:100px;}.sys-panel .alert-warn{color: #8a6d3b;background-color: #fcf8e3;border-color: #faebcc;}</style></head><body><form id="form1"><div class="sys-panel-cover"></div><div class="sys-panel in-center" id="err-panel"><div class="panel-hd mb20"><h4 class="panel-title danger">安全提示</h4></div><div class="panel-bd mb20"><p class="alert alert-warn">安全提示：您的请求可能存在攻击行为, 已被EpointRASP拦截</br>攻击类型: 【%attack_name%】</br>攻击时间: 【%attack_time%】</p></div></div></form></body></html>'
         },
-        binFileUrl: '',
-        binFileHash: ''
+        raspBinInfo: {
+          fileName: '',
+          downLoadUrl: '',
+          md5: ''
+        },
+        raspLibInfo: {
+          fileName: '',
+          downLoadUrl: '',
+          md5: ''
+        }
       }
       const checkedCount = this.selectedModuleId.length
       this.checkAll = checkedCount === this.moduleList.length
@@ -588,6 +731,11 @@ export default {
     // 关闭配置创建
     closeCreateConfig() {
       this.createConfigVisible = false
+    },
+    // 关闭上传文件选择窗口
+    closeSelectUploadFileDialog() {
+      this.selectUploadFileVisible = false
+      this.selectKeyName = null
     },
 
     // 提交表单
@@ -778,6 +926,50 @@ export default {
         }
       }
       return '未知'
+    },
+    // 上传模块
+    openUploadForm(selectKeyName) {
+      this.selectKeyName = selectKeyName
+      this.selectUploadFileVisible = true
+      this.getUploadTableData()
+    },
+    // 获取上传文件表格数据
+    async getUploadTableData() {
+      this.loading = true
+      try {
+        const { data } = await getUploadFiles(this.uploadFilesParams)
+        this.uploadFileTableData = data.list
+        this.uploadFileTotal = data.total
+      } finally {
+        this.loading = false
+      }
+    },
+    // 点击选中的行也可以选中单选按钮
+    updateCurrentUploadFile(row) {
+      if (!row) return
+      this.selectedRadio = row.ID
+      this.selectUploadData = row
+    },
+    handleSizeChange2(val) {
+      this.uploadFilesParams.pageSize = val
+      this.getUploadTableData()
+    },
+    handleCurrentChange2(val) {
+      this.uploadFilesParams.pageNum = val
+      this.getUploadTableData()
+    },
+    // 单选选中
+    setCurrentUploadFile(row) {
+      this.selectUploadData = row
+    },
+    async addSelectedFile() {
+      if (this.selectedRadio) {
+        this.bindConfigData[this.selectKeyName].fileName = this.selectUploadData.fileName
+        this.bindConfigData[this.selectKeyName].downLoadUrl = this.selectUploadData.downLoadUrl
+        this.bindConfigData[this.selectKeyName].md5 = this.selectUploadData.fileHash
+      }
+      this.selectUploadFileVisible = false
+      this.selectKeyName = null
     }
   }
 }

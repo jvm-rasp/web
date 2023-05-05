@@ -88,8 +88,8 @@ func (r RaspConfigController) CreateRaspConfig(c *gin.Context) {
 		ModuleConfigs: req.ModuleConfigs,
 		LogPath:       req.LogPath,
 		AgentConfigs:  req.AgentConfigs,
-		BinFileUrl:    req.BinFileUrl,
-		BinFileHash:   req.BinFileHash,
+		RaspBinInfo:   req.RaspBinInfo,
+		RaspLibInfo:   req.RaspLibInfo,
 	}
 
 	// 获取
@@ -139,8 +139,8 @@ func (r RaspConfigController) UpdateRaspConfig(c *gin.Context) {
 	config.ModuleConfigs = req.ModuleConfigs
 	config.LogPath = req.LogPath
 	config.AgentConfigs = req.AgentConfigs
-	config.BinFileUrl = req.BinFileUrl
-	config.BinFileHash = req.BinFileHash
+	config.RaspBinInfo = req.RaspBinInfo
+	config.RaspLibInfo = req.RaspLibInfo
 
 	err = r.RaspConfigRepository.UpdateRaspConfig(config)
 	if err != nil {
