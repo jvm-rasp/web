@@ -194,7 +194,9 @@
           <el-row>
             <el-col :span="12">
               <el-form-item label="模块名称" prop="moduleName">
-                <el-input v-model="bindModuleData.moduleName" placeholder="模块名称" />
+                <el-input v-model="bindModuleData.moduleName" placeholder="模块名称">
+                  <i slot="suffix" class="el-input__icon el-icon-more" @click="openUploadForm" />
+                </el-input>
               </el-form-item>
             </el-col>
             <el-col :span="12">
