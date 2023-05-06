@@ -8,7 +8,7 @@ type CreateMenuRequest struct {
 	Path       string `json:"path" form:"path" validate:"required,min=1,max=100"`
 	Redirect   string `json:"redirect" form:"redirect" validate:"min=0,max=100"`
 	Component  string `json:"component" form:"component" validate:"required,min=1,max=100"`
-	Sort       uint   `json:"sort" form:"sort" validate:"gte=1,lte=999"`
+	Sort       uint   `json:"sort" form:"sort" validate:"gte=1,lte=9999"`
 	Status     uint   `json:"status" form:"status" validate:"oneof=1 2"`
 	Hidden     uint   `json:"hidden" form:"hidden" validate:"oneof=1 2"`
 	NoCache    uint   `json:"noCache" form:"noCache" validate:"oneof=1 2"`
@@ -26,7 +26,7 @@ type UpdateMenuRequest struct {
 	Path       string `json:"path" form:"path" validate:"required,min=1,max=100"`
 	Redirect   string `json:"redirect" form:"redirect" validate:"min=0,max=100"`
 	Component  string `json:"component" form:"component" validate:"min=0,max=100"`
-	Sort       uint   `json:"sort" form:"sort" validate:"gte=1,lte=999"`
+	Sort       uint   `json:"sort" form:"sort" validate:"gte=1,lte=9999"`
 	Status     uint   `json:"status" form:"status" validate:"oneof=1 2"`
 	Hidden     uint   `json:"hidden" form:"hidden" validate:"oneof=1 2"`
 	NoCache    uint   `json:"noCache" form:"noCache" validate:"oneof=1 2"`

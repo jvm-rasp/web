@@ -6,7 +6,7 @@ type CreateRoleRequest struct {
 	Keyword string `json:"keyword" form:"keyword" validate:"required,min=1,max=20"`
 	Desc    string `json:"desc" form:"desc" validate:"min=0,max=100"`
 	Status  uint   `json:"status" form:"status" validate:"oneof=1 2"`
-	Sort    uint   `json:"sort" form:"sort" validate:"gte=1,lte=999"`
+	Sort    uint   `json:"sort" form:"sort" validate:"gte=1,lte=9999"`
 }
 
 // 获取用户角色结构体

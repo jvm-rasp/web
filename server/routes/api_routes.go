@@ -18,7 +18,7 @@ func InitApiRoutes(r *gin.RouterGroup, authMiddleware *jwt.GinJWTMiddleware) gin
 		router.GET("/list", apiController.GetApis)
 		router.GET("/tree", apiController.GetApiTree)
 		router.POST("/create", apiController.CreateApi)
-		router.GET("/update/:apiId", apiController.UpdateApiById)
+		router.POST("/update/:apiId", apiController.UpdateApiById)
 		router.POST("/delete/batch", apiController.BatchDeleteApiByIds)
 	}
 

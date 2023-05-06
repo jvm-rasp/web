@@ -48,7 +48,7 @@ export function updateUserById(id, data) {
 export function batchDeleteUserByIds(data) {
   return request({
     url: '/user/delete/batch',
-    method: 'get',
+    method: 'post',
     data
   })
 }

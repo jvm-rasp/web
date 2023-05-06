@@ -146,6 +146,7 @@ func (rc RoleController) UpdateRoleById(c *gin.Context) {
 		response.Fail(c, nil, "未获取到角色信息")
 		return
 	}
+
 	if minSort >= roles[0].Sort {
 		response.Fail(c, nil, "不能更新比自己角色等级高或相等的角色")
 		return

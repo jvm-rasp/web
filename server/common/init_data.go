@@ -11,6 +11,7 @@ import (
 )
 
 // 初始化mysql数据
+// TODO 用户权限系统默认配置
 func InitData() {
 	// 是否初始化数据
 	if !config.Conf.System.InitData {
@@ -76,25 +77,25 @@ func InitData() {
 
 	systemUserStr := "/system/user"
 	attackLogStr := "/attack/list"
-    // direct
-    configDirectStr :="/config/list"
-    hostDirectStr :="/host/list"
-    // TODO 其他菜单页面的重定向需要修改
+	// direct
+	configDirectStr := "/config/list"
+	hostDirectStr := "/host/list"
+	// TODO 其他菜单页面的重定向需要修改
 
 	// icon 配置
-	hostIcon :="host"
-	moduleIcon :="module"
-    attackLogIcon :="attackLog"
-    jarIcon :="jar"
-    listIcon :="list2"
-    jsonIcon :="json"
-    runLogIcon :="runLog"
-    systemIcon :="system"
-    apiIcon :="api"
-    apiLogIcon :="apiLog"
-    menuIcon :="menu"
-    roleIcon :="role"
-    userIcon :="user"
+	hostIcon := "host"
+	moduleIcon := "module"
+	attackLogIcon := "attackLog"
+	jarIcon := "jar"
+	listIcon := "list2"
+	jsonIcon := "json"
+	runLogIcon := "runLog"
+	systemIcon := "system"
+	apiIcon := "api"
+	apiLogIcon := "apiLog"
+	menuIcon := "menu"
+	roleIcon := "role"
+	userIcon := "user"
 
 	menus := []model.Menu{
 		{
@@ -304,7 +305,7 @@ func InitData() {
 			Component: "/system/operation-log/index",
 			Sort:      systemId + 5,
 			ParentId:  &systemId,
-			Roles:     roles[:2],
+			Roles:     roles[:1],
 			Creator:   "系统",
 		},
 	}
@@ -328,9 +329,8 @@ func InitData() {
 			Model:        gorm.Model{ID: 1},
 			Username:     "admin",
 			Password:     util.GenPasswd("123456"),
-			Mobile:       "18888888888",
+			Mobile:       "13188888888",
 			Avatar:       "https://wpimg.wallstcn.com/f778738c-e4f8-4870-b634-56703b4acafe.gif",
-			Nickname:     new(string),
 			Introduction: new(string),
 			Status:       1,
 			Creator:      "系统",
@@ -338,39 +338,25 @@ func InitData() {
 		},
 		{
 			Model:        gorm.Model{ID: 2},
-			Username:     "faker",
+			Username:     "user2023-1",
 			Password:     util.GenPasswd("123456"),
-			Mobile:       "19999999999",
+			Mobile:       "13899999999",
 			Avatar:       "https://wpimg.wallstcn.com/f778738c-e4f8-4870-b634-56703b4acafe.gif",
-			Nickname:     new(string),
-			Introduction: new(string),
-			Status:       1,
-			Creator:      "系统",
-			Roles:        roles[:2],
-		},
-		{
-			Model:        gorm.Model{ID: 3},
-			Username:     "nike",
-			Password:     util.GenPasswd("123456"),
-			Mobile:       "13333333333",
-			Avatar:       "https://wpimg.wallstcn.com/f778738c-e4f8-4870-b634-56703b4acafe.gif",
-			Nickname:     new(string),
 			Introduction: new(string),
 			Status:       1,
 			Creator:      "系统",
 			Roles:        roles[1:2],
 		},
 		{
-			Model:        gorm.Model{ID: 4},
-			Username:     "bob",
+			Model:        gorm.Model{ID: 3},
+			Username:     "user2023-2",
 			Password:     util.GenPasswd("123456"),
-			Mobile:       "15555555555",
+			Mobile:       "13833333333",
 			Avatar:       "https://wpimg.wallstcn.com/f778738c-e4f8-4870-b634-56703b4acafe.gif",
-			Nickname:     new(string),
 			Introduction: new(string),
 			Status:       1,
 			Creator:      "系统",
-			Roles:        roles[2:3],
+			Roles:        roles[1:2],
 		},
 	}
 
@@ -461,7 +447,7 @@ func InitData() {
 			Creator:  "系统",
 		},
 		{
-			Method:   "GET",
+			Method:   "POST",
 			Path:     "/user/update/:userId",
 			Category: "user",
 			Desc:     "更新用户",
@@ -489,7 +475,7 @@ func InitData() {
 			Creator:  "系统",
 		},
 		{
-			Method:   "GET",
+			Method:   "POST",
 			Path:     "/role/update/:roleId",
 			Category: "role",
 			Desc:     "更新角色",
@@ -503,7 +489,7 @@ func InitData() {
 			Creator:  "系统",
 		},
 		{
-			Method:   "GET",
+			Method:   "POST",
 			Path:     "/role/menus/update/:roleId",
 			Category: "role",
 			Desc:     "更新角色的权限菜单",
@@ -517,7 +503,7 @@ func InitData() {
 			Creator:  "系统",
 		},
 		{
-			Method:   "GET",
+			Method:   "POST",
 			Path:     "/role/apis/update/:roleId",
 			Category: "role",
 			Desc:     "更新角色的权限接口",

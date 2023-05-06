@@ -18,11 +18,11 @@ func InitRoleRoutes(r *gin.RouterGroup, authMiddleware *jwt.GinJWTMiddleware) gi
 	{
 		router.GET("/list", roleController.GetRoles)
 		router.POST("/create", roleController.CreateRole)
-		router.GET("/update/:roleId", roleController.UpdateRoleById)
+		router.POST("/update/:roleId", roleController.UpdateRoleById)
 		router.GET("/menus/get/:roleId", roleController.GetRoleMenusById)
-		router.GET("/menus/update/:roleId", roleController.UpdateRoleMenusById)
+		router.POST("/menus/update/:roleId", roleController.UpdateRoleMenusById)
 		router.GET("/apis/get/:roleId", roleController.GetRoleApisById)
-		router.GET("/apis/update/:roleId", roleController.UpdateRoleApisById)
+		router.POST("/apis/update/:roleId", roleController.UpdateRoleApisById)
 		router.POST("/delete/batch", roleController.BatchDeleteRoleByIds)
 	}
 	return r

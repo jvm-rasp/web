@@ -151,10 +151,7 @@ func (ur UserRepository) GetUsers(req *vo.UserListRequest) ([]*model.User, int64
 	if username != "" {
 		db = db.Where("username LIKE ?", fmt.Sprintf("%%%s%%", username))
 	}
-	nickname := strings.TrimSpace(req.Nickname)
-	if nickname != "" {
-		db = db.Where("nickname LIKE ?", fmt.Sprintf("%%%s%%", nickname))
-	}
+
 	mobile := strings.TrimSpace(req.Mobile)
 	if mobile != "" {
 		db = db.Where("mobile LIKE ?", fmt.Sprintf("%%%s%%", mobile))
@@ -302,7 +299,7 @@ func (ur UserRepository) UpdateUserInfoCacheByRoleId(roleId uint) error {
 	return err
 }
 
-//清理所有用户信息缓存
+// 清理所有用户信息缓存
 func (ur UserRepository) ClearUserInfoCache() {
 	userInfoCache.Flush()
 }
