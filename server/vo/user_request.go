@@ -12,7 +12,6 @@ type CreateUserRequest struct {
 	Password     string `form:"password" json:"password"`
 	Mobile       string `form:"mobile" json:"mobile" validate:"required,checkMobile"`
 	Avatar       string `form:"avatar" json:"avatar"`
-	Nickname     string `form:"nickname" json:"nickname" validate:"min=0,max=20"`
 	Introduction string `form:"introduction" json:"introduction" validate:"min=0,max=255"`
 	Status       uint   `form:"status" json:"status" validate:"oneof=1 2"`
 	RoleIds      []uint `form:"roleIds" json:"roleIds" validate:"required"`
@@ -22,7 +21,6 @@ type CreateUserRequest struct {
 type UserListRequest struct {
 	Username string `json:"username" form:"username" `
 	Mobile   string `json:"mobile" form:"mobile" `
-	Nickname string `json:"nickname" form:"nickname" `
 	Status   uint   `json:"status" form:"status" `
 	PageNum  uint   `json:"pageNum" form:"pageNum"`
 	PageSize uint   `json:"pageSize" form:"pageSize"`

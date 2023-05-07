@@ -1,17 +1,7 @@
 <template>
   <div>
     <el-card class="container-card" shadow="always">
-      <el-form :size="this.$store.getters.size" :inline="true" class="demo-form-inline">
-        <el-form-item>
-          <el-button :loading="loading" icon="el-icon-plus" type="warning" @click="create">新增</el-button>
-        </el-form-item>
-        <el-form-item>
-          <el-button :disabled="multipleSelection.length === 0" :loading="loading" icon="el-icon-delete" type="danger" @click="batchDelete">批量删除</el-button>
-        </el-form-item>
-      </el-form>
-
-      <el-table v-loading="loading" :tree-props="{children: 'children', hasChildren: 'hasChildren'}" row-key="ID" :data="tableData" border stripe style="width: 100%" :size="this.$store.getters.size" @selection-change="handleSelectionChange">
-        <el-table-column type="selection" width="55" align="center" />
+      <el-table v-loading="loading" :tree-props="{children: 'children', hasChildren: 'hasChildren'}" row-key="ID" :data="tableData" border stripe style="width: 100%" :size="this.$store.getters.size">
         <el-table-column show-overflow-tooltip prop="title" label="菜单标题" width="150" align="center" />
         <el-table-column show-overflow-tooltip prop="name" label="名称" />
         <el-table-column show-overflow-tooltip prop="icon" label="图标" />
@@ -34,19 +24,6 @@
             <el-tag size="small" :type="scope.row.noCache === 1 ? 'danger':'success'">{{ scope.row.noCache === 1 ? '否':'是' }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column show-overflow-tooltip prop="activeMenu" label="高亮菜单" />
-        <el-table-column fixed="right" label="操作" align="center" width="120">
-          <template slot-scope="scope">
-            <el-tooltip content="编辑" effect="dark" placement="top">
-              <el-button size="mini" icon="el-icon-edit" circle type="primary" @click="update(scope.row)" />
-            </el-tooltip>
-            <el-tooltip class="delete-popover" content="删除" effect="dark" placement="top">
-              <el-popconfirm title="确定删除吗？" @confirm="singleDelete(scope.row.ID)">
-                <el-button slot="reference" size="mini" icon="el-icon-delete" circle type="danger" />
-              </el-popconfirm>
-            </el-tooltip>
-          </template>
-        </el-table-column>
       </el-table>
 
       <el-dialog :title="dialogFormTitle" :visible.sync="dialogFormVisible" width="580px">
@@ -58,7 +35,7 @@
             <el-input v-model.trim="dialogFormData.name" placeholder="名称(name)" style="width: 220px" />
           </el-form-item>
           <el-form-item label="排序" prop="sort">
-            <el-input-number v-model.number="dialogFormData.sort" controls-position="right" :min="1" :max="999" />
+            <el-input-number v-model.number="dialogFormData.sort" controls-position="right" :min="1" :max="9999" />
           </el-form-item>
           <el-form-item label="图标" prop="icon">
             <el-popover
@@ -100,9 +77,6 @@
               <el-radio-button label="是" />
               <el-radio-button label="否" />
             </el-radio-group>
-          </el-form-item>
-          <el-form-item label="高亮菜单" prop="activeMenu">
-            <el-input v-model.trim="dialogFormData.activeMenu" placeholder="高亮菜单(activeMenu)" style="width: 440px" />
           </el-form-item>
           <el-form-item label="上级目录" prop="parentId">
             <!-- <el-cascader
@@ -166,7 +140,7 @@ export default {
         path: '',
         component: 'Layout',
         redirect: '',
-        sort: 999,
+        sort: 9999,
         status: '否',
         hidden: '否',
         noCache: '是',
@@ -239,7 +213,7 @@ export default {
         path: '',
         component: 'Layout',
         redirect: '',
-        sort: 999,
+        sort: 9999,
         status: '否',
         hidden: '否',
         noCache: '是',
@@ -342,7 +316,7 @@ export default {
         path: '',
         component: 'Layout',
         redirect: '',
-        sort: 999,
+        sort: 9999,
         status: '否',
         hidden: '否',
         noCache: '是',

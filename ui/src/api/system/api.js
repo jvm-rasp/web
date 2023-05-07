@@ -31,7 +31,7 @@ export function createApi(data) {
 export function updateApiById(Id, data) {
   return request({
     url: '/api/update/' + Id,
-    method: 'get',
+    method: 'post',
     data
   })
 }

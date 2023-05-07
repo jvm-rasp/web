@@ -20,16 +20,9 @@
         <el-form-item>
           <el-button :loading="loading" icon="el-icon-search" type="primary" @click="search">查询</el-button>
         </el-form-item>
-        <el-form-item>
-          <el-button :loading="loading" icon="el-icon-plus" type="warning" @click="create">新增</el-button>
-        </el-form-item>
-        <el-form-item>
-          <el-button :disabled="multipleSelection.length === 0" :loading="loading" icon="el-icon-delete" type="danger" @click="batchDelete">批量删除</el-button>
-        </el-form-item>
       </el-form>
 
-      <el-table v-loading="loading" :data="tableData" border stripe style="width: 100%" :size="this.$store.getters.size" @selection-change="handleSelectionChange">
-        <el-table-column type="selection" width="55" align="center" />
+      <el-table v-loading="loading" :data="tableData" border stripe style="width: 100%" :size="this.$store.getters.size">
         <el-table-column show-overflow-tooltip sortable prop="path" label="访问路径" />
         <el-table-column show-overflow-tooltip sortable prop="category" label="所属类别" />
         <el-table-column show-overflow-tooltip sortable prop="method" label="请求方式" align="center">
@@ -39,18 +32,6 @@
         </el-table-column>
         <el-table-column show-overflow-tooltip sortable prop="creator" label="创建人" />
         <el-table-column show-overflow-tooltip sortable prop="desc" label="说明" />
-        <el-table-column fixed="right" label="操作" align="center" width="120">
-          <template slot-scope="scope">
-            <el-tooltip content="编辑" effect="dark" placement="top">
-              <el-button size="mini" icon="el-icon-edit" circle type="primary" @click="update(scope.row)" />
-            </el-tooltip>
-            <el-tooltip class="delete-popover" content="删除" effect="dark" placement="top">
-              <el-popconfirm title="确定删除吗？" @confirm="singleDelete(scope.row.ID)">
-                <el-button slot="reference" size="mini" icon="el-icon-delete" circle type="danger" />
-              </el-popconfirm>
-            </el-tooltip>
-          </template>
-        </el-table-column>
       </el-table>
 
       <el-pagination

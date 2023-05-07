@@ -20,9 +20,6 @@
         <el-form-item>
           <el-button :loading="loading" icon="el-icon-plus" type="warning" @click="create">新增</el-button>
         </el-form-item>
-        <el-form-item>
-          <el-button :disabled="multipleSelection.length === 0" :loading="loading" icon="el-icon-delete" type="danger" @click="batchDelete">批量删除</el-button>
-        </el-form-item>
       </el-form>
 
       <el-table v-loading="loading" :data="tableData" border stripe style="width: 100%" :size="this.$store.getters.size" @selection-change="handleSelectionChange">

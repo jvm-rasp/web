@@ -22,7 +22,7 @@ export function createRole(data) {
 export function updateRoleById(roleId, data) {
   return request({
     url: '/role/update/' + roleId,
-    method: 'get',
+    method: 'post',
     data
   })
 }
@@ -39,7 +39,7 @@ export function getRoleMenusById(roleId) {
 export function updateRoleMenusById(roleId, data) {
   return request({
     url: '/role/menus/update/' + roleId,
-    method: 'get',
+    method: 'post',
     data
   })
 }
@@ -56,7 +56,7 @@ export function getRoleApisById(roleId) {
 export function updateRoleApisById(roleId, data) {
   return request({
     url: '/role/apis/update/' + roleId,
-    method: 'get',
+    method: 'post',
     data
   })
 }

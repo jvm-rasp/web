@@ -5,9 +5,6 @@
         <el-form-item label="用户名">
           <el-input v-model.trim="params.username" clearable placeholder="用户名" @clear="search" />
         </el-form-item>
-        <el-form-item label="昵称">
-          <el-input v-model.trim="params.nickname" clearable placeholder="昵称" @clear="search" />
-        </el-form-item>
         <el-form-item label="状态">
           <el-select v-model.trim="params.status" clearable placeholder="状态" @change="search" @clear="search">
             <el-option label="正常" value="1" />
@@ -23,15 +20,11 @@
         <el-form-item>
           <el-button :loading="loading" icon="el-icon-plus" type="warning" @click="create">新增</el-button>
         </el-form-item>
-        <el-form-item>
-          <el-button :disabled="multipleSelection.length === 0" :loading="loading" icon="el-icon-delete" type="danger" @click="batchDelete">批量删除</el-button>
-        </el-form-item>
       </el-form>
 
       <el-table v-loading="loading" :data="tableData" border stripe style="width: 100%" :size="this.$store.getters.size" @selection-change="handleSelectionChange">
         <el-table-column type="selection" width="55" align="center" />
         <el-table-column show-overflow-tooltip sortable prop="username" label="用户名" />
-        <el-table-column show-overflow-tooltip sortable prop="nickname" label="昵称" />
         <el-table-column show-overflow-tooltip sortable prop="status" label="状态" align="center">
           <template slot-scope="scope">
             <el-tag size="small" :type="scope.row.status === 1 ? 'success':'danger'" disable-transitions>{{ scope.row.status === 1 ? '正常':'禁用' }}</el-tag>
@@ -93,9 +86,6 @@
               <el-option label="禁用" :value="2" />
             </el-select>
           </el-form-item>
-          <el-form-item label="昵称" prop="nickname">
-            <el-input v-model.trim="dialogFormData.nickname" placeholder="昵称" />
-          </el-form-item>
           <el-form-item label="手机号" prop="mobile">
             <el-input v-model.trim="dialogFormData.mobile" placeholder="手机号" />
           </el-form-item>
@@ -137,7 +127,6 @@ export default {
       // 查询参数
       params: {
         username: '',
-        nickname: '',
         status: '',
         mobile: '',
         pageNum: 1,
@@ -168,7 +157,6 @@ wLXapv+ZfsjG7NgdawIDAQAB
       dialogFormData: {
         username: '',
         password: '',
-        nickname: '',
         status: 1,
         mobile: '',
         avatar: '',
@@ -183,10 +171,6 @@ wLXapv+ZfsjG7NgdawIDAQAB
         password: [
           { required: false, message: '请输入密码', trigger: 'blur' },
           { min: 6, max: 30, message: '长度在 6 到 30 个字符', trigger: 'blur' }
-        ],
-        nickname: [
-          { required: false, message: '请输入昵称', trigger: 'blur' },
-          { min: 2, max: 20, message: '长度在 2 到 20 个字符', trigger: 'blur' }
         ],
         mobile: [
           { required: true, validator: checkPhone, trigger: 'blur' }
@@ -248,7 +232,6 @@ wLXapv+ZfsjG7NgdawIDAQAB
       this.dialogFormData.ID = row.ID
       this.dialogFormData.username = row.username
       this.dialogFormData.password = ''
-      this.dialogFormData.nickname = row.nickname
       this.dialogFormData.status = row.status
       this.dialogFormData.mobile = row.mobile
       this.dialogFormData.introduction = row.introduction
@@ -318,7 +301,6 @@ wLXapv+ZfsjG7NgdawIDAQAB
       this.dialogFormData = {
         username: '',
         password: '',
-        nickname: '',
         status: 1,
         mobile: '',
         avatar: '',
