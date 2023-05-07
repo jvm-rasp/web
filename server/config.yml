@@ -48,12 +48,16 @@ rate-limit:
   # 填充一个令牌需要的时间间隔,毫秒
   fill-interval: 50
   # 桶容量
-  capacity: 200
+  capacity: 1000
 
 ssl:
   # https开关,默认关闭
-  enable: true
+  enable: false
   # ssl 证书key
   keyFile: keyFile.key
   # ssl 证书路径
   certFile: certFile.pem
+
+mdns:
+  # 是否开启内网服务发现功能
+  enable: false

@@ -16,10 +16,12 @@ type MDNSServer struct {
 }
 
 func InitMDNSService() {
-	server := NewMDNSServer()
-	server.NewService()
-	go server.Start()
-	Log.Infof("初始化mdns服务完成")
+	if config.Conf.Mdns.Enable {
+		server := NewMDNSServer()
+		server.NewService()
+		go server.Start()
+		Log.Infof("初始化mdns服务完成")
+	}
 }
 
 func NewMDNSServer() *MDNSServer {
