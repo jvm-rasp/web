@@ -1,56 +1,58 @@
 # web
 
+## 说明
+
+web是jrasp的管理端工程，负责配置策略和日志消费。前端由vue开发、后端使用golang。
+
+## 预览
+
+https://www.server.jrasp.com:8088/rasp-admin
+账号和密码： admin 123456
+
+## 编译工具
+
 npm 版本 >= 8.5.0
 
 golang 版本 >= 1.19.6 (强制)
 
-## server 工程
-进入到 server 目录下
+## 一键打包
 
-### 下载依赖
+进入到 build 目录下执行
+
++ linux
 ```
-export GOPROXY="https://mirrors.aliyun.com/goproxy/"
-go mod tidy
+bash build.sh
 ```
-### 编译
+
++ windows
 ```
-go build
+（待补充）
 ```
+
+输出文件在`target`目录下
+
 
 ### 运行
+
+解压之后执行（内置数据库、前后端不分离）
 ```
 ./server
 ```
 ```
-2023-02-22 23:30:27     INFO    routes/routes.go:54     server/routes.InitRoutes        初始化路由完成！
-2023-02-22 23:30:27     INFO    server/main.go:64       main.main       Server is running at localhost:8088/api
+MacBook-Pro root$ ./server 
+2023-05-01 13:48:57     INFO    common/logger.go:108    server/common.InitLogger        初始化zap日志完成!
+2023-05-01 13:48:58     INFO    common/database.go:30   server/common.InitMysql 初始化数据库完成!
+2023-05-01 13:48:58     INFO    common/casbin.go:22     server/common.InitCasbinEnforcer        初始化Casbin完成!
+2023-05-01 13:48:58     INFO    common/validator.go:26  server/common.InitValidate      初始化validator.v10数据校验器完成
+2023-05-01 13:48:58     INFO    routes/routes.go:73     server/routes.InitRoutes        初始化路由完成！
+2023-05-01 13:48:58     INFO    server/main.go:84       main.main       Server is running at 0.0.0.0:8088/rasp-admin
+2023-05-01 13:48:58     INFO    socket/ws.go:27 server/socket.(*Manager).Start  websocket manage start
 ```
 
+## 访问
 
-## UI 工程
++ 访问 `https://localhost:8088/rasp-admin` （浏览器信任证书）
++ 账号和密码： admin 123456
 
-进入到ui目录下
+## 替换证书（非必须）
 
-###  编译
-首次编译时，更换阿里的 npm registry 镜像
-```
-npm config set registry https://registry.npm.taobao.org
-```
-### 安装依赖
-```
-npm install
-```
-
-### 本地运行
-```
-npm run dev
-```
-
-### 静态文件
-```
-npm run build:prod
-```
-## 登陆账号
-
-admin
-123456
