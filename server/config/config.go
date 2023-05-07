@@ -24,6 +24,7 @@ type config struct {
 	Jwt       *JwtConfig       `mapstructure:"jwt" json:"jwt"`
 	RateLimit *RateLimitConfig `mapstructure:"rate-limit" json:"rateLimit"`
 	Ssl       *Ssl             `mapstructure:"ssl" json:"ssl"`
+	Mdns      *Mdns            `mapstructure:"mdns" json:"mdns"`
 }
 
 // 设置读取配置信息
@@ -109,4 +110,8 @@ type Ssl struct {
 	Enable   bool
 	KeyFile  string
 	CertFile string
+}
+
+type Mdns struct {
+	Enable bool
 }

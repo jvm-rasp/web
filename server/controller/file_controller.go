@@ -3,7 +3,7 @@ package controller
 import (
 	"fmt"
 	"os"
-	"path/filepath"
+	"path"
 	"server/common"
 	"server/model"
 	"server/repository"
@@ -47,7 +47,7 @@ func (f FileController) Upload(c *gin.Context) {
 	files := form.File["files"]
 
 	// 创建data目录
-	dataPath := filepath.Join(DATA_DIR)
+	dataPath := path.Join(DATA_DIR)
 	if exist, _ := fileExist(dataPath); !exist {
 		err := os.MkdirAll(dataPath, FILE_PERM)
 		if err != nil {
@@ -60,13 +60,13 @@ func (f FileController) Upload(c *gin.Context) {
 		// 创建时间戳
 		ts := strconv.FormatInt(time.Now().Unix(), 10)
 		// 创建目录树
-		dir := filepath.Join(dataPath, file.Filename, ts)
+		dir := path.Join(dataPath, file.Filename, ts)
 		err := os.MkdirAll(dir, os.ModePerm)
 		if err != nil {
 			response.Fail(c, nil, err.Error())
 			return
 		}
-		filePath := filepath.Join(dir, file.Filename)
+		filePath := path.Join(dir, file.Filename)
 		// 保存至本地磁盘
 		err = c.SaveUploadedFile(file, filePath)
 		if err != nil {
@@ -133,7 +133,6 @@ func (r FileController) GetRaspFiles(c *gin.Context) {
 }
 
 func (f FileController) Download(c *gin.Context) {
-	// TODO 接口不鉴权
 	var req vo.RaspFileDownloadRequest
 	// 参数绑定
 	if err := c.ShouldBind(&req); err != nil {
