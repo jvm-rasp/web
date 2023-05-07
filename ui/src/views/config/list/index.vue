@@ -204,7 +204,7 @@
           </el-row>
           <el-row>
             <el-col :span="24">
-              <el-form-item label="配置描述" label-width="120px" prop="desc">
+              <el-form-item label="配置描述" prop="desc">
                 <el-input v-model.trim="bindConfigData.desc" placeholder="配置描述" />
               </el-form-item>
             </el-col>
@@ -310,7 +310,7 @@
           </el-row>
           <el-row>
             <el-col :span="24">
-              <el-form-item label="配置描述" label-width="120px" prop="desc">
+              <el-form-item label="配置描述" prop="desc">
                 <el-input v-model.trim="bindConfigData.desc" placeholder="配置描述" />
               </el-form-item>
             </el-col>
