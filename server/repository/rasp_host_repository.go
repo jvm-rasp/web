@@ -17,6 +17,7 @@ type IRaspHostRepository interface {
 	UpdateRaspHostByHostName(host *model.RaspHost) error
 	UpdateRaspHost(host *model.RaspHost) error
 	GetRaspHostById(id uint) (*model.RaspHost, error)
+	GetRaspHostByHostName(hostName string) (*model.RaspHost, error)
 }
 
 type RaspHostRepository struct {
@@ -48,11 +49,18 @@ func (h RaspHostRepository) GetRaspHosts(req *vo.RaspHostListRequest) ([]*model.
 		db = db.Where("agent_mode = ?", agentMode)
 	}
 
-	// todo 在线状态查询
-	//status := req.Status
-	//if status != 0 {
-	//	db = db.Where("status = ?", status)
-	//}
+	// 保护状态查询
+	status := req.Status
+	if status != "" {
+		switch status {
+		case "0":
+			db = db.Where("not_inject > 0")
+		case "1":
+			db = db.Where("success_inject > 0")
+		case "2":
+			db = db.Where("failed_inject > 0")
+		}
+	}
 
 	// 当pageNum > 0 且 pageSize > 0 才分页
 	//记录总条数
@@ -115,12 +123,18 @@ func (h RaspHostRepository) UpdateRaspHostByHostName(host *model.RaspHost) error
 }
 
 func (h RaspHostRepository) UpdateRaspHost(host *model.RaspHost) error {
-	err := common.DB.Model(host).Updates(host).Error
+	err := common.DB.Save(host).Error
 	return err
 }
 
 func (h RaspHostRepository) GetRaspHostById(id uint) (*model.RaspHost, error) {
 	var host *model.RaspHost
 	err := common.DB.Model(&model.RaspHost{}).Where("id = ?", id).Find(&host).Error
+	return host, err
+}
+
+func (h RaspHostRepository) GetRaspHostByHostName(hostName string) (*model.RaspHost, error) {
+	var host *model.RaspHost
+	err := common.DB.Model(&model.RaspHost{}).Where("host_name = ?", hostName).Find(&host).Error
 	return host, err
 }

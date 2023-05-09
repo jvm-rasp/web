@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"fmt"
 	"server/common"
 	"server/model"
 	"server/vo"
@@ -50,6 +51,10 @@ func (a RaspAttackRepository) GetRaspAttacks(req *vo.RaspAttackListRequest) ([]*
 	name := strings.TrimSpace(req.HostName)
 	if name != "" {
 		db = db.Where("host_name = ?", name)
+	}
+	url := strings.TrimSpace(req.Url)
+	if url != "" {
+		db = db.Where("request_uri like ?", fmt.Sprintf("%%%s%%", url))
 	}
 	isBlocked, err := strconv.ParseBool(req.IsBlocked)
 	if err == nil {

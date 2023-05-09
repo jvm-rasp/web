@@ -4,17 +4,20 @@
       <!-- 条件搜索框 -->
       <el-form :size="this.$store.getters.size" :inline="true" :model="params" class="demo-form-inline">
         <el-form-item label="实例名称">
-          <el-input v-model="params.hostName" placeholder="请输入主机名" />
+          <el-input v-model="params.hostName" placeholder="请输入主机名" clearable @clear="onSearch" />
+        </el-form-item>
+        <el-form-item label="URL关键字">
+          <el-input v-model="params.url" placeholder="请输入URL关键字" clearable @clear="onSearch" />
         </el-form-item>
         <el-form-item label="阻断状态">
-          <el-select v-model="params.isBlocked" placeholder="请选择">
+          <el-select v-model="params.isBlocked" placeholder="请选择" clearable @change="onSearch" @clear="onSearch">
             <el-option label="放行" :value="false" />
             <el-option label="阻断" :value="true" />
             <el-option label="全部" value="" />
           </el-select>
         </el-form-item>
         <el-form-item label="处理状态">
-          <el-select v-model="params.handleResult" placeholder="请选择">
+          <el-select v-model="params.handleResult" placeholder="请选择" clearable @change="onSearch" @clear="onSearch">
             <el-option label="未处理" :value="handleStatus['未处理']" />
             <el-option label="已确认" :value="handleStatus['已确认']" />
             <el-option label="误报" :value="handleStatus['误报']" />
@@ -55,7 +58,8 @@
           </template>
         </el-table-column>
         <el-table-column prop="attackTime" label="攻击时间" width="180" :formatter="dateFormat" align="center" />
-        <el-table-column prop="hostName" label="实例名称" width="150" align="center" />
+        <!--        <el-table-column prop="hostName" label="实例名称" width="150" align="center" />-->
+        <el-table-column prop="hostIp" label="实例IP" width="150" align="center" />
         <el-table-column prop="attackType" label="攻击类型" width="180" align="center">
           <template slot-scope="scope">
             <el-tag size="small" color="#cd201f" style="color: #ffffff; font-weight: bold; border-color: #cd201f" effect="dark">{{ scope.row.attackType }}</el-tag>
@@ -199,6 +203,7 @@ export default {
     return {
       params: {
         hostName: '',
+        url: '',
         isBlocked: '',
         handleResult: '',
         pageNum: 1,

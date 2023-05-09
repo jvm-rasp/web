@@ -40,7 +40,7 @@ type LogController struct {
 
 func NewLogController() ILogController {
 	repository1 := repository.NewRaspHostRepository()
-	repository2 := repository.NewJavaProcessInfoRepository()
+	repository2 := repository.NewJavaProcessInfoRepository(repository1)
 	repository3 := repository.NewRaspAttackRepository()
 	repository4 := repository.NewRaspErrorLogsRepository()
 	repository5 := repository.NewRaspConfigRepository()
@@ -388,7 +388,7 @@ func (l LogController) handleHeartbeatLog(req vo.RaspLogRequest) {
 
 	for _, v := range dblist {
 		// db有，上报数据中没有，删除db数据
-		if len(detailMap) == 0 || detailMap[string(v.Pid)] == nil {
+		if len(detailMap) == 0 || detailMap[strconv.Itoa(v.Pid)] == nil {
 			err := l.JavaProcessRepository.DeleteProcess(v.ID)
 			if err != nil {
 				panic(err)
@@ -402,7 +402,7 @@ func (l LogController) handleHeartbeatLog(req vo.RaspLogRequest) {
 	for k, v := range detailMap {
 		var existed = false
 		for _, v2 := range dblist {
-			if string(rune(v2.Pid)) == k {
+			if strconv.Itoa(v2.Pid) == k {
 				existed = true
 			}
 		}
@@ -417,9 +417,9 @@ func (l LogController) handleHeartbeatLog(req vo.RaspLogRequest) {
 		pid, _ := strconv.ParseInt(pidint64, 10, 32)
 
 		startTime := processDetail["startTime"].(string)
-		status := processDetail["status"].(string)
+		message := processDetail["status"].(string)
 		// 缺少命令后信息
-		process := &model.JavaProcessInfo{HostName: req.HostName, Pid: int(pid), StartTime: startTime, Status: status}
+		process := &model.JavaProcessInfo{HostName: req.HostName, Pid: int(pid), StartTime: startTime, Status: l.convertMessageToStatus(message), Message: message}
 		err = l.JavaProcessRepository.SaveProcessInfo(process)
 		if err != nil {
 			panic(err)
@@ -437,17 +437,22 @@ func (l LogController) handleAgentInitAndUnloadLog(req vo.RaspLogRequest) {
 
 	pid := detailMap["pid"].(float64)
 	startTime := detailMap["startTime"].(string)
-	status := detailMap["status"].(string)
-
-	process := &model.JavaProcessInfo{
-		Status:    status,
-		Pid:       int(pid),
-		StartTime: startTime,
-		HostName:  req.HostName,
-	}
-	err = l.JavaProcessRepository.UpdateProcessByHostName(process)
-	if err != nil {
-		panic(err)
+	messages := detailMap["status"].(string)
+	status := l.convertMessageToStatus(messages)
+	processInfo, err := l.JavaProcessRepository.GetProcessByPid(req.HostName, uint(pid))
+	if processInfo != nil {
+		processInfo.Status = status
+		processInfo.Message = messages
+		processInfo.StartTime = startTime
+		err = l.JavaProcessRepository.UpdateProcessInfo(processInfo)
+		if err != nil {
+			panic(err)
+		}
+	} else {
+		err = l.JavaProcessRepository.DeleteProcessByPid(req.HostName, uint(pid))
+		if err != nil {
+			panic(err)
+		}
 	}
 }
 
@@ -502,9 +507,10 @@ func (l LogController) handleFindJavaProcessLog(req vo.RaspLogRequest) {
 
 	pid := detailMap["javaPid"].(float64)
 	startTime := detailMap["startTime"].(string)
-	status := detailMap["injectedStatus"].(string)
-
+	message := detailMap["injectedStatus"].(string)
+	status := l.convertMessageToStatus(message)
 	cmdLines := detailMap["cmdLines"].([]interface{})
+	appNames := detailMap["appNames"]
 	var paramSlice []string
 	for _, param := range cmdLines {
 		switch v := param.(type) {
@@ -517,17 +523,40 @@ func (l LogController) handleFindJavaProcessLog(req vo.RaspLogRequest) {
 			panic("params type not supported")
 		}
 	}
-
-	process := &model.JavaProcessInfo{
-		Status:      status,
-		Pid:         int(pid),
-		StartTime:   startTime,
-		CmdlineInfo: strings.Join(paramSlice, ","),
-		HostName:    req.HostName,
+	var appNamesStr = ""
+	if appNames != nil {
+		for _, item := range appNames.([]interface{}) {
+			appNamesStr += item.(string) + ";"
+		}
 	}
-	err = l.JavaProcessRepository.SaveProcessInfo(process)
+	// 先判断表中是否有对应的pid
+	processInfo, err := l.JavaProcessRepository.GetProcessByPid(req.HostName, uint(pid))
 	if err != nil {
 		panic(err)
+	}
+	// 如果库中没有则新增, 如果有则更新
+	if processInfo == nil {
+		process := &model.JavaProcessInfo{
+			Status:       status,
+			Message:      message,
+			Pid:          int(pid),
+			StartTime:    startTime,
+			CmdlineInfo:  strings.Join(paramSlice, ","),
+			AppNamesInfo: appNamesStr,
+			HostName:     req.HostName,
+		}
+		err = l.JavaProcessRepository.SaveProcessInfo(process)
+		if err != nil {
+			panic(err)
+		}
+	} else {
+		processInfo.Status = status
+		processInfo.Message = message
+		processInfo.AppNamesInfo = appNamesStr
+		err = l.JavaProcessRepository.UpdateProcessInfo(processInfo)
+		if err != nil {
+			panic(err)
+		}
 	}
 }
 
@@ -635,8 +664,13 @@ func (l LogController) handleAttackLog(req vo.RaspLogRequest) {
 	}
 
 	// 构建对象
+	raspHostInfo, err := l.RaspHostRepository.GetRaspHostByHostName(req.Host.Name)
+	if err != nil {
+		return
+	}
 	attack := model.RaspAttack{
 		HostName: req.Host.Name,
+		HostIp:   raspHostInfo.Ip,
 	}
 	// 构件攻击详情对象
 	detail := model.RaspAttackDetail{}
@@ -680,4 +714,16 @@ func (l LogController) handleAttackLog(req vo.RaspLogRequest) {
 	if err != nil {
 		return
 	}
+}
+
+func (l LogController) convertMessageToStatus(message string) int {
+	status := 0
+	if message == "success inject" || message == "success degrade" {
+		status = 1
+	} else if message == "not inject" {
+		status = 0
+	} else if message == "failed inject" || message == "failed uninstall agent" || message == "failed degrade" {
+		status = 2
+	}
+	return status
 }

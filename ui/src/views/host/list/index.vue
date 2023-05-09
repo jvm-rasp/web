@@ -17,6 +17,14 @@
             <el-option label="全部" value="" />
           </el-select>
         </el-form-item>
+        <el-form-item label="防护状态">
+          <el-select v-model.trim="params.status" clearable placeholder="防护状态" @change="search" @clear="search">
+            <el-option label="防护成功" value="1" />
+            <el-option label="防护失败" value="2" />
+            <el-option label="未防护" value="0" />
+            <el-option label="全部" value="" />
+          </el-select>
+        </el-form-item>
         <el-form-item>
           <el-button :loading="loading" icon="el-icon-search" type="primary" @click="search">查询</el-button>
         </el-form-item>
@@ -57,7 +65,7 @@
             {{ (params.pageNum - 1) * params.pageSize + scope.$index + 1 }}
           </template>
         </el-table-column>
-        <el-table-column show-overflow-tooltip sortable prop="hostName" label="实例名称" align="center" />
+        <!--        <el-table-column show-overflow-tooltip sortable prop="hostName" label="实例名称" align="center" />-->
         <el-table-column show-overflow-tooltip sortable prop="ip" label="实例IP" width="150" align="center" />
         <el-table-column show-overflow-tooltip sortable prop="agentMode" label="接入方式" width="120" align="center">
           <template slot-scope="scope">
@@ -73,6 +81,27 @@
             </el-tag>
           </template>
         </el-table-column>
+        <el-table-column show-overflow-tooltip sortable label="防护成功" width="120" align="center">
+          <template slot-scope="scope">
+            <el-tag size="medium" type="success" disable-transitions>
+              {{ scope.row.successInject + '个' }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column show-overflow-tooltip sortable label="防护失败" width="120" align="center">
+          <template slot-scope="scope">
+            <el-tag size="medium" :type="scope.row.failedInject > 0 ? 'danger' : 'success'" disable-transitions>
+              {{ scope.row.failedInject + '个' }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column show-overflow-tooltip sortable label="未防护" width="120" align="center">
+          <template slot-scope="scope">
+            <el-tag size="medium" :type="scope.row.notInject > 0 ? 'danger' : 'success'" disable-transitions>
+              {{ scope.row.notInject + '个' }}
+            </el-tag>
+          </template>
+        </el-table-column>
         <el-table-column show-overflow-tooltip prop="version" label="RASP版本" align="center" width="100" />
         <el-table-column show-overflow-tooltip sortable prop="configId" label="防护策略" align="center">
           <template slot-scope="scope">
@@ -80,7 +109,7 @@
           </template>
         </el-table-column>
         <el-table-column show-overflow-tooltip sortable prop="heartbeatTime" :formatter="dateFormat" label="心跳时间" width="180" align="center" />
-        <el-table-column show-overflow-tooltip sortable prop="CreatedAt" :formatter="dateFormat" label="注册时间" width="180" align="center" />
+        <!--        <el-table-column show-overflow-tooltip sortable prop="CreatedAt" :formatter="dateFormat" label="注册时间" width="180" align="center" />-->
         <el-table-column fixed="right" label="操作" width="180" align="center">
           <template slot-scope="scope">
             <el-button type="text" size="medium" @click="handleDelete(scope.row)">删除</el-button>
@@ -121,6 +150,7 @@
               </el-tag>
             </template>
           </el-table-column>
+          <el-table-column show-overflow-tooltip sortable prop="appNamesInfo" label="保护应用" align="center" />
           <el-table-column show-overflow-tooltip sortable prop="cmdlineInfo" label="命令行信息" align="center" />
         </el-table>
         <el-pagination
@@ -181,6 +211,8 @@ export default {
       params: {
         hostName: '',
         ip: '',
+        agentMode: '',
+        status: '',
         pageNum: 1,
         pageSize: 10
       },
@@ -205,7 +237,7 @@ export default {
         hostName: '',
         status: '',
         pageNum: 1,
-        pageSize: 2
+        pageSize: 10
       },
       currentHostName: '',
       showProcessInfoVisible: false,
@@ -425,21 +457,21 @@ export default {
       this.showProcessInfoVisible = false
       this.currentHostName = ''
     },
-    getAgentStatusColor(type) {
-      if (type === 'success inject' || type === 'success degrade') {
+    getAgentStatusColor(status) {
+      if (status === 1) {
         return 'success'
-      } else if (type === 'not inject') {
+      } else if (status === 0) {
         return 'primary'
-      } else if (type === 'failed inject' || type === 'failed uninstall agent' || type === 'failed degrade') {
+      } else if (status === 2) {
         return 'danger'
       }
     },
-    getAgentStatusText(type) {
-      if (type === 'success inject' || type === 'success degrade') {
+    getAgentStatusText(status) {
+      if (status === 1) {
         return '防护中'
-      } else if (type === 'not inject') {
+      } else if (status === 0) {
         return '未安装'
-      } else if (type === 'failed inject' || type === 'failed uninstall agent' || type === 'failed degrade') {
+      } else if (status === 2) {
         return '安装失败'
       }
     },

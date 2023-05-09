@@ -18,6 +18,9 @@ type RaspHost struct {
 	TotalMem              float64 `gorm:"type:float64;comment:'实例总内存,单位GB'" json:"totalMem"`
 	CpuCounts             float64 `gorm:"type:float64;comment:'实例逻辑cpu数量'" json:"cpuCounts"`
 	FreeDisk              float64 `gorm:"type:float64;comment:'实例可用磁盘容量,单位GB'" json:"freeDisk"`
+	SuccessInject         int64   `gorm:"type:int(11);comment:'注入成功数量'" json:"successInject"`
+	FailedInject          int64   `gorm:"type:int(11);comment:'注入成功数量'" json:"failedInject"`
+	NotInject             int64   `gorm:"type:int(11);comment:'未保护数量'" json:"notInject"`
 	BuildDateTime         string  `gorm:"type:varchar(128);comment:'代码信息：编译时间'" json:"buildDateTime"`
 	BuildGitBranch        string  `gorm:"type:varchar(128);comment:'代码信息：分支'" json:"buildGitBranch"`
 	BuildGitCommit        string  `gorm:"type:varchar(128);comment:'代码信息：commit''" json:"buildGitCommit"`

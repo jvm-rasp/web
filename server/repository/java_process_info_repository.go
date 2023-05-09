@@ -2,6 +2,7 @@ package repository
 
 import (
 	"fmt"
+	"gorm.io/gorm"
 	"server/common"
 	"server/model"
 	"server/vo"
@@ -13,15 +14,23 @@ type IJavaProcessInfoRepository interface {
 	GetAllJavaProcessInfos(hostName string) ([]*model.JavaProcessInfo, error)
 	DeleteProcess(id uint) error
 	SaveProcessInfo(*model.JavaProcessInfo) error
+	UpdateProcessInfo(info *model.JavaProcessInfo) error
 	DeleteProcessByPid(hostName string, pid uint) error
-	UpdateProcessByHostName(process *model.JavaProcessInfo) error
+	GetProcessByPid(hostName string, pid uint) (*model.JavaProcessInfo, error)
+	GetSuccessInjectCount(hostName string) (int64, error)
+	GetFailedInjectCount(hostName string) (int64, error)
+	GetNotInjectCount(hostName string) (int64, error)
+	UpdateRaspHostInjectCounts(hostName string) error
 }
 
 type JavaProcessInfoRepository struct {
+	RaspHostRepository IRaspHostRepository
 }
 
-func NewJavaProcessInfoRepository() IJavaProcessInfoRepository {
-	return JavaProcessInfoRepository{}
+func NewJavaProcessInfoRepository(raspHostRepository IRaspHostRepository) IJavaProcessInfoRepository {
+	return JavaProcessInfoRepository{
+		RaspHostRepository: raspHostRepository,
+	}
 }
 
 func (j JavaProcessInfoRepository) GetJavaProcessInfos(req *vo.JavaProcessInfoListRequest) ([]*model.JavaProcessInfo, int64, error) {
@@ -71,23 +80,108 @@ func (j JavaProcessInfoRepository) GetAllJavaProcessInfos(hostName string) ([]*m
 }
 
 func (j JavaProcessInfoRepository) DeleteProcess(id uint) error {
-	err := common.DB.Where("id = ?", id).Unscoped().Delete(&model.JavaProcessInfo{}).Error
+	var javaProcessInfo model.JavaProcessInfo
+	err := common.DB.Where("id = ?", id).Find(&javaProcessInfo).Error
+	if err != nil {
+		return err
+	}
+	hostName := javaProcessInfo.HostName
+	err = common.DB.Model(&model.JavaProcessInfo{}).Unscoped().Delete(javaProcessInfo).Error
+	if err != nil {
+		return err
+	}
+	err = j.UpdateRaspHostInjectCounts(hostName)
 	return err
 }
 
 func (j JavaProcessInfoRepository) SaveProcessInfo(process *model.JavaProcessInfo) error {
 	err := common.DB.Create(process).Error
+	if err != nil {
+		return err
+	}
+	err = j.UpdateRaspHostInjectCounts(process.HostName)
+	return err
+}
+
+func (j JavaProcessInfoRepository) UpdateProcessInfo(info *model.JavaProcessInfo) error {
+	err := common.DB.Save(info).Error
+	if err != nil {
+		return err
+	}
+	err = j.UpdateRaspHostInjectCounts(info.HostName)
 	return err
 }
 
 func (j JavaProcessInfoRepository) DeleteProcessByPid(hostName string, pid uint) error {
-	err := common.DB.Where("host_name = ?", hostName).
-		Where("pid = ?", pid).Unscoped().Delete(&model.JavaProcessInfo{}).Error
-	return err
+	javaProcessInfo, err := j.GetProcessByPid(hostName, pid)
+	if err != nil {
+		return err
+	}
+	if javaProcessInfo != nil {
+		hostName = javaProcessInfo.HostName
+		err = common.DB.Unscoped().Delete(javaProcessInfo).Error
+		if err != nil {
+			return err
+		}
+		err = j.UpdateRaspHostInjectCounts(hostName)
+		return err
+	} else {
+		return nil
+	}
 }
 
-func (j JavaProcessInfoRepository) UpdateProcessByHostName(process *model.JavaProcessInfo) error{
-	err := common.DB.Where("host_name = ?", process.HostName).
-		Where("pid = ?", process.Pid).Unscoped().Delete(&model.JavaProcessInfo{}).Error
-	return err
+func (j JavaProcessInfoRepository) GetProcessByPid(hostName string, pid uint) (*model.JavaProcessInfo, error) {
+	var javaProcessInfo model.JavaProcessInfo
+	err := common.DB.Model(&model.JavaProcessInfo{}).Where("host_name = ?", hostName).Where("pid = ?", pid).First(&javaProcessInfo).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		} else {
+			return nil, err
+		}
+	}
+	return &javaProcessInfo, err
+}
+
+func (j JavaProcessInfoRepository) GetSuccessInjectCount(hostName string) (int64, error) {
+	var count int64
+	err := common.DB.Model(&model.JavaProcessInfo{}).Where("host_name = ?", hostName).Where("status = ?", 1).Count(&count).Error
+	return count, err
+}
+
+func (j JavaProcessInfoRepository) GetFailedInjectCount(hostName string) (int64, error) {
+	var count int64
+	err := common.DB.Model(&model.JavaProcessInfo{}).Where("host_name = ?", hostName).Where("status = ?", 2).Count(&count).Error
+	return count, err
+}
+
+func (j JavaProcessInfoRepository) GetNotInjectCount(hostName string) (int64, error) {
+	var count int64
+	err := common.DB.Model(&model.JavaProcessInfo{}).Where("host_name = ?", hostName).Where("status = ?", 0).Count(&count).Error
+	return count, err
+}
+
+func (j JavaProcessInfoRepository) UpdateRaspHostInjectCounts(hostName string) error {
+	// 更新保护应用数量
+	raspHost, err := j.RaspHostRepository.GetRaspHostByHostName(hostName)
+	if err != nil {
+		return err
+	}
+	raspHost.NotInject, err = j.GetNotInjectCount(hostName)
+	if err != nil {
+		return err
+	}
+	raspHost.SuccessInject, err = j.GetSuccessInjectCount(hostName)
+	if err != nil {
+		return err
+	}
+	raspHost.FailedInject, err = j.GetFailedInjectCount(hostName)
+	if err != nil {
+		return err
+	}
+	err = j.RaspHostRepository.UpdateRaspHost(raspHost)
+	if err != nil {
+		return err
+	}
+	return nil
 }
