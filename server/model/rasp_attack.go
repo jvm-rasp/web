@@ -10,6 +10,7 @@ type RaspAttack struct {
 	gorm.Model
 	RowGuid      string    `gorm:"type:varchar(255);index;comment:'标识guid'" json:"rowGuid"`
 	HostName     string    `gorm:"type:varchar(255);index;comment:'实例名称'" json:"hostName"`
+	HostIp       string    `gorm:"type:varchar(255);index;comment:'实例ip'" json:"hostIp"`
 	RemoteIp     string    `gorm:"type:varchar(255);index;comment:'攻击者ip地址'" json:"remoteIp"`
 	AttackType   string    `gorm:"type:varchar(255);comment:'攻击类型'" json:"attackType"`
 	IsBlocked    bool      `gorm:"type:boolean;comment:'是否阻断：0,放行；1：阻断'" json:"isBlocked"`

@@ -5,13 +5,16 @@
       <el-row>
         <el-form :size="this.$store.getters.size" :inline="true" :model="params" class="demo-form-inline">
           <el-form-item label="模块名称">
-            <el-input v-model.trim="params.moduleName" clearable placeholder="模块名称" @clear="search" />
+            <el-input v-model.trim="params.fileName" clearable placeholder="模块名称" @clear="search" />
           </el-form-item>
           <el-form-item label="模块hash">
             <el-input v-model.trim="params.fileHash" clearable placeholder="模块hash" @clear="search" />
           </el-form-item>
           <el-form-item label="文件类型">
             <el-input v-model.trim="params.mimeType" clearable placeholder="文件类型" @clear="search" />
+          </el-form-item>
+          <el-form-item label="创建人">
+            <el-input v-model.trim="params.creator" clearable placeholder="文件类型" @clear="search" />
           </el-form-item>
           <el-form-item>
             <el-button :loading="loading" icon="el-icon-search" type="primary" @click="search">查询</el-button>
@@ -126,9 +129,10 @@ export default {
     return {
       // 查询参数
       params: {
-        moduleName: '',
+        fileName: '',
         fileHash: '',
         mimeType: '',
+        creator: '',
         pageNum: 1,
         pageSize: 10
       },

@@ -17,8 +17,8 @@ type JavaProcessInfoController struct {
 	JavaProcessInfoRepository repository.IJavaProcessInfoRepository
 }
 
-func NewJavaProcessInfoController() IJavaProcessInfoController {
-	javaProcessInfoRepository := repository.NewJavaProcessInfoRepository()
+func NewJavaProcessInfoController(raspHostRepository repository.IRaspHostRepository) IJavaProcessInfoController {
+	javaProcessInfoRepository := repository.NewJavaProcessInfoRepository(raspHostRepository)
 	javaProcessInfoContorller := JavaProcessInfoController{JavaProcessInfoRepository: javaProcessInfoRepository}
 	return javaProcessInfoContorller
 }

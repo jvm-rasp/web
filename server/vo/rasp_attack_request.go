@@ -2,6 +2,7 @@ package vo
 
 type RaspAttackListRequest struct {
 	HostName     string `json:"hostName" form:"hostName"`
+	Url          string `json:"url" form:"url"`
 	IsBlocked    string `json:"isBlocked" form:"isBlocked"`
 	HandleResult string `json:"handleResult" form:"handleResult"`
 	PageNum      uint   `json:"pageNum" form:"pageNum"`
