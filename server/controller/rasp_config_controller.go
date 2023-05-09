@@ -20,6 +20,7 @@ type IRaspConfigController interface {
 	UpdateRaspConfigStatusById(c *gin.Context)
 	UpdateRaspConfigDefaultById(c *gin.Context)
 	PushRaspConfig(c *gin.Context)
+	CopyRaspConfig(c *gin.Context)
 }
 
 type RaspConfigController struct {
@@ -95,7 +96,7 @@ func (r RaspConfigController) CreateRaspConfig(c *gin.Context) {
 	// 获取
 	err = r.RaspConfigRepository.CreateRaspConfig(&raspConfig)
 	if err != nil {
-		response.Fail(c, nil, "获取接口列表失败"+err.Error())
+		response.Fail(c, nil, "创建配置失败"+err.Error())
 		return
 	}
 	response.Success(c, nil, "创建配置成功")
@@ -313,4 +314,53 @@ func (l RaspConfigController) PushRaspConfig(c *gin.Context) {
 	hostController.PushHostsConfig(hostNameList, content)
 
 	response.Success(c, nil, "推送策略成功")
+}
+
+func (l RaspConfigController) CopyRaspConfig(c *gin.Context) {
+	var req vo.CopyRaspConfigRequest
+	// 参数绑定
+	if err := c.ShouldBind(&req); err != nil {
+		response.Fail(c, nil, err.Error())
+		return
+	}
+	// 参数校验
+	if err := common.Validate.Struct(&req); err != nil {
+		errStr := err.(validator.ValidationErrors)[0].Translate(common.Trans)
+		response.Fail(c, nil, errStr)
+		return
+	}
+	// 获取要复制的配置对象
+	srcConfig, err := l.RaspConfigRepository.GetRaspConfigById(req.ID)
+	if err != nil {
+		response.Fail(c, nil, "复制当前配置失败")
+		return
+	}
+	// 获取当前用户
+	ur := repository.NewUserRepository()
+	ctxUser, err := ur.GetCurrentUser(c)
+	if err != nil {
+		response.Fail(c, nil, "获取当前用户信息失败")
+		return
+	}
+	destConfig := model.RaspConfig{
+		Name:          srcConfig.Name + "_Copy",
+		Desc:          srcConfig.Desc,
+		Status:        srcConfig.Status,
+		Creator:       ctxUser.Username,
+		Operator:      ctxUser.Username,
+		AgentMode:     srcConfig.AgentMode,
+		ModuleConfigs: srcConfig.ModuleConfigs,
+		LogPath:       srcConfig.LogPath,
+		AgentConfigs:  srcConfig.AgentConfigs,
+		RaspBinInfo:   srcConfig.RaspBinInfo,
+		RaspLibInfo:   srcConfig.RaspLibInfo,
+		IsDefault:     false,
+	}
+	err = l.RaspConfigRepository.CreateRaspConfig(&destConfig)
+	if err != nil {
+		response.Fail(c, nil, "复制当前配置失败"+err.Error())
+		return
+	}
+	response.Success(c, nil, "复制配置成功")
+	return
 }

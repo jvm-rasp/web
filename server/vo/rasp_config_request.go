@@ -58,3 +58,7 @@ type UpdateRaspConfigDefaultRequest struct {
 type PushRaspConfigRequest struct {
 	ID uint `json:"id" form:"id" validate:"required,min=1,max=32"`
 }
+
+type CopyRaspConfigRequest struct {
+	ID uint `json:"id" form:"id" validate:"required,min=1,max=32"`
+}

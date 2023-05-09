@@ -22,6 +22,7 @@ func InitRaspConfigRoutes(r *gin.RouterGroup, authMiddleware *jwt.GinJWTMiddlewa
 		router.POST("/update/status", raspConfigController.UpdateRaspConfigStatusById)
 		router.POST("/update/default", raspConfigController.UpdateRaspConfigDefaultById)
 		router.POST("/push", raspConfigController.PushRaspConfig)
+		router.POST("/copy", raspConfigController.CopyRaspConfig)
 	}
 	return r
 }

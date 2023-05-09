@@ -672,6 +672,13 @@ func InitData() {
 		},
 		{
 			Method:   "POST",
+			Path:     "/config/copy",
+			Category: "config",
+			Desc:     "复制一条配置",
+			Creator:  "系统",
+		},
+		{
+			Method:   "POST",
 			Path:     "/module/create",
 			Category: "module",
 			Desc:     "创建模块",
