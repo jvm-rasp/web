@@ -91,8 +91,16 @@
         <el-table-column fixed="right" label="操作" align="center">
           <template slot-scope="scope">
             <el-button type="text" size="medium" @click="handlePush(scope.row)">推送</el-button>
-            <el-button type="text" size="medium" @click="handleDelete(scope.row)">删除</el-button>
-            <el-button type="text" size="medium" @click="handleEdit(scope.row)">修改</el-button>
+            <el-dropdown @command="handleCommand">
+              <span class="el-dropdown-link">
+                更多<i class="el-icon-arrow-down el-icon--right" />
+              </span>
+              <el-dropdown-menu slot="dropdown">
+                <el-dropdown-item :command="{cmd: 'edit', args: scope.row}">修 改</el-dropdown-item>
+                <el-dropdown-item :command="{cmd: 'copy', args: scope.row}">复 制</el-dropdown-item>
+                <el-dropdown-item :command="{cmd: 'delete', args: scope.row}">删 除</el-dropdown-item>
+              </el-dropdown-menu>
+            </el-dropdown>
           </template>
         </el-table-column>
       </el-table>
@@ -430,7 +438,7 @@ import {
   batchDeleteConfigByIds,
   updateConfig,
   updateStatusById,
-  updateDefaultById, pushConfigById
+  updateDefaultById, pushConfigById, copyConfigById
 } from '@/api/config/config'
 import vueJsonEditor from 'vue-json-editor'
 import { getModules, getUploadFiles } from '@/api/module/module'
@@ -579,6 +587,20 @@ export default {
       this.getUploadTableData()
     },
 
+    handleCommand(command) {
+      switch (command.cmd) {
+        case 'delete':
+          this.handleDelete(command.args)
+          break
+        case 'edit':
+          this.handleEdit(command.args)
+          break
+        case 'copy':
+          this.handleCopy(command.args)
+          break
+      }
+    },
+
     handleEdit(record) {
       this.bindConfigData = JSON.parse(JSON.stringify(record))
       this.selectedModuleId = []
@@ -617,6 +639,36 @@ export default {
           showClose: true,
           type: 'info',
           message: '已取消删除'
+        })
+      })
+    },
+
+    handleCopy(record) {
+      this.$confirm('此操作将复制当前配置, 是否继续?', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(async res => {
+        this.loading = true
+        let msg = ''
+        try {
+          const { message } = await copyConfigById({ id: record.ID })
+          msg = message
+        } finally {
+          this.loading = false
+        }
+
+        await this.getConfigTableData()
+        this.$message({
+          showClose: true,
+          message: msg,
+          type: 'success'
+        })
+      }).catch(() => {
+        this.$message({
+          showClose: true,
+          type: 'info',
+          message: '已取消复制'
         })
       })
     },
@@ -992,5 +1044,18 @@ export default {
   color: #889aa4;
   cursor: pointer;
   user-select: none;
+}
+
+.el-dropdown-link {
+  cursor: pointer;
+  color: #1890ff;
+  margin-left: 5px;
+}
+.el-icon-arrow-down {
+  font-size: 14px;
+}
+
+.el-dropdown-menu__item {
+  font-size: 14px;
 }
 </style>

@@ -44,6 +44,14 @@ export function batchDeleteConfigByIds(params) {
   })
 }
 
+export function copyConfigById(params) {
+  return request({
+    url: '/config/copy',
+    method: 'post',
+    data: params
+  })
+}
+
 export function updateStatusById(params) {
   return request({
     url: '/config/update/status',
