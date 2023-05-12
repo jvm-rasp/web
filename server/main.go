@@ -25,6 +25,12 @@ func main() {
 	// 初始化日志
 	common.InitLogger()
 
+	// 初始化上报日志
+	if config.Conf.Logs.EnableReportLog {
+		common.InitReportLog()
+		common.InitHeartBeat()
+	}
+
 	// 初始化数据库(mysql)
 	common.InitMysql()
 

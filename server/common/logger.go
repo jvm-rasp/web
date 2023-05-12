@@ -2,17 +2,20 @@ package common
 
 import (
 	"fmt"
-	"server/config"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"gopkg.in/natefinch/lumberjack.v2"
 	"os"
+	"server/config"
 	"time"
 )
 
 // 全局日志变量
-//var Log *zap.Logger
+// var Log *zap.Logger
 var Log *zap.SugaredLogger
+
+// 上报攻击日志变量
+var ReportLog = zap.New(zapcore.NewTee(), zap.AddCaller()).Sugar()
 
 /**
  * 初始化日志
@@ -66,15 +69,8 @@ func InitLogger() {
 		return level >= zap.ErrorLevel
 	})
 	lowPriority := zap.LevelEnablerFunc(func(level zapcore.Level) bool {
-		return level < zap.ErrorLevel && level >= zap.DebugLevel
+		return level < zap.ErrorLevel && level >= config.Conf.Logs.Level
 	})
-
-	// 当yml配置中的等级大于Error时，lowPriority级别日志停止记录
-	if config.Conf.Logs.Level >= 2 {
-		lowPriority = zap.LevelEnablerFunc(func(level zapcore.Level) bool {
-			return false
-		})
-	}
 
 	// info文件writeSyncer
 	infoFileWriteSyncer := zapcore.AddSync(&lumberjack.Logger{
@@ -106,4 +102,56 @@ func InitLogger() {
 	logger := zap.New(zapcore.NewTee(coreArr...), zap.AddCaller())
 	Log = logger.Sugar()
 	Log.Info("初始化zap日志完成!")
+}
+
+func InitReportLog() {
+	now := time.Now()
+	attackLogFileName := fmt.Sprintf("%s/report-attack/%04d-%02d-%02d.log", config.Conf.Logs.Path, now.Year(), now.Month(), now.Day())
+	errorLogFileName := fmt.Sprintf("%s/report-error/%04d-%02d-%02d.log", config.Conf.Logs.Path, now.Year(), now.Month(), now.Day())
+	var coreArr []zapcore.Core
+
+	encoderConfig := zapcore.EncoderConfig{
+		MessageKey: "msg",
+		LineEnding: zapcore.DefaultLineEnding,
+	}
+	encoder := zapcore.NewConsoleEncoder(encoderConfig)
+
+	// 日志级别
+	highPriority := zap.LevelEnablerFunc(func(level zapcore.Level) bool {
+		return level == zap.ErrorLevel
+	})
+	lowPriority := zap.LevelEnablerFunc(func(level zapcore.Level) bool {
+		return level == zap.WarnLevel
+	})
+
+	// info文件writeSyncer
+	infoFileWriteSyncer := zapcore.AddSync(&lumberjack.Logger{
+		Filename:   attackLogFileName,           //日志文件存放目录，如果文件夹不存在会自动创建
+		MaxSize:    config.Conf.Logs.MaxSize,    //文件大小限制,单位MB
+		MaxAge:     config.Conf.Logs.MaxAge,     //日志文件保留天数
+		MaxBackups: config.Conf.Logs.MaxBackups, //最大保留日志文件数量
+		LocalTime:  false,
+		Compress:   config.Conf.Logs.Compress, //是否压缩处理
+	})
+	// 第三个及之后的参数为写入文件的日志级别,ErrorLevel模式只记录error级别的日志
+	infoFileCore := zapcore.NewCore(encoder, zapcore.NewMultiWriteSyncer(infoFileWriteSyncer), lowPriority)
+
+	// error文件writeSyncer
+	errorFileWriteSyncer := zapcore.AddSync(&lumberjack.Logger{
+		Filename:   errorLogFileName,            //日志文件存放目录
+		MaxSize:    config.Conf.Logs.MaxSize,    //文件大小限制,单位MB
+		MaxAge:     config.Conf.Logs.MaxAge,     //日志文件保留天数
+		MaxBackups: config.Conf.Logs.MaxBackups, //最大保留日志文件数量
+		LocalTime:  false,
+		Compress:   config.Conf.Logs.Compress, //是否压缩处理
+	})
+	// 第三个及之后的参数为写入文件的日志级别,ErrorLevel模式只记录error级别的日志
+	errorFileCore := zapcore.NewCore(encoder, zapcore.NewMultiWriteSyncer(errorFileWriteSyncer), highPriority)
+
+	coreArr = append(coreArr, infoFileCore)
+	coreArr = append(coreArr, errorFileCore)
+
+	logger := zap.New(zapcore.NewTee(coreArr...), zap.AddCaller())
+	ReportLog = logger.Sugar()
+	Log.Info("初始化上报日志完成!")
 }

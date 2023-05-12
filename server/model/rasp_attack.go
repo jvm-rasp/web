@@ -34,4 +34,5 @@ type RaspAttackDetail struct {
 	Extend     string         `gorm:"type:text;comment:'告警信息'" json:"extend"`
 	AttackTime time.Time      `gorm:"type:datetime;comment:'攻击时间'" json:"attackTime"`
 	Level      int            `gorm:"type:int(11);comment:'危险等级：0～100整数'" json:"level"`
+	MetaInfo   string         `gorm:"type:varchar(255);comment:'元数据信息'" json:"metaInfo"`
 }

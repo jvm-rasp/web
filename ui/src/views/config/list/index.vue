@@ -98,6 +98,7 @@
               <el-dropdown-menu slot="dropdown">
                 <el-dropdown-item :command="{cmd: 'edit', args: scope.row}">修 改</el-dropdown-item>
                 <el-dropdown-item :command="{cmd: 'copy', args: scope.row}">复 制</el-dropdown-item>
+                <el-dropdown-item :command="{cmd: 'export', args: scope.row}">导 出</el-dropdown-item>
                 <el-dropdown-item :command="{cmd: 'delete', args: scope.row}">删 除</el-dropdown-item>
               </el-dropdown-menu>
             </el-dropdown>

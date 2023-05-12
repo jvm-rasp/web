@@ -25,6 +25,7 @@ type config struct {
 	RateLimit *RateLimitConfig `mapstructure:"rate-limit" json:"rateLimit"`
 	Ssl       *Ssl             `mapstructure:"ssl" json:"ssl"`
 	Mdns      *Mdns            `mapstructure:"mdns" json:"mdns"`
+	Env       *Env             `json:"env"`
 }
 
 // 设置读取配置信息
@@ -68,6 +69,11 @@ func InitConfig() {
 	} else {
 		Conf.System.UrlPathPrefix = strings.Trim(Conf.System.UrlPathPrefix, "/")
 	}
+	// 读取全局环境变量
+	Conf.Env = &Env{}
+	Conf.Env.WorkDir = workDir
+	Conf.Env.Ip = util.GetDefaultIp()
+	Conf.Env.HostName, _ = os.Hostname()
 }
 
 type SystemConfig struct {
@@ -82,12 +88,13 @@ type SystemConfig struct {
 }
 
 type LogsConfig struct {
-	Level      zapcore.Level `mapstructure:"level" json:"level"`
-	Path       string        `mapstructure:"path" json:"path"`
-	MaxSize    int           `mapstructure:"max-size" json:"maxSize"`
-	MaxBackups int           `mapstructure:"max-backups" json:"maxBackups"`
-	MaxAge     int           `mapstructure:"max-age" json:"maxAge"`
-	Compress   bool          `mapstructure:"compress" json:"compress"`
+	Level           zapcore.Level `mapstructure:"level" json:"level"`
+	Path            string        `mapstructure:"path" json:"path"`
+	MaxSize         int           `mapstructure:"max-size" json:"maxSize"`
+	MaxBackups      int           `mapstructure:"max-backups" json:"maxBackups"`
+	MaxAge          int           `mapstructure:"max-age" json:"maxAge"`
+	Compress        bool          `mapstructure:"compress" json:"compress"`
+	EnableReportLog bool          `mapstructure:"enable-report-log" json:"enableReportLog"`
 }
 
 type CasbinConfig struct {
@@ -114,4 +121,10 @@ type Ssl struct {
 
 type Mdns struct {
 	Enable bool
+}
+
+type Env struct {
+	Ip       string
+	HostName string
+	WorkDir  string
 }
