@@ -32,6 +32,7 @@ type AttackDetail struct {
 	Extend     string  `json:"extend"`
 	AttackTime int64   `json:"attackTime"`
 	Level      int     `json:"level"`
+	MetaInfo   string  `json:"metaInfo"`
 }
 
 type Context struct {

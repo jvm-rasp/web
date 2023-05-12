@@ -606,6 +606,8 @@ func (l LogController) handleAgentErrorLog(req vo.RaspLogRequest) {
 	if err != nil {
 		panic(err)
 	}
+	// 写入上报错误日志
+	common.ReportLog.Error(req.Message)
 }
 
 func (l LogController) handleDaemonErrorLog(req vo.RaspLogRequest) {
@@ -622,6 +624,8 @@ func (l LogController) handleDaemonErrorLog(req vo.RaspLogRequest) {
 	if err != nil {
 		panic(err)
 	}
+	// 写入上报错误日志
+	common.ReportLog.Error(req.Message)
 }
 
 func (l LogController) handleModuleErrorLog(req vo.RaspLogRequest) {
@@ -645,6 +649,8 @@ func (l LogController) handleModuleErrorLog(req vo.RaspLogRequest) {
 	if err != nil {
 		panic(err)
 	}
+	// 写入上报错误日志
+	common.ReportLog.Error(req.Message)
 }
 
 func (l LogController) handleAttackLog(req vo.RaspLogRequest) {
@@ -663,14 +669,8 @@ func (l LogController) handleAttackLog(req vo.RaspLogRequest) {
 		return
 	}
 
-	// 构建对象
-	raspHostInfo, err := l.RaspHostRepository.GetRaspHostByHostName(req.Host.Name)
-	if err != nil {
-		return
-	}
 	attack := model.RaspAttack{
 		HostName: req.Host.Name,
-		HostIp:   raspHostInfo.Ip,
 	}
 	// 构件攻击详情对象
 	detail := model.RaspAttackDetail{}
@@ -685,6 +685,7 @@ func (l LogController) handleAttackLog(req vo.RaspLogRequest) {
 		}
 		guid, _ := uuid.NewUUID()
 		attack.RowGuid = guid.String()
+		attack.HostIp = attackDetail.Context.LocalAddr
 		attack.RemoteIp = attackDetail.Context.RemoteHost
 		attack.RequestUri = attackDetail.Context.RequestURI
 		attack.IsBlocked = attackDetail.IsBlocked
@@ -704,6 +705,10 @@ func (l LogController) handleAttackLog(req vo.RaspLogRequest) {
 		detail.Extend = attackDetail.Extend
 		detail.AttackTime = time.Unix(attackDetail.AttackTime/1000, 0)
 		detail.Level = attackDetail.Level
+		detail.MetaInfo = attackDetail.MetaInfo
+
+		// 写入上报日志
+		common.ReportLog.Warn(msg)
 	}
 
 	err = l.RaspAttackRepository.CreateRaspAttack(&attack)

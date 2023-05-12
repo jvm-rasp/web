@@ -118,7 +118,7 @@
         <el-tab-pane label="漏洞详情">
           <el-descriptions title="" size="medium" :column="2" border>
             <el-descriptions-item label="主机名称">{{ selectRecord.record.hostName }}</el-descriptions-item>
-            <el-descriptions-item label="受攻击IP">{{ selectRecord.record.localIp }}</el-descriptions-item>
+            <el-descriptions-item label="受攻击IP">{{ selectRecord.record.hostIp }}</el-descriptions-item>
             <el-descriptions-item label="攻击IP">{{ selectRecord.record.remoteIp }}</el-descriptions-item>
             <el-descriptions-item label="攻击时间">{{ selectRecord.record.attackTime }}</el-descriptions-item>
             <el-descriptions-item label="危险等级">
@@ -134,6 +134,7 @@
             <el-descriptions-item label="攻击类型">{{ selectRecord.record.attackType }}</el-descriptions-item>
             <el-descriptions-item label="检测算法">{{ selectRecord.detail.algorithm }}</el-descriptions-item>
             <el-descriptions-item label="告警详情">{{ selectRecord.detail.extend }}</el-descriptions-item>
+            <el-descriptions-item label="规则版本">{{ selectRecord.detail.metaInfo }}</el-descriptions-item>
           </el-descriptions>
           <el-descriptions
             title=""
@@ -220,7 +221,18 @@ export default {
       },
       dialogDetailVisible: false,
       selectRecord: {
-        record: {},
+        record: {
+          hostName: '',
+          hostIp: '',
+          remoteIp: '',
+          attackTime: '',
+          attackType: '',
+          algorithm: '',
+          extend: '',
+          metaInfo: '',
+          level: '',
+          isBlocked: ''
+        },
         detail: {
           context: {}
         }

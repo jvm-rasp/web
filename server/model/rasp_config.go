@@ -27,6 +27,7 @@ type RaspFinalConfig struct {
 	ModuleAutoUpdate bool           `json:"moduleAutoUpdate"`
 	LogPath          string         `json:"logPath"`
 	RemoteHosts      string         `json:"remoteHosts"`
+	EnableMdns       bool           `json:"enableMdns"`
 	AgentConfigs     AgentConfig    `json:"agentConfigs"`
 	RaspLibConfigs   ZipFileInfo    `json:"raspLibConfigs"`
 	RaspBinConfigs   ZipFileInfo    `json:"raspBinConfigs"`
