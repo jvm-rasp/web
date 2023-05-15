@@ -2,6 +2,7 @@ package repository
 
 import (
 	"fmt"
+	"gorm.io/gorm"
 	"server/common"
 	"server/model"
 	"server/vo"
@@ -11,7 +12,7 @@ import (
 type IRaspFileRepository interface {
 	GetRaspFiles(req *vo.RaspFileListRequest) ([]*model.RaspFile, int64, error)
 	GetRaspFileById(id uint) (*model.RaspFile, error)
-	GetRaspFileByName(fileName string) (*model.RaspFile, int64, error)
+	GetRaspFileByName(fileName string) (*model.RaspFile, error)
 	GetRaspFileByHash(fileHash string) (*model.RaspFile, error)
 	CreateRaspFile(files *model.RaspFile) error
 	DeleteRaspFile(ids []uint) error
@@ -69,20 +70,29 @@ func (h RaspFileRepository) GetRaspFiles(req *vo.RaspFileListRequest) ([]*model.
 
 func (h RaspFileRepository) GetRaspFileById(id uint) (*model.RaspFile, error) {
 	var record *model.RaspFile
-	err := common.DB.Find(&record, "id = ?", id).Error
+	err := common.DB.First(&record, "id = ?", id).Error
+	if err == gorm.ErrRecordNotFound {
+		return nil, nil
+	}
 	return record, err
 }
 
-func (h RaspFileRepository) GetRaspFileByName(fileName string) (*model.RaspFile, int64, error) {
+func (h RaspFileRepository) GetRaspFileByName(fileName string) (*model.RaspFile, error) {
 	var record *model.RaspFile
 	var count int64
-	err := common.DB.Find(&record, "file_name = ?", fileName).Count(&count).Error
-	return record, count, err
+	err := common.DB.First(&record, "file_name = ?", fileName).Count(&count).Error
+	if err == gorm.ErrRecordNotFound {
+		return nil, nil
+	}
+	return record, err
 }
 
 func (h RaspFileRepository) GetRaspFileByHash(fileHash string) (*model.RaspFile, error) {
 	var record *model.RaspFile
-	err := common.DB.Find(&record, "file_hash = ?", fileHash).Error
+	err := common.DB.First(&record, "file_hash = ?", fileHash).Error
+	if err == gorm.ErrRecordNotFound {
+		return nil, nil
+	}
 	return record, err
 }
 

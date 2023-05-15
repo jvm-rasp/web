@@ -75,3 +75,20 @@ export function pushConfigById(params) {
     data: params
   })
 }
+
+export function exportConfigById(params) {
+  return request({
+    url: '/config/export',
+    method: 'post',
+    data: params,
+    responseType: 'blob'
+  })
+}
+
+export function getModules(params) {
+  return request({
+    url: '/config/module/list',
+    method: 'get',
+    params
+  })
+}

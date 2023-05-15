@@ -1,13 +1,17 @@
 package controller
 
 import (
+	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
+	"gorm.io/datatypes"
 	"server/common"
 	"server/model"
 	"server/repository"
 	"server/response"
+	"server/util"
 	"server/vo"
+	"strings"
 )
 
 type IRaspModuleController interface {
@@ -17,15 +21,21 @@ type IRaspModuleController interface {
 	BatchDeleteModuleByIds(c *gin.Context)
 	DeleteModuleById(c *gin.Context)
 	UpdateRaspModuleStatusById(c *gin.Context)
+	UpGradeRaspModuleById(c *gin.Context)
 }
 
 type RaspModuleController struct {
 	RaspModuleRepository repository.IRaspModuleRepository
+	RaspFileRepository   repository.IRaspFileRepository
 }
 
 func NewRaspModuleController() IRaspModuleController {
-	raspModuleRepository := repository.NewRaspModuleRepository()
-	raspModuleController := RaspModuleController{RaspModuleRepository: raspModuleRepository}
+	repo1 := repository.NewRaspModuleRepository()
+	repo2 := repository.NewRaspFileRepository()
+	raspModuleController := RaspModuleController{
+		RaspModuleRepository: repo1,
+		RaspFileRepository:   repo2,
+	}
 	return raspModuleController
 }
 
@@ -66,7 +76,12 @@ func (r RaspModuleController) CreateRaspModule(c *gin.Context) {
 		response.Fail(c, nil, errStr)
 		return
 	}
-
+	// 判断库中是否有相同模块
+	record, err := r.RaspModuleRepository.GetRaspModuleByName(req.ModuleName, req.ModuleVersion)
+	if err != nil || record != nil {
+		response.Fail(c, nil, "当前库中已存在相同模块，请重命名或者更新版本")
+		return
+	}
 	// 获取当前用户
 	ur := repository.NewUserRepository()
 	ctxUser, err := ur.GetCurrentUser(c)
@@ -76,16 +91,16 @@ func (r RaspModuleController) CreateRaspModule(c *gin.Context) {
 	}
 
 	raspConfig := model.RaspModule{
-		ModuleName:        req.ModuleName,
-		ModuleVersion:     req.ModuleVersion,
-		ModuleType:        req.ModuleType,
-		DownLoadURL:       req.DownLoadURL,
-		Md5:               req.Md5,
-		Desc:              req.Desc,
-		Status:            req.Status,
-		Parameters:        req.Parameters,
-		Creator:           ctxUser.Username,
-		Operator:          ctxUser.Username,
+		ModuleName:    req.ModuleName,
+		ModuleVersion: req.ModuleVersion,
+		ModuleType:    req.ModuleType,
+		DownLoadURL:   req.DownLoadURL,
+		Md5:           req.Md5,
+		Desc:          req.Desc,
+		Status:        req.Status,
+		Parameters:    req.Parameters,
+		Creator:       ctxUser.Username,
+		Operator:      ctxUser.Username,
 	}
 
 	// 获取
@@ -226,6 +241,71 @@ func (r RaspModuleController) UpdateRaspModuleStatusById(c *gin.Context) {
 	err = r.RaspModuleRepository.UpdateRaspModule(module)
 	if err != nil {
 		response.Fail(c, nil, "更新当前模块失败")
+		return
+	}
+	response.Success(c, nil, "更新模块成功")
+}
+
+func (r RaspModuleController) UpGradeRaspModuleById(c *gin.Context) {
+	var req vo.UpgradeRaspModuleRequest
+	// 参数绑定
+	if err := c.ShouldBind(&req); err != nil {
+		response.Fail(c, nil, err.Error())
+		return
+	}
+	// 参数校验
+	if err := common.Validate.Struct(&req); err != nil {
+		errStr := err.(validator.ValidationErrors)[0].Translate(common.Trans)
+		response.Fail(c, nil, errStr)
+		return
+	}
+
+	// 获取当前用户
+	ur := repository.NewUserRepository()
+	ctxUser, err := ur.GetCurrentUser(c)
+	if err != nil {
+		response.Fail(c, nil, "获取当前用户信息失败")
+		return
+	}
+	module, err := r.RaspModuleRepository.GetRaspModuleById(req.ID)
+	if err != nil {
+		response.Fail(c, nil, "获取当前模块信息失败")
+		return
+	}
+	if module.Upgradable && module.NewMd5 != "" {
+		// TODO 更新为最新模块
+		raspFile, err := r.RaspFileRepository.GetRaspFileByHash(module.NewMd5)
+		if err != nil {
+			response.Fail(c, nil, "获取最新模块信息失败")
+			return
+		}
+		// 获取默认参数配置
+		parametersStr, err := util.GetDefaultParameters(raspFile.DiskPath)
+		if err != nil {
+			response.Fail(c, nil, err.Error())
+			return
+		}
+		parametersStr = strings.ReplaceAll(parametersStr, "\n", "")
+		var parameters datatypes.JSON
+		err = json.Unmarshal([]byte(parametersStr), &parameters)
+		if err != nil {
+			response.Fail(c, nil, err.Error())
+			return
+		}
+		module.DownLoadURL = raspFile.DownLoadUrl
+		module.Md5 = raspFile.FileHash
+		module.Parameters = parameters
+		// 取消标记
+		module.Upgradable = false
+		module.NewMd5 = ""
+		module.Operator = ctxUser.Username
+		err = r.RaspModuleRepository.UpdateRaspModule(module)
+		if err != nil {
+			response.Fail(c, nil, "标记模块已更新失败")
+			return
+		}
+	} else {
+		response.Fail(c, nil, "当前模块已是最新")
 		return
 	}
 	response.Success(c, nil, "更新模块成功")

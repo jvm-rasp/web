@@ -2,6 +2,7 @@ package repository
 
 import (
 	"fmt"
+	"gorm.io/gorm"
 	"server/common"
 	"server/model"
 	"server/vo"
@@ -12,6 +13,7 @@ import (
 type IRaspModuleRepository interface {
 	GetRaspModules(req *vo.RaspModuleListRequest) ([]*model.RaspModule, int64, error)
 	GetRaspModuleById(id uint) (*model.RaspModule, error)
+	GetRaspModuleByName(moduleName string, moduleVersion string) (*model.RaspModule, error)
 	UpdateRaspModule(module *model.RaspModule) error
 	CreateRaspModule(module *model.RaspModule) error
 	DeleteRaspModule(ids []uint) error
@@ -66,6 +68,15 @@ func (a RaspModuleRepository) GetRaspModules(req *vo.RaspModuleListRequest) ([]*
 func (a RaspModuleRepository) GetRaspModuleById(id uint) (*model.RaspModule, error) {
 	var record *model.RaspModule
 	err := common.DB.Find(&record, "id = ?", id).Error
+	return record, err
+}
+
+func (a RaspModuleRepository) GetRaspModuleByName(moduleName string, moduleVersion string) (*model.RaspModule, error) {
+	var record *model.RaspModule
+	err := common.DB.Where("module_name = ?", moduleName).Where("module_version = ?", moduleVersion).First(&record).Error
+	if err == gorm.ErrRecordNotFound {
+		return nil, nil
+	}
 	return record, err
 }
 

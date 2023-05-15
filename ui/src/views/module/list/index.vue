@@ -51,7 +51,14 @@
             {{ (params.pageNum - 1) * params.pageSize + scope.$index + 1 }}
           </template>
         </el-table-column>
-        <el-table-column show-overflow-tooltip sortable prop="moduleName" label="模块名称" align="center" />
+        <el-table-column show-overflow-tooltip sortable prop="moduleName" label="模块名称" header-align="center" align="center" width="250">
+          <template slot-scope="scope">
+            <el-badge value="new" class="item" :hidden="!scope.row.upgradable">
+              <el-link v-if="scope.row.upgradable" style="font-weight: 400" :underline="false" @click="upgradeModule(scope.row)">{{ scope.row.moduleName }}</el-link>
+              <div v-else>{{ scope.row.moduleName }}</div>
+            </el-badge>
+          </template>
+        </el-table-column>
         <el-table-column show-overflow-tooltip sortable prop="moduleType" label="模块类型" align="center">
           <template slot-scope="scope">
             {{ getModuleType(scope.row.moduleType) }}
@@ -65,7 +72,6 @@
             </el-tag>
           </template>
         </el-table-column>
-
         <el-table-column show-overflow-tooltip sortable prop="status" label="模块状态" align="center">
           <template slot-scope="scope" label="模块状态" align="center">
             <el-switch
@@ -327,7 +333,7 @@ import {
   deleteModule, getModuleInfoById,
   getModules, getUploadFiles,
   updateModule,
-  updateStatusById
+  updateStatusById, upGradeModuleById
 } from '@/api/module/module'
 import moment from 'moment'
 
@@ -695,6 +701,35 @@ export default {
         this.bindModuleData.parameters = JSON.parse(data.parameters)
       }
       this.selectUploadFileVisible = false
+    },
+    upgradeModule(record) {
+      this.$confirm('此操作将更新为最新版本, 是否继续?', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(async res => {
+        this.loading = true
+        let msg = ''
+        try {
+          const { message } = await upGradeModuleById({ id: record.ID })
+          msg = message
+        } finally {
+          this.loading = false
+        }
+
+        await this.getModuleTableData()
+        this.$message({
+          showClose: true,
+          message: msg,
+          type: 'success'
+        })
+      }).catch(() => {
+        this.$message({
+          showClose: true,
+          type: 'info',
+          message: '已取消更新'
+        })
+      })
     }
   }
 }
@@ -717,5 +752,10 @@ export default {
   color: #889aa4;
   cursor: pointer;
   user-select: none;
+}
+
+.item {
+  margin-top: 8px;
+  margin-bottom: 8px;
 }
 </style>

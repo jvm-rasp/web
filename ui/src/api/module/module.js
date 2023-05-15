@@ -71,3 +71,11 @@ export function getModuleInfoById(params) {
     params
   })
 }
+
+export function upGradeModuleById(params) {
+  return request({
+    url: '/module/upgrade',
+    method: 'post',
+    data: params
+  })
+}
