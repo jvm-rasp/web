@@ -208,8 +208,7 @@ func (h RaspHostController) GeneratePushConfig(configId uint) ([]byte, error) {
 	}
 	// 添加模块参数信息
 	for _, item := range moduleConfigsFields {
-		moduleId := item.ID
-		moduleInfo, err := h.RaspModuleRepository.GetRaspModuleById(moduleId)
+		moduleInfo, err := h.RaspModuleRepository.GetRaspModuleByName(item.ModuleName, item.ModuleVersion)
 		if err != nil {
 			return nil, errors.New("获取模块信息失败:" + err.Error())
 		}
