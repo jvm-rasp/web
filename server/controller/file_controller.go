@@ -11,6 +11,7 @@ import (
 	"server/util"
 	"server/vo"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -32,12 +33,17 @@ const DATA_DIR = "upload"
 const FILE_PERM = 0755
 
 type FileController struct {
-	RaspFileRepository repository.IRaspFileRepository
+	RaspFileRepository   repository.IRaspFileRepository
+	RaspModuleRepository repository.IRaspModuleRepository
 }
 
 func NewFileController() IFileController {
-	repository := repository.NewRaspFileRepository()
-	fileController := FileController{RaspFileRepository: repository}
+	repo1 := repository.NewRaspFileRepository()
+	repo2 := repository.NewRaspModuleRepository()
+	fileController := FileController{
+		RaspFileRepository:   repo1,
+		RaspModuleRepository: repo2,
+	}
 	return fileController
 }
 
@@ -104,6 +110,31 @@ func (f FileController) Upload(c *gin.Context) {
 			response.Fail(c, nil, err.Error())
 			return
 		}
+		// 读取jar包manifest文件
+		if strings.HasSuffix(fileInfo.FileName, ".jar") {
+			manifest, err := util.ReadFile(fileInfo.DiskPath)
+			if err != nil {
+				response.Fail(c, nil, "读取jar包manifest信息失败: "+err.Error())
+				return
+			}
+			moduleName := manifest["ModuleName"]
+			moduleVersion := manifest["ModuleVersion"]
+			module, err := f.RaspModuleRepository.GetRaspModuleByName(moduleName, moduleVersion)
+			if err != nil {
+				response.Fail(c, nil, "读取模块信息信息失败: "+err.Error())
+				return
+			}
+			if module != nil {
+				module.Upgradable = true
+				module.NewMd5 = fileInfo.FileHash
+				err = f.RaspModuleRepository.UpdateRaspModule(module)
+				if err != nil {
+					response.Fail(c, nil, "标记模块信息可升级失败: "+err.Error())
+					return
+				}
+			}
+		}
+
 	}
 	response.Success(c, nil, "uploaded file success")
 }

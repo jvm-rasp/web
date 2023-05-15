@@ -1,8 +1,8 @@
 package repository
 
 import (
-	"errors"
 	"fmt"
+	"gorm.io/gorm"
 	"server/common"
 	"server/model"
 	"server/vo"
@@ -16,8 +16,9 @@ type IRaspConfigRepository interface {
 	CreateRaspConfig(config *model.RaspConfig) error // 创建接口
 	UpdateRaspConfig(config *model.RaspConfig) error
 	DeleteRaspConfig(ids []uint) error
-	GetRaspConfig(hostName string) (*model.RaspConfig, error)
+	GetRaspConfigByName(name string) (*model.RaspConfig, error)
 	GetRaspDefaultConfig() (*model.RaspConfig, error)
+	GetRaspModules() ([]*model.RaspModule, int64, error)
 }
 
 type RaspConfigRepository struct {
@@ -80,7 +81,10 @@ func (a RaspConfigRepository) GetRaspConfigs(req *vo.RaspConfigListRequest) ([]*
 
 func (a RaspConfigRepository) GetRaspConfigById(id uint) (*model.RaspConfig, error) {
 	var record *model.RaspConfig
-	err := common.DB.Find(&record, "id = ?", id).Error
+	err := common.DB.First(&record, "id = ?", id).Error
+	if err == gorm.ErrRecordNotFound {
+		return nil, nil
+	}
 	return record, err
 }
 
@@ -89,23 +93,32 @@ func (r RaspConfigRepository) DeleteRaspConfig(ids []uint) error {
 	return err
 }
 
-func (a RaspConfigRepository) GetRaspConfig(hostName string) (*model.RaspConfig, error) {
-	var list []*model.RaspConfig
-	db := common.DB.Model(&model.RaspConfig{}).Order("created_at DESC")
-	name := strings.TrimSpace(hostName)
-	if name != "" {
-		db = db.Where("name = ?", name)
+func (a RaspConfigRepository) GetRaspConfigByName(name string) (*model.RaspConfig, error) {
+	var record *model.RaspConfig
+	err := common.DB.Where("name = ?", name).First(&record).Error
+	if err == gorm.ErrRecordNotFound {
+		return nil, nil
 	}
-
-	err := db.Find(&list).Error
-	if len(list) == 0 {
-		return nil, errors.New("no config find in db, hostName: " + hostName)
-	}
-	return list[0], err
+	return record, err
 }
 
 func (a RaspConfigRepository) GetRaspDefaultConfig() (*model.RaspConfig, error) {
 	var record *model.RaspConfig
-	err := common.DB.Find(&record, "is_default = ?", true).Error
+	err := common.DB.First(&record, "is_default = ?", true).Error
+	if err == gorm.ErrRecordNotFound {
+		return nil, nil
+	}
 	return record, err
+}
+
+func (a RaspConfigRepository) GetRaspModules() ([]*model.RaspModule, int64, error) {
+	var list []*model.RaspModule
+	db := common.DB.Model(&model.RaspModule{}).Order("created_at DESC")
+	var total int64
+	err := db.Count(&total).Error
+	if err != nil {
+		return list, total, err
+	}
+	err = db.Find(&list).Error
+	return list, total, err
 }

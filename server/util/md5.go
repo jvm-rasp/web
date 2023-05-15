@@ -1,6 +1,7 @@
 package util
 
 import (
+	"bytes"
 	"crypto/md5"
 	"encoding/hex"
 	"io"
@@ -31,6 +32,15 @@ func GetFileMd5(jarFile string) (string, error) {
 func GetMd5FromReader(reader io.Reader) (string, error) {
 	h := md5.New()
 	_, err := io.Copy(h, reader)
+	if err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(h.Sum(nil)), nil
+}
+
+func GetMd5FromBytes(data []byte) (string, error) {
+	h := md5.New()
+	_, err := io.Copy(h, bytes.NewReader(data))
 	if err != nil {
 		return "", err
 	}

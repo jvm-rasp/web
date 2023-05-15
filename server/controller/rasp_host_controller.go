@@ -36,16 +36,19 @@ type RaspHostController struct {
 	RaspHostRepository   repository.IRaspHostRepository
 	RaspConfigRepository repository.IRaspConfigRepository
 	RaspFileRepository   repository.IRaspFileRepository
+	RaspModuleRepository repository.IRaspModuleRepository
 }
 
 func NewRaspHostController() IRaspHostController {
 	raspHostRepository := repository.NewRaspHostRepository()
 	raspConfigRepository := repository.NewRaspConfigRepository()
 	raspFileRepository := repository.NewRaspFileRepository()
+	raspModuleRepository := repository.NewRaspModuleRepository()
 	raspHostController := RaspHostController{
 		RaspHostRepository:   raspHostRepository,
 		RaspConfigRepository: raspConfigRepository,
 		RaspFileRepository:   raspFileRepository,
+		RaspModuleRepository: raspModuleRepository,
 	}
 	return raspHostController
 }
@@ -205,15 +208,20 @@ func (h RaspHostController) GeneratePushConfig(configId uint) ([]byte, error) {
 	}
 	// 添加模块参数信息
 	for _, item := range moduleConfigsFields {
-		var moduleConfig model.ModuleConfig
-		err = json.Unmarshal([]byte(item.Parameters.String()), &moduleConfig)
-		// 如果是外部下载地址则直接赋值
-		if strings.HasPrefix(item.DownLoadURL, "http://") || strings.HasPrefix(item.DownLoadURL, "https://") {
-			moduleConfig.DownLoadUrl = item.DownLoadURL
-		} else {
-			moduleConfig.DownLoadUrl = fmt.Sprintf("%v%v", downloadPrefix, item.DownLoadURL)
+		moduleId := item.ID
+		moduleInfo, err := h.RaspModuleRepository.GetRaspModuleById(moduleId)
+		if err != nil {
+			return nil, errors.New("获取模块信息失败:" + err.Error())
 		}
-		moduleConfig.Md5 = item.Md5
+		var moduleConfig model.ModuleConfig
+		err = json.Unmarshal([]byte(moduleInfo.Parameters.String()), &moduleConfig)
+		// 如果是外部下载地址则直接赋值
+		if strings.HasPrefix(moduleInfo.DownLoadURL, "http://") || strings.HasPrefix(moduleInfo.DownLoadURL, "https://") {
+			moduleConfig.DownLoadUrl = moduleInfo.DownLoadURL
+		} else {
+			moduleConfig.DownLoadUrl = fmt.Sprintf("%v%v", downloadPrefix, moduleInfo.DownLoadURL)
+		}
+		moduleConfig.Md5 = moduleInfo.Md5
 		if err != nil {
 			return nil, errors.New("获取配置文本失败:" + err.Error())
 		}

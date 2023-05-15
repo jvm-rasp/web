@@ -24,6 +24,25 @@
             <el-button :loading="loading" icon="el-icon-plus" type="warning" @click="create">新增</el-button>
           </el-form-item>
           <el-form-item>
+            <el-upload
+              class="upload"
+              action="./config/import"
+              :headers="{Authorization: 'Bearer ' + getUserToken()}"
+              :show-file-list="false"
+              :on-preview="handlePreview"
+              :on-remove="handleRemove"
+              :before-remove="beforeRemove"
+              :on-success="onUploadSuccess"
+              multiple
+              name="files"
+              :limit="1"
+              :on-exceed="handleExceed"
+              :file-list="fileList"
+            >
+              <el-button :loading="loading" icon="el-icon-upload2" type="success">导入</el-button>
+            </el-upload>
+          </el-form-item>
+          <el-form-item>
             <el-button
               :disabled="multipleSelection.length === 0"
               :loading="loading"
@@ -142,8 +161,8 @@
               <el-form-item label="模块列表" prop="moduleConfigs">
                 <el-checkbox v-model="checkAll" :indeterminate="isIndeterminate" @change="handleCheckAllChange">全选</el-checkbox>
                 <div style="margin: 15px 0;" />
-                <el-checkbox-group v-model="selectedModuleId" @change="handleCheckedModulesChange">
-                  <el-checkbox v-for="module in moduleList" :key="module.ID" :label="module.ID">{{ module.moduleName }}</el-checkbox>
+                <el-checkbox-group v-model="selectedModuleName" @change="handleCheckedModulesChange">
+                  <el-checkbox v-for="module in moduleList" :key="module.moduleName" :label="module.moduleName">{{ module.moduleName }}</el-checkbox>
                 </el-checkbox-group>
               </el-form-item>
             </el-col>
@@ -262,8 +281,8 @@
               <el-form-item label="模块列表" prop="moduleConfigs">
                 <el-checkbox v-model="checkAll" :indeterminate="isIndeterminate" @change="handleCheckAllChange">全选</el-checkbox>
                 <div style="margin: 15px 0;" />
-                <el-checkbox-group v-model="selectedModuleId" @change="handleCheckedModulesChange">
-                  <el-checkbox v-for="module in moduleList" :key="module.ID" :label="module.ID">{{ module.moduleName }}</el-checkbox>
+                <el-checkbox-group v-model="selectedModuleName" @change="handleCheckedModulesChange">
+                  <el-checkbox v-for="module in moduleList" :key="module.moduleName" :label="module.moduleName">{{ module.moduleName }}</el-checkbox>
                 </el-checkbox-group>
               </el-form-item>
             </el-col>
@@ -439,11 +458,12 @@ import {
   batchDeleteConfigByIds,
   updateConfig,
   updateStatusById,
-  updateDefaultById, pushConfigById, copyConfigById
+  updateDefaultById, pushConfigById, copyConfigById, exportConfigById, getModules
 } from '@/api/config/config'
 import vueJsonEditor from 'vue-json-editor'
-import { getModules, getUploadFiles } from '@/api/module/module'
+import { getUploadFiles } from '@/api/module/module'
 import moment from 'moment/moment'
+import { getToken } from '@/utils/auth'
 
 export default {
   name: 'Config',
@@ -462,10 +482,6 @@ export default {
 
       // 模块查询参数
       moduleQueryParams: {
-        name: '',
-        status: true,
-        pageNum: 1,
-        pageSize: 1000
       },
       // 上传附件查询参数
       uploadFilesParams: {
@@ -500,7 +516,7 @@ export default {
       ],
 
       // 已选择的模块
-      selectedModuleId: [],
+      selectedModuleName: [],
 
       // 配置数据绑定
       bindConfigData: {
@@ -569,7 +585,8 @@ export default {
         '动态': 1,
         '静态': 2
       },
-      showAdvanced: false
+      showAdvanced: false,
+      fileList: []
     }
   },
   created() {
@@ -599,16 +616,19 @@ export default {
         case 'copy':
           this.handleCopy(command.args)
           break
+        case 'export':
+          this.handleExport(command.args)
+          break
       }
     },
 
     handleEdit(record) {
       this.bindConfigData = JSON.parse(JSON.stringify(record))
-      this.selectedModuleId = []
+      this.selectedModuleName = []
       record.moduleConfigs.forEach((item) => {
-        this.selectedModuleId.push(item.ID)
+        this.selectedModuleName.push(item.moduleName)
       })
-      const checkedCount = this.selectedModuleId.length
+      const checkedCount = this.selectedModuleName.length
       this.checkAll = checkedCount === this.moduleList.length
       this.isIndeterminate = checkedCount > 0 && checkedCount < this.moduleList.length
       this.editConfigVisible = true
@@ -683,7 +703,6 @@ export default {
         this.loading = true
         let msg = ''
         try {
-          // TODO 批量推送配置
           const { message } = await pushConfigById({ id: record.ID })
           msg = message
         } finally {
@@ -698,18 +717,53 @@ export default {
       })
     },
 
+    handleExport(record) {
+      this.$confirm('确定导出此配置?', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(async res => {
+        this.loading = true
+        const fileName = 'export_' + record.name + '.zip'
+        try {
+          const data = await exportConfigById({ id: record.ID })
+          if (!data || data.size === 0) {
+            this.$message.warning('文件导出失败')
+            return
+          }
+          if (typeof window.navigator.msSaveBlob !== 'undefined') {
+            window.navigator.msSaveBlob(new Blob([data]), fileName)
+          } else {
+            const url = window.URL.createObjectURL(new Blob([data]))
+            const link = document.createElement('a')
+            link.style.display = 'none'
+            link.href = url
+            link.download = fileName
+            // link.setAttribute('download', fileName)
+            document.body.appendChild(link)
+            link.click()
+            document.body.removeChild(link) // 下载完成移除元素
+            window.URL.revokeObjectURL(url) // 释放掉blob对象
+          }
+        } finally {
+          this.loading = false
+        }
+        await this.getConfigTableData()
+      })
+    },
+
     handleCheckAllChange(value) {
       if (value) {
         this.checkAll = true
         this.moduleList.forEach((item) => {
-          this.selectedModuleId.push(item.ID)
+          this.selectedModuleName.push(item.moduleName)
         })
       } else {
         this.checkAll = false
-        this.selectedModuleId = []
+        this.selectedModuleName = []
       }
       this.isIndeterminate = false
-      this.handleCheckedModulesChange(this.selectedModuleId)
+      this.handleCheckedModulesChange(this.selectedModuleName)
     },
 
     handleCheckedModulesChange(value) {
@@ -719,7 +773,7 @@ export default {
       this.bindConfigData.moduleConfigs = []
       value.forEach((checkedItem) => {
         const matches = this.moduleList.filter((moduleItem) => {
-          return moduleItem.ID === checkedItem
+          return moduleItem.moduleName === checkedItem
         })
         this.bindConfigData.moduleConfigs = this.bindConfigData.moduleConfigs.concat(matches)
       })
@@ -744,7 +798,7 @@ export default {
 
     // 配置创建
     create() {
-      this.selectedModuleId = []
+      this.selectedModuleName = []
       this.bindConfigData = {
         id: '',
         name: '',
@@ -776,7 +830,7 @@ export default {
           md5: ''
         }
       }
-      const checkedCount = this.selectedModuleId.length
+      const checkedCount = this.selectedModuleName.length
       this.checkAll = checkedCount === this.moduleList.length
       this.isIndeterminate = checkedCount > 0 && checkedCount < this.moduleList.length
       this.createConfigVisible = true
@@ -1023,6 +1077,33 @@ export default {
       }
       this.selectUploadFileVisible = false
       this.selectKeyName = null
+    },
+    handleRemove(file, fileList) {
+      console.log(file, fileList)
+    },
+    handlePreview(file) {
+      console.log(file)
+    },
+    handleExceed(files, fileList) {
+      this.$message.warning(`当前限制选择 10 个文件，本次选择了 ${files.length} 个文件，共选择了 ${files.length + fileList.length} 个文件`)
+    },
+    beforeRemove(file, fileList) {
+      this.$alert('文件已上传，请在管理页面删除')
+      return false
+    },
+    onUploadSuccess(response, file, fileList) {
+      this.fileList = fileList
+      const { message, code } = response
+      const type = code === 200 ? 'success' : 'error'
+      this.$message({
+        showClose: true,
+        message: message,
+        type: type
+      })
+      this.getConfigTableData()
+    },
+    getUserToken() {
+      return getToken()
     }
   }
 }

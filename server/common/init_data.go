@@ -678,6 +678,27 @@ func InitData() {
 			Creator:  "系统",
 		},
 		{
+			Method:   "GET",
+			Path:     "/config/module/list",
+			Category: "config",
+			Desc:     "获取模块列表",
+			Creator:  "系统",
+		},
+		{
+			Method:   "POST",
+			Path:     "/config/export",
+			Category: "config",
+			Desc:     "导出配置",
+			Creator:  "系统",
+		},
+		{
+			Method:   "POST",
+			Path:     "/config/import",
+			Category: "config",
+			Desc:     "导入配置",
+			Creator:  "系统",
+		},
+		{
 			Method:   "POST",
 			Path:     "/module/create",
 			Category: "module",
@@ -696,6 +717,13 @@ func InitData() {
 			Path:     "/module/update",
 			Category: "module",
 			Desc:     "更新模块",
+			Creator:  "系统",
+		},
+		{
+			Method:   "POST",
+			Path:     "/module/upgrade",
+			Category: "module",
+			Desc:     "升级模块版本",
 			Creator:  "系统",
 		},
 		{

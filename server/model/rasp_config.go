@@ -34,6 +34,12 @@ type RaspFinalConfig struct {
 	ModuleConfigs    []ModuleConfig `json:"moduleConfigs"`
 }
 
+type RaspExportConfig struct {
+	RaspFileInfo   []RaspFile   `json:"raspFileInfo"`
+	RaspModuleInfo []RaspModule `json:"raspModuleInfo"`
+	RaspConfigInfo RaspConfig   `json:"raspConfigInfo"`
+}
+
 type AgentConfig struct {
 	CheckDisable     bool   `json:"check_disable"`
 	RedirectUrl      string `json:"redirect_url"`
@@ -44,10 +50,11 @@ type AgentConfig struct {
 }
 
 type ModuleConfig struct {
-	ModuleName  string                 `json:"moduleName"`
-	DownLoadUrl string                 `json:"downLoadURL"`
-	Parameters  map[string]interface{} `json:"parameters"`
-	Md5         string                 `json:"md5"`
+	ModuleName    string                 `json:"moduleName"`
+	ModuleVersion string                 `json:"moduleVersion"`
+	DownLoadUrl   string                 `json:"downLoadURL"`
+	Parameters    map[string]interface{} `json:"parameters"`
+	Md5           string                 `json:"md5"`
 }
 
 type ZipFileInfo struct {
