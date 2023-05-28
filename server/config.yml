@@ -13,6 +13,14 @@ system:
   # rsa私钥文件路径(config.yml相对路径, 也可以填绝对路径)
   rsa-private-key: web-priv.pem
 
+database:
+  # driver: mysql, sqlite
+  driver: sqlite
+#  source: root:Gepoint@tcp(127.0.0.1:3306)/jrasp?charset=utf8mb4&collation=utf8mb4_general_ci&parseTime=True&loc=Local&timeout=1000ms
+  source: jrasp.db
+  # silent=1 error=2 warn=3 info=4
+  log-mode: 1
+
 logs:
   # 日志等级(-1:Debug, 0:Info, 1:Warn, 2:Error, 3:DPanic, 4:Panic, 5:Fatal, -1<=level<=5, 参照zap.level源码)
   level: 0

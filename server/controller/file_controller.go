@@ -33,16 +33,19 @@ const DATA_DIR = "upload"
 const FILE_PERM = 0755
 
 type FileController struct {
-	RaspFileRepository   repository.IRaspFileRepository
-	RaspModuleRepository repository.IRaspModuleRepository
+	RaspFileRepository      repository.IRaspFileRepository
+	RaspModuleRepository    repository.IRaspModuleRepository
+	RaspComponentRepository repository.IRaspComponentRepository
 }
 
 func NewFileController() IFileController {
 	repo1 := repository.NewRaspFileRepository()
 	repo2 := repository.NewRaspModuleRepository()
+	repo3 := repository.NewRaspComponentRepository()
 	fileController := FileController{
-		RaspFileRepository:   repo1,
-		RaspModuleRepository: repo2,
+		RaspFileRepository:      repo1,
+		RaspModuleRepository:    repo2,
+		RaspComponentRepository: repo3,
 	}
 	return fileController
 }
@@ -117,16 +120,23 @@ func (f FileController) Upload(c *gin.Context) {
 				response.Fail(c, nil, "读取jar包manifest信息失败: "+err.Error())
 				return
 			}
-			moduleName := manifest["ModuleName"]
-			moduleVersion := manifest["ModuleVersion"]
-			module, err := f.RaspModuleRepository.GetRaspModuleByName(moduleName, moduleVersion)
+			componentName := manifest["ModuleName"]
+			module, err := f.RaspModuleRepository.GetRaspModuleByComponentName(componentName)
 			if err != nil {
 				response.Fail(c, nil, "读取模块信息信息失败: "+err.Error())
 				return
 			}
 			if module != nil {
 				module.Upgradable = true
-				module.NewMd5 = fileInfo.FileHash
+				upgradeComponent := &model.RaspUpgradeComponent{
+					ParentGuid: module.RowGuid,
+					Md5:        fileInfo.FileHash,
+				}
+				err = f.RaspComponentRepository.CreateRaspUpgradeComponent(upgradeComponent)
+				if err != nil {
+					response.Fail(c, nil, "标记模块信息可升级失败: "+err.Error())
+					return
+				}
 				err = f.RaspModuleRepository.UpdateRaspModule(module)
 				if err != nil {
 					response.Fail(c, nil, "标记模块信息可升级失败: "+err.Error())
@@ -134,7 +144,6 @@ func (f FileController) Upload(c *gin.Context) {
 				}
 			}
 		}
-
 	}
 	response.Success(c, nil, "uploaded file success")
 }

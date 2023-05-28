@@ -33,22 +33,31 @@ var AgentMode = map[uint]string{
 }
 
 type RaspHostController struct {
-	RaspHostRepository   repository.IRaspHostRepository
-	RaspConfigRepository repository.IRaspConfigRepository
-	RaspFileRepository   repository.IRaspFileRepository
-	RaspModuleRepository repository.IRaspModuleRepository
+	RaspHostRepository          repository.IRaspHostRepository
+	JavaProcessInfoRepository   repository.IJavaProcessInfoRepository
+	RaspConfigRepository        repository.IRaspConfigRepository
+	RaspConfigHistoryRepository repository.IRaspConfigHistoryRepository
+	RaspFileRepository          repository.IRaspFileRepository
+	RaspModuleRepository        repository.IRaspModuleRepository
+	RaspComponentRepository     repository.IRaspComponentRepository
 }
 
 func NewRaspHostController() IRaspHostController {
-	raspHostRepository := repository.NewRaspHostRepository()
-	raspConfigRepository := repository.NewRaspConfigRepository()
-	raspFileRepository := repository.NewRaspFileRepository()
-	raspModuleRepository := repository.NewRaspModuleRepository()
+	repo1 := repository.NewRaspHostRepository()
+	repo2 := repository.NewRaspConfigRepository()
+	repo3 := repository.NewRaspFileRepository()
+	repo4 := repository.NewRaspModuleRepository()
+	repo5 := repository.NewRaspComponentRepository()
+	repo6 := repository.NewRaspConfigHistoryRepository()
+	repo7 := repository.NewJavaProcessInfoRepository(repo1)
 	raspHostController := RaspHostController{
-		RaspHostRepository:   raspHostRepository,
-		RaspConfigRepository: raspConfigRepository,
-		RaspFileRepository:   raspFileRepository,
-		RaspModuleRepository: raspModuleRepository,
+		RaspHostRepository:          repo1,
+		RaspConfigRepository:        repo2,
+		RaspFileRepository:          repo3,
+		RaspModuleRepository:        repo4,
+		RaspComponentRepository:     repo5,
+		RaspConfigHistoryRepository: repo6,
+		JavaProcessInfoRepository:   repo7,
 	}
 	return raspHostController
 }
@@ -92,10 +101,22 @@ func (h RaspHostController) BatchDeleteHostByIds(c *gin.Context) {
 		return
 	}
 	// 删除接口
-	err := h.RaspHostRepository.DeleteRaspHost(req.Ids)
-	if err != nil {
-		response.Fail(c, nil, "删除实例失败: "+err.Error())
-		return
+	for _, item := range req.Ids {
+		hostInfo, err := h.RaspHostRepository.GetRaspHostById(item)
+		if err != nil {
+			response.Fail(c, nil, "删除实例失败: "+err.Error())
+			return
+		}
+		err = h.JavaProcessInfoRepository.DeleteProcessByHostName(hostInfo.HostName)
+		if err != nil {
+			response.Fail(c, nil, "删除实例失败: "+err.Error())
+			return
+		}
+		err = h.RaspHostRepository.DeleteRaspHostById(hostInfo.ID)
+		if err != nil {
+			response.Fail(c, nil, "删除实例失败: "+err.Error())
+			return
+		}
 	}
 	response.Success(c, nil, "删除实例成功")
 }
@@ -152,6 +173,15 @@ func (h RaspHostController) GeneratePushConfig(configId uint) ([]byte, error) {
 	if err != nil {
 		return nil, errors.New("获取配置文本失败:" + err.Error())
 	}
+	raspConfigHistory, err := h.RaspConfigHistoryRepository.GetRaspConfigHistoryDataByGuid(raspConfig.RowGuid, raspConfig.Version)
+	if err != nil {
+		return nil, errors.New("获取配置版本失败:" + err.Error())
+	}
+	var historyModuleConfig []map[string]interface{}
+	err = json.Unmarshal(raspConfigHistory.ModuleConfigs, &historyModuleConfig)
+	if err != nil {
+		return nil, errors.New("反序列化用户配置信息失败:" + err.Error())
+	}
 	// 合并成一个完成的配置文件
 	var agentConfigsFields model.AgentConfig
 	var raspLibInfo model.ZipFileInfo
@@ -164,19 +194,19 @@ func (h RaspHostController) GeneratePushConfig(configId uint) ([]byte, error) {
 		util.GetDefaultIp(),
 		config.Conf.System.Port,
 		config.Conf.System.UrlPathPrefix)
-	err = json.Unmarshal([]byte(raspConfig.AgentConfigs.String()), &agentConfigsFields)
+	err = json.Unmarshal(raspConfigHistory.AgentConfigs, &agentConfigsFields)
 	if err != nil {
 		return nil, errors.New("获取配置文本失败:" + err.Error())
 	}
-	err = json.Unmarshal([]byte(raspConfig.ModuleConfigs.String()), &moduleConfigsFields)
+	err = json.Unmarshal(raspConfigHistory.ModuleConfigs, &moduleConfigsFields)
 	if err != nil {
 		return nil, errors.New("获取配置文本失败:" + err.Error())
 	}
-	err = json.Unmarshal([]byte(raspConfig.RaspLibInfo.String()), &raspLibInfo)
+	err = json.Unmarshal(raspConfigHistory.RaspLibInfo, &raspLibInfo)
 	if err != nil {
 		return nil, errors.New("获取配置文本失败:" + err.Error())
 	}
-	err = json.Unmarshal([]byte(raspConfig.RaspBinInfo.String()), &raspBinInfo)
+	err = json.Unmarshal(raspConfigHistory.RaspBinInfo, &raspBinInfo)
 	if err != nil {
 		return nil, errors.New("获取配置文本失败:" + err.Error())
 	}
@@ -208,29 +238,43 @@ func (h RaspHostController) GeneratePushConfig(configId uint) ([]byte, error) {
 	}
 	// 添加模块参数信息
 	for _, item := range moduleConfigsFields {
-		moduleInfo, err := h.RaspModuleRepository.GetRaspModuleByName(item.ModuleName, item.ModuleVersion)
+		moduleInfo, err := h.RaspModuleRepository.GetRaspModuleByName(item.ModuleName)
 		if err != nil {
 			return nil, errors.New("获取模块信息失败:" + err.Error())
 		}
-		var moduleConfig model.ModuleConfig
-		err = json.Unmarshal([]byte(moduleInfo.Parameters.String()), &moduleConfig)
+		componentsInfo := item.Components
 		// 如果是外部下载地址则直接赋值
-		if strings.HasPrefix(moduleInfo.DownLoadURL, "http://") || strings.HasPrefix(moduleInfo.DownLoadURL, "https://") {
-			moduleConfig.DownLoadUrl = moduleInfo.DownLoadURL
-		} else {
-			moduleConfig.DownLoadUrl = fmt.Sprintf("%v%v", downloadPrefix, moduleInfo.DownLoadURL)
+		for _, component := range componentsInfo {
+			var moduleConfig model.ModuleConfig
+			moduleConfig.ModuleName = component.ComponentName
+			moduleConfig.ModuleVersion = component.ComponentVersion
+			moduleConfig.Md5 = component.Md5
+			if strings.HasPrefix(component.DownLoadURL, "http://") || strings.HasPrefix(component.DownLoadURL, "https://") {
+				moduleConfig.DownLoadUrl = component.DownLoadURL
+			} else {
+				moduleConfig.DownLoadUrl = fmt.Sprintf("%v%v", downloadPrefix, component.DownLoadURL)
+			}
+			var componentParameters map[string]interface{}
+			err = json.Unmarshal(component.Parameters, &componentParameters)
+			if err != nil {
+				return nil, errors.New("反序列化组件配置失败:" + err.Error())
+			}
+			moduleConfig.Parameters = componentParameters
+			// 使用策略中用户定义的拦截放行规则替换默认规则
+			if component.ComponentType == 2 {
+				actions := h.GetUserBlockParameterList(historyModuleConfig, moduleInfo.ModuleName)
+				for k, v := range actions {
+					moduleConfig.Parameters[k] = v
+				}
+			}
+			moduleConfigs = append(moduleConfigs, moduleConfig)
 		}
-		moduleConfig.Md5 = moduleInfo.Md5
-		if err != nil {
-			return nil, errors.New("获取配置文本失败:" + err.Error())
-		}
-		moduleConfigs = append(moduleConfigs, moduleConfig)
 	}
 	finalConfig := model.RaspFinalConfig{
-		AgentMode:        AgentMode[raspConfig.AgentMode],
+		AgentMode:        AgentMode[raspConfigHistory.AgentMode],
 		ConfigId:         raspConfig.ID,
 		ModuleAutoUpdate: true,
-		LogPath:          raspConfig.LogPath,
+		LogPath:          raspConfigHistory.LogPath,
 		RemoteHosts: fmt.Sprintf("%v://%v:%v/%v",
 			util.Ternary(config.Conf.Ssl.Enable, "wss", "ws"),
 			util.GetDefaultIp(),
@@ -277,4 +321,16 @@ func (h RaspHostController) UpdateConfig(c *gin.Context) {
 		return
 	}
 	response.Success(c, nil, "更新实例成功")
+}
+
+func (h RaspHostController) GetUserBlockParameterList(userBlockParameter []map[string]interface{}, moduleName string) map[string]interface{} {
+	var result = map[string]interface{}{}
+	for _, item := range userBlockParameter {
+		if item["moduleName"] == moduleName {
+			parameters := item["parameters"].(map[string]interface{})
+			result = parameters["action"].(map[string]interface{})
+			return result
+		}
+	}
+	return result
 }

@@ -42,7 +42,7 @@ func (a RaspConfigRepository) UpdateRaspConfig(config *model.RaspConfig) error {
 // GetRaspConfigs 查询配置
 func (a RaspConfigRepository) GetRaspConfigs(req *vo.RaspConfigListRequest) ([]*model.RaspConfig, int64, error) {
 	var list []*model.RaspConfig
-	db := common.DB.Model(&model.RaspConfig{}).Order("created_at DESC")
+	db := common.DB.Model(&model.RaspConfig{}).Order("id ASC")
 
 	// 名称模糊查询
 	name := strings.TrimSpace(req.Name)

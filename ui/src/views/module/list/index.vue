@@ -51,19 +51,7 @@
             {{ (params.pageNum - 1) * params.pageSize + scope.$index + 1 }}
           </template>
         </el-table-column>
-        <el-table-column show-overflow-tooltip sortable prop="moduleName" label="模块名称" header-align="center" align="center" width="250">
-          <template slot-scope="scope">
-            <el-badge value="new" class="item" :hidden="!scope.row.upgradable">
-              <el-link v-if="scope.row.upgradable" style="font-weight: 400" :underline="false" @click="upgradeModule(scope.row)">{{ scope.row.moduleName }}</el-link>
-              <div v-else>{{ scope.row.moduleName }}</div>
-            </el-badge>
-          </template>
-        </el-table-column>
-        <el-table-column show-overflow-tooltip sortable prop="moduleType" label="模块类型" align="center">
-          <template slot-scope="scope">
-            {{ getModuleType(scope.row.moduleType) }}
-          </template>
-        </el-table-column>
+        <el-table-column show-overflow-tooltip sortable prop="moduleName" label="模块名称" header-align="center" align="center" width="250" />
         <el-table-column show-overflow-tooltip sortable prop="desc" label="模块描述" align="center" />
         <el-table-column show-overflow-tooltip sortable prop="moduleVersion" label="版本" align="center">
           <template slot-scope="scope">
@@ -72,16 +60,12 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column show-overflow-tooltip sortable prop="status" label="模块状态" align="center">
-          <template slot-scope="scope" label="模块状态" align="center">
-            <el-switch
-              v-model="scope.row.status"
-              active-color="#13ce66"
-              inactive-color="grey"
-              :active-value="true"
-              :inactive-value="false"
-              @change="switchChange($event,scope.row,scope.$index)"
-            />
+        <el-table-column show-overflow-tooltip sortable prop="upgradable" label="组件状态" align="center">
+          <template slot-scope="scope" align="center">
+            <el-badge value="new" class="item" :hidden="!scope.row.upgradable">
+              <el-link v-if="scope.row.upgradable" style="font-weight: 400" :underline="false" @click="upgradeModule(scope.row)">可更新</el-link>
+              <div v-else>已是最新</div>
+            </el-badge>
           </template>
         </el-table-column>
         <el-table-column show-overflow-tooltip sortable prop="operator" label="操作人" align="center" />
@@ -120,7 +104,7 @@
         @size-change="handleSizeChange"
         @current-change="handleCurrentChange"
       />
-      <!-- 新增防护模块对话框-->
+      <!-- 新增、修改防护模块对话框-->
       <el-dialog title="新增防护模块" :visible.sync="createModuleVisible" width="60%">
         <el-form
           ref="createModuleForm"
@@ -131,9 +115,7 @@
           <el-row>
             <el-col :span="12">
               <el-form-item label="模块名称" prop="moduleName">
-                <el-input v-model="bindModuleData.moduleName" placeholder="模块名称">
-                  <i slot="suffix" class="el-input__icon el-icon-more" @click="openUploadForm" />
-                </el-input>
+                <el-input v-model="bindModuleData.moduleName" placeholder="模块名称" />
               </el-form-item>
             </el-col>
             <el-col :span="12">
@@ -141,30 +123,57 @@
                 <el-input v-model="bindModuleData.moduleVersion" />
               </el-form-item>
             </el-col>
-            <el-col>
-              <el-form-item label="模块类型" prop="moduleType">
-                <el-radio-group v-model="bindModuleData.moduleType">
-                  <el-radio :label="1">hook模块</el-radio>
-                  <el-radio :label="2">algorithm模块</el-radio>
-                  <el-radio :label="3">其他模块</el-radio>
-                </el-radio-group>
+          </el-row>
+          <el-row>
+            <el-form-item label="组件列表">
+              <el-row>
+                <el-form-item>
+                  <el-button :loading="loading" icon="el-icon-plus" type="primary" size="mini" circle @click="createComponent" />
+                </el-form-item>
+              </el-row>
+              <!-- 组件列表 -->
+              <el-table
+                v-loading="loading"
+                :data="bindModuleData.components"
+                stripe
+                style="width: 100%"
+                :size="this.$store.getters.size"
+              >
+                <el-table-column label="序号" type="index" width="50" align="center">
+                  <template slot-scope="scope">
+                    {{ (params.pageNum - 1) * params.pageSize + scope.$index + 1 }}
+                  </template>
+                </el-table-column>
+                <el-table-column show-overflow-tooltip prop="componentName" label="组件名称" header-align="center" align="center" />
+                <el-table-column show-overflow-tooltip prop="componentVersion" label="组件版本" header-align="center" align="center" width="100" />
+                <el-table-column show-overflow-tooltip prop="componentType" label="组件类型" header-align="center" align="center" width="150">
+                  <template slot-scope="scope">
+                    {{ getModuleType(scope.row.componentType) }}
+                  </template>
+                </el-table-column>
+                <el-table-column show-overflow-tooltip prop="md5" label="md5" header-align="center" align="center" width="300" />
+                <el-table-column fixed="right" label="操作" align="center" width="100">
+                  <template slot-scope="scope">
+                    <el-button type="text" size="medium" @click="handleDeleteComponentFromBindData(scope.row)">删除</el-button>
+                    <el-button type="text" size="medium" @click="handleEditComponentFromBindData(scope.row)">修改</el-button>
+                  </template>
+                </el-table-column>
+              </el-table>
+            </el-form-item>
+          </el-row>
+          <el-row>
+            <el-col :span="24">
+              <el-form-item label="拦截参数">
+                <el-switch
+                  v-model="showModuleParameter"
+                  :active-value="true"
+                  :inactive-value="false"
+                />
               </el-form-item>
             </el-col>
           </el-row>
-          <el-row>
-            <el-col :span="12">
-              <el-form-item label="下载链接" prop="downLoadURL">
-                <el-input v-model="bindModuleData.downLoadURL" />
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="文件hash" prop="md5">
-                <el-input v-model="bindModuleData.md5" />
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row>
-            <el-form-item label="配置参数" prop="parameters">
+          <el-row v-if="showModuleParameter">
+            <el-form-item>
               <vue-json-editor
                 v-model="bindModuleData.parameters"
                 :show-btns="false"
@@ -189,7 +198,6 @@
           </el-button>
         </div>
       </el-dialog>
-      <!-- 修改防护模块对话框-->
       <el-dialog title="修改防护模块" :visible.sync="editModuleVisible" width="60%">
         <el-form
           ref="editModuleForm"
@@ -200,9 +208,7 @@
           <el-row>
             <el-col :span="12">
               <el-form-item label="模块名称" prop="moduleName">
-                <el-input v-model="bindModuleData.moduleName" placeholder="模块名称">
-                  <i slot="suffix" class="el-input__icon el-icon-more" @click="openUploadForm" />
-                </el-input>
+                <el-input v-model="bindModuleData.moduleName" placeholder="模块名称" />
               </el-form-item>
             </el-col>
             <el-col :span="12">
@@ -212,31 +218,71 @@
             </el-col>
           </el-row>
           <el-row>
-            <el-col :span="12">
-              <el-form-item label="下载链接" prop="downLoadURL">
-                <el-input v-model="bindModuleData.downLoadURL" />
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="文件hash" prop="md5">
-                <el-input v-model="bindModuleData.md5" />
+            <el-form-item label="组件列表">
+              <el-row>
+                <el-form-item>
+                  <el-button :loading="loading" icon="el-icon-plus" type="primary" size="mini" circle @click="createComponent" />
+                </el-form-item>
+              </el-row>
+              <!-- 组件列表 -->
+              <el-table
+                v-loading="loading"
+                :data="bindModuleData.components"
+                stripe
+                style="width: 100%"
+                :size="this.$store.getters.size"
+              >
+                <el-table-column label="序号" type="index" width="50" align="center">
+                  <template slot-scope="scope">
+                    {{ (params.pageNum - 1) * params.pageSize + scope.$index + 1 }}
+                  </template>
+                </el-table-column>
+                <el-table-column show-overflow-tooltip prop="componentName" label="组件名称" header-align="center" align="center" />
+                <el-table-column show-overflow-tooltip prop="componentVersion" label="组件版本" header-align="center" align="center" width="100" />
+                <el-table-column show-overflow-tooltip prop="componentType" label="组件类型" header-align="center" align="center" width="150">
+                  <template slot-scope="scope">
+                    {{ getModuleType(scope.row.componentType) }}
+                  </template>
+                </el-table-column>
+                <el-table-column show-overflow-tooltip prop="md5" label="md5" header-align="center" align="center" width="300" />
+                <el-table-column fixed="right" label="操作" align="center" width="100">
+                  <template slot-scope="scope">
+                    <el-button type="text" size="medium" @click="handleDeleteComponent(scope.row)">删除</el-button>
+                    <el-button type="text" size="medium" @click="handleEditComponent(scope.row)">修改</el-button>
+                  </template>
+                </el-table-column>
+              </el-table>
+            </el-form-item>
+          </el-row>
+          <el-row>
+            <el-col :span="24">
+              <el-form-item label="拦截参数">
+                <el-switch
+                  v-model="showModuleParameter"
+                  :active-value="true"
+                  :inactive-value="false"
+                />
               </el-form-item>
             </el-col>
           </el-row>
-          <el-form-item label="配置参数" prop="parameters">
-            <vue-json-editor
-              v-model="bindModuleData.parameters"
-              :show-btns="false"
-              :mode="'code'"
-              lang="zh"
-              @json-change="onJsonChange"
-              @json-save="onJsonSave"
-              @has-error="onError"
-            />
-          </el-form-item>
-          <el-form-item label="模块描述" prop="desc">
-            <el-input v-model="bindModuleData.desc" placeholder="模块描述" />
-          </el-form-item>
+          <el-row v-if="showModuleParameter">
+            <el-form-item label="拦截参数" prop="parameters">
+              <vue-json-editor
+                v-model="bindModuleData.parameters"
+                :show-btns="false"
+                :mode="'code'"
+                lang="zh"
+                @json-change="onJsonChange"
+                @json-save="onJsonSave"
+                @has-error="onError"
+              />
+            </el-form-item>
+          </el-row>
+          <el-row>
+            <el-form-item label="模块描述" prop="desc">
+              <el-input v-model="bindModuleData.desc" type="textarea" :rows="2" placeholder="模块描述" />
+            </el-form-item>
+          </el-row>
         </el-form>
         <div slot="footer" class="dialog-footer">
           <el-button size="mini" @click="closeEditModule()">关 闭</el-button>
@@ -244,7 +290,135 @@
           </el-button>
         </div>
       </el-dialog>
-      <el-dialog title="选择防护模块" :visible.sync="selectUploadFileVisible" width="60%">
+      <!-- 新增、修改防护组件对话框-->
+      <el-dialog title="新增防护组件" :visible.sync="createComponentVisible" width="60%">
+        <el-form
+          ref="createComponentForm"
+          size="small"
+          :model="bindComponentData"
+          label-width="100px"
+        >
+          <el-row>
+            <el-col :span="12">
+              <el-form-item label="组件名称" prop="componentName">
+                <el-input v-model="bindComponentData.componentName" placeholder="组件名称">
+                  <i slot="suffix" class="el-input__icon el-icon-more" @click="openUploadForm" />
+                </el-input>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="组件版本" prop="componentVersion">
+                <el-input v-model="bindComponentData.componentVersion" />
+              </el-form-item>
+            </el-col>
+            <el-col>
+              <el-form-item label="组件类型" prop="componentType">
+                <el-radio-group v-model="bindComponentData.componentType">
+                  <el-radio :label="1">hook模块</el-radio>
+                  <el-radio :label="2">algorithm模块</el-radio>
+                  <el-radio :label="3">其他模块</el-radio>
+                </el-radio-group>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-col :span="12">
+              <el-form-item label="下载链接" prop="downLoadURL">
+                <el-input v-model="bindComponentData.downLoadURL" />
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="文件hash" prop="md5">
+                <el-input v-model="bindComponentData.md5" />
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-form-item label="配置参数" prop="parameters">
+              <vue-json-editor
+                v-model="bindComponentData.parameters"
+                :show-btns="false"
+                :mode="'code'"
+                lang="zh"
+                @json-change="onJsonChange"
+                @json-save="onJsonSave"
+                @has-error="onError"
+              />
+            </el-form-item>
+          </el-row>
+        </el-form>
+        <div slot="footer" class="dialog-footer">
+          <el-button size="mini" @click="closeCreateComponent()">关 闭</el-button>
+          <el-button size="mini" :loading="loading" type="primary" @click="submitNewComponentForm()">
+            确 定
+          </el-button>
+        </div>
+      </el-dialog>
+      <el-dialog title="修改防护组件" :visible.sync="editComponentVisible" width="60%">
+        <el-form
+          ref="createComponentForm"
+          size="small"
+          :model="bindComponentData"
+          label-width="100px"
+        >
+          <el-row>
+            <el-col :span="12">
+              <el-form-item label="组件名称" prop="componentName">
+                <el-input v-model="bindComponentData.componentName" placeholder="组件名称">
+                  <i slot="suffix" class="el-input__icon el-icon-more" @click="openUploadForm" />
+                </el-input>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="组件版本" prop="componentVersion">
+                <el-input v-model="bindComponentData.componentVersion" />
+              </el-form-item>
+            </el-col>
+            <el-col>
+              <el-form-item label="组件类型" prop="componentType">
+                <el-radio-group v-model="bindComponentData.componentType">
+                  <el-radio :label="1">hook模块</el-radio>
+                  <el-radio :label="2">algorithm模块</el-radio>
+                  <el-radio :label="3">其他模块</el-radio>
+                </el-radio-group>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-col :span="12">
+              <el-form-item label="下载链接" prop="downLoadURL">
+                <el-input v-model="bindComponentData.downLoadURL" />
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="文件hash" prop="md5">
+                <el-input v-model="bindComponentData.md5" />
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-form-item label="配置参数" prop="parameters">
+              <vue-json-editor
+                v-model="bindComponentData.parameters"
+                :show-btns="false"
+                :mode="'code'"
+                lang="zh"
+                @json-change="onJsonChange"
+                @json-save="onJsonSave"
+                @has-error="onError"
+              />
+            </el-form-item>
+          </el-row>
+        </el-form>
+        <div slot="footer" class="dialog-footer">
+          <el-button size="mini" @click="closeEditComponent()">关 闭</el-button>
+          <el-button size="mini" :loading="loading" type="primary" @click="updateComponentForm()">
+            确 定
+          </el-button>
+        </div>
+      </el-dialog>
+      <!-- 选择防护组件对话框-->
+      <el-dialog title="选择防护组件" :visible.sync="selectUploadFileVisible" width="60%">
         <div style="margin-bottom: 30px;">
           <!-- 条件搜索框 -->
           <el-row>
@@ -329,8 +503,8 @@
 import vueJsonEditor from 'vue-json-editor'
 import {
   batchDeleteModuleByIds,
-  createModule,
-  deleteModule, getModuleInfoById,
+  createModule, deleteComponent,
+  deleteModule, getComponents, getModuleInfoById,
   getModules, getUploadFiles,
   updateModule,
   updateStatusById, upGradeModuleById
@@ -359,23 +533,34 @@ export default {
 
       // 创建模块
       createModuleVisible: false,
+      createComponentVisible: false,
+      editComponentVisible: false,
       submitCreateModuleLoading: false,
       bindModuleData: {
-        ID: '',
+        ID: 0,
         moduleName: '',
         moduleVersion: '',
-        downLoadURL: '',
-        md5: '',
-        moduleType: 1,
         tag: '',
         desc: '',
         status: '',
+        components: [],
+        parameters: {
+          cn_map: {},
+          action: {}
+        }
+      },
+      bindComponentData: {
+        ID: 0,
+        parentGuid: '',
+        componentName: '',
+        componentVersion: '',
+        downLoadURL: '',
+        md5: '',
+        componentType: 1,
         parameters: {}
       },
       // 编辑模块
       editModuleVisible: false,
-
-      selectedModuleData: null,
 
       hasJsonFlag: true, // json是否验证通过
       // 删除按钮弹出框
@@ -403,7 +588,8 @@ export default {
         mimeType: 'application/zip',
         pageNum: 1,
         pageSize: 10
-      }
+      },
+      showModuleParameter: false
     }
   },
   created() {
@@ -433,6 +619,16 @@ export default {
         this.loading = false
       }
     },
+    // 获取组件数据
+    async getComponentTableData(record) {
+      this.loading = true
+      try {
+        const { data } = await getComponents({ parentGuid: record.parentGuid })
+        this.bindModuleData.components = data.list
+      } finally {
+        this.loading = false
+      }
+    },
     // 获取上传文件表格数据
     async getUploadTableData() {
       this.loading = true
@@ -453,22 +649,45 @@ export default {
       this.editModuleVisible = false
     },
 
+    closeCreateComponent() {
+      this.createComponentVisible = false
+    },
+
+    closeEditComponent() {
+      this.editComponentVisible = false
+    },
+
     create() {
       this.bindModuleData = {
+        ID: 0,
         moduleName: '',
         moduleVersion: '',
-        downLoadURL: '',
-        md5: '',
-        moduleType: 1,
+        tag: '',
         desc: '',
-        status: true,
-        parameters: {}
+        status: '',
+        components: [],
+        parameters: {
+          cn_map: {},
+          action: {}
+        }
       }
       this.createModuleVisible = true
     },
+    createComponent() {
+      this.bindComponentData = {
+        ID: 0,
+        parentGuid: '',
+        componentName: '',
+        componentVersion: '',
+        downLoadURL: '',
+        md5: '',
+        componentType: 1,
+        parameters: {}
+      }
+      this.createComponentVisible = true
+    },
 
     handleEdit(record) {
-      this.selectedModuleData = record
       this.bindModuleData = record
       this.editModuleVisible = true
     },
@@ -501,6 +720,55 @@ export default {
           message: '已取消删除'
         })
       })
+    },
+
+    handleDeleteComponent(record) {
+      this.$confirm('确定删除此组件?', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(async res => {
+        this.loading = true
+        let msg = ''
+        try {
+          if (record.ID === 0 || record.parentGuid === '') {
+            this.handleDeleteComponentFromBindData(record)
+            msg = '删除记录成功'
+          } else {
+            const { message } = await deleteComponent({ id: record.ID })
+            msg = message
+            await this.getComponentTableData(record)
+          }
+        } finally {
+          this.loading = false
+        }
+        this.$message({
+          showClose: true,
+          message: msg,
+          type: 'success'
+        })
+      }).catch(() => {
+        this.$message({
+          showClose: true,
+          type: 'info',
+          message: '已取消删除'
+        })
+      })
+    },
+
+    handleDeleteComponentFromBindData(record) {
+      const idx = this.bindModuleData.components.indexOf(record)
+      this.bindModuleData.components.splice(idx, 1)
+    },
+
+    handleEditComponentFromBindData(record) {
+      this.bindComponentData = record
+      this.editComponentVisible = true
+    },
+
+    handleEditComponent(record) {
+      this.bindComponentData = record
+      this.editComponentVisible = true
     },
 
     switchChange(e, row, index) {
@@ -536,6 +804,40 @@ export default {
           return false
         }
       })
+    },
+
+    submitNewComponentForm() {
+      this.bindModuleData.components.push(this.bindComponentData)
+      if (this.bindComponentData.componentType === 2) {
+        this.bindModuleData.parameters.cn_map = {}
+        this.bindModuleData.parameters.action = {}
+        this.bindModuleData.parameters.cn_map = this.bindComponentData.cn_map
+        for (const [key, value] of Object.entries(this.bindComponentData.parameters)) {
+          if (key.endsWith('_action')) {
+            this.bindModuleData.parameters.action[key] = value
+          }
+        }
+      }
+      this.createComponentVisible = false
+    },
+
+    updateComponentForm() {
+      this.bindModuleData.components.forEach((item, index) => {
+        if (this.bindComponentData.md5 === item.md5) {
+          this.bindModuleData.components[index] = this.bindComponentData
+          if (this.bindComponentData.componentType === 2) {
+            this.bindModuleData.parameters.cn_map = {}
+            this.bindModuleData.parameters.action = {}
+            this.bindModuleData.parameters.cn_map = this.bindComponentData.parameters['cn_map']
+            for (const [key, value] of Object.entries(this.bindComponentData.parameters['parameters'])) {
+              if (key.endsWith('_action')) {
+                this.bindModuleData.parameters.action[key] = value
+              }
+            }
+          }
+        }
+      })
+      this.editComponentVisible = false
     },
 
     updateModuleForm() {
@@ -694,11 +996,14 @@ export default {
     async addSelectedFile() {
       if (this.selectedRadio) {
         const { data } = await getModuleInfoById({ id: this.selectUploadData.ID })
-        this.bindModuleData.moduleName = data.manifest.ModuleName
-        this.bindModuleData.moduleVersion = data.manifest.ModuleVersion
-        this.bindModuleData.downLoadURL = this.selectUploadData.downLoadUrl
-        this.bindModuleData.md5 = this.selectUploadData.fileHash
-        this.bindModuleData.parameters = JSON.parse(data.parameters)
+        this.bindComponentData.componentName = data.manifest.ModuleName
+        this.bindComponentData.componentVersion = data.manifest.ModuleVersion
+        this.bindComponentData.componentType = data.manifest.ModuleName.endsWith('-hook') ? 1 : 2
+        this.bindComponentData.downLoadURL = this.selectUploadData.downLoadUrl
+        this.bindComponentData.md5 = this.selectUploadData.fileHash
+        const parameters = JSON.parse(data.parameters)
+        this.bindComponentData.cn_map = parameters.cn_map
+        this.bindComponentData.parameters = parameters.parameters
       }
       this.selectUploadFileVisible = false
     },

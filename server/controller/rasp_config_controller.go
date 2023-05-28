@@ -8,8 +8,10 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
+	"github.com/google/uuid"
 	"github.com/gookit/goutil/fsutil"
 	"github.com/mholt/archiver/v4"
+	"gorm.io/datatypes"
 	"io"
 	"os"
 	"path"
@@ -36,22 +38,29 @@ type IRaspConfigController interface {
 	GetRaspModules(c *gin.Context)
 	ExportRaspConfig(c *gin.Context)
 	ImportRaspConfig(c *gin.Context)
+	SyncRaspConfig(c *gin.Context)
 }
 
 type RaspConfigController struct {
-	RaspConfigRepository repository.IRaspConfigRepository
-	RaspModuleRepository repository.IRaspModuleRepository
-	RaspFileRepository   repository.IRaspFileRepository
+	RaspConfigRepository        repository.IRaspConfigRepository
+	RaspConfigHistoryRepository repository.IRaspConfigHistoryRepository
+	RaspModuleRepository        repository.IRaspModuleRepository
+	RaspComponentRepository     repository.IRaspComponentRepository
+	RaspFileRepository          repository.IRaspFileRepository
 }
 
 func NewRaspConfigController() IRaspConfigController {
-	raspConfigRepository := repository.NewRaspConfigRepository()
-	raspModuleRepository := repository.NewRaspModuleRepository()
-	raspFileRepository := repository.NewRaspFileRepository()
+	repo1 := repository.NewRaspConfigRepository()
+	repo2 := repository.NewRaspModuleRepository()
+	repo3 := repository.NewRaspFileRepository()
+	repo4 := repository.NewRaspComponentRepository()
+	repo5 := repository.NewRaspConfigHistoryRepository()
 	raspConfigController := RaspConfigController{
-		RaspConfigRepository: raspConfigRepository,
-		RaspModuleRepository: raspModuleRepository,
-		RaspFileRepository:   raspFileRepository,
+		RaspConfigRepository:        repo1,
+		RaspModuleRepository:        repo2,
+		RaspFileRepository:          repo3,
+		RaspComponentRepository:     repo4,
+		RaspConfigHistoryRepository: repo5,
 	}
 	return raspConfigController
 }
@@ -103,17 +112,31 @@ func (r RaspConfigController) CreateRaspConfig(c *gin.Context) {
 	}
 
 	raspConfig := model.RaspConfig{
-		Name:          req.Name,
-		Desc:          req.Desc,
-		Status:        req.Status,
-		Creator:       ctxUser.Username,
-		Operator:      ctxUser.Username,
+		RowGuid:  uuid.New().String(),
+		Name:     req.Name,
+		Version:  req.Version + 1,
+		Desc:     req.Desc,
+		Status:   req.Status,
+		Creator:  ctxUser.Username,
+		Operator: ctxUser.Username,
+	}
+
+	newModuleConfigs, err := r.generateModuleConfig(req.ModuleConfigs)
+	if err != nil {
+		response.Fail(c, nil, "获取模块最新下载地址出错")
+		return
+	}
+	raspConfigHistory := model.RaspConfigHistory{
+		ParentGuid:    raspConfig.RowGuid,
+		Version:       req.Version + 1,
 		AgentMode:     req.AgentMode,
-		ModuleConfigs: req.ModuleConfigs,
+		ModuleConfigs: newModuleConfigs,
 		LogPath:       req.LogPath,
 		AgentConfigs:  req.AgentConfigs,
 		RaspBinInfo:   req.RaspBinInfo,
 		RaspLibInfo:   req.RaspLibInfo,
+		Desc:          req.HistoryDesc,
+		Source:        "新建版本",
 	}
 
 	// 获取
@@ -122,8 +145,12 @@ func (r RaspConfigController) CreateRaspConfig(c *gin.Context) {
 		response.Fail(c, nil, "创建配置失败"+err.Error())
 		return
 	}
+	err = r.RaspConfigHistoryRepository.CreateRaspConfigHistory(&raspConfigHistory)
+	if err != nil {
+		response.Fail(c, nil, "创建配置版本失败"+err.Error())
+		return
+	}
 	response.Success(c, nil, "创建配置成功")
-	return
 }
 
 func (r RaspConfigController) UpdateRaspConfig(c *gin.Context) {
@@ -154,22 +181,47 @@ func (r RaspConfigController) UpdateRaspConfig(c *gin.Context) {
 		response.Fail(c, nil, "获取当前模块失败")
 		return
 	}
+	// 默认防护策略仅允许root用户更新
+	if id == 1 && ctxUser.Username != "root" {
+		response.Fail(c, nil, "通用防护策略不允许更新，请自行新建策略")
+		return
+	}
 
 	config.Name = req.Name
+	config.Version = util.Ternary(req.IsNewVersion, req.Version+1, req.Version).(int)
 	config.Desc = req.Desc
 	config.Status = req.Status
 	config.Operator = ctxUser.Username
-	config.AgentMode = req.AgentMode
-	config.ModuleConfigs = req.ModuleConfigs
-	config.LogPath = req.LogPath
-	config.AgentConfigs = req.AgentConfigs
-	config.RaspBinInfo = req.RaspBinInfo
-	config.RaspLibInfo = req.RaspLibInfo
+	config.IsModified = true
 
 	err = r.RaspConfigRepository.UpdateRaspConfig(config)
 	if err != nil {
 		response.Fail(c, nil, "更新当前配置失败")
 		return
+	}
+	if req.IsNewVersion {
+		newModuleConfigs, err := r.generateModuleConfig(req.ModuleConfigs)
+		if err != nil {
+			response.Fail(c, nil, "获取模块最新下载地址出错")
+			return
+		}
+		raspConfigHistory := model.RaspConfigHistory{
+			ParentGuid:    config.RowGuid,
+			Version:       req.Version + 1,
+			AgentMode:     req.AgentMode,
+			ModuleConfigs: newModuleConfigs,
+			LogPath:       req.LogPath,
+			AgentConfigs:  req.AgentConfigs,
+			RaspBinInfo:   req.RaspBinInfo,
+			RaspLibInfo:   req.RaspLibInfo,
+			Desc:          req.HistoryDesc,
+			Source:        "更新版本",
+		}
+		err = r.RaspConfigHistoryRepository.CreateRaspConfigHistory(&raspConfigHistory)
+		if err != nil {
+			response.Fail(c, nil, "创建配置版本失败"+err.Error())
+			return
+		}
 	}
 	response.Success(c, nil, "更新配置成功")
 }
@@ -188,13 +240,38 @@ func (r RaspConfigController) BatchDeleteConfigByIds(c *gin.Context) {
 		response.Fail(c, nil, errStr)
 		return
 	}
+	// 获取当前用户
+	ur := repository.NewUserRepository()
+	ctxUser, err := ur.GetCurrentUser(c)
+	if err != nil {
+		response.Fail(c, nil, "获取当前用户信息失败")
+		return
+	}
+	// 先删除历史版本记录
+	for _, item := range req.Ids {
+		if item == 1 && ctxUser.Username != "root" {
+			response.Fail(c, nil, "删除配置失败, 通用防护策略不允许删除")
+			return
+		}
+		raspConfig, err := r.RaspConfigRepository.GetRaspConfigById(item)
+		if err != nil {
+			response.Fail(c, nil, "获取配置信息失败: "+err.Error())
+			return
+		}
+		err = r.RaspConfigHistoryRepository.DeleteRaspConfigHistory(raspConfig.RowGuid)
+		if err != nil {
+			response.Fail(c, nil, "删除配置历史记录信息失败: "+err.Error())
+			return
+		}
+	}
 
 	// 删除接口
-	err := r.RaspConfigRepository.DeleteRaspConfig(req.Ids)
+	err = r.RaspConfigRepository.DeleteRaspConfig(req.Ids)
 	if err != nil {
 		response.Fail(c, nil, "删除配置失败: "+err.Error())
 		return
 	}
+
 	response.Success(c, nil, "删除配置成功")
 }
 
@@ -216,7 +293,12 @@ func (l RaspConfigController) GetViperRaspConfig(c *gin.Context) {
 		response.Fail(c, nil, err.Error())
 		return
 	}
-	response.Success(c, gin.H{"key": name, "value": config.AgentConfigs}, "获取配置成功")
+	configHistory, err := l.RaspConfigHistoryRepository.GetRaspConfigHistoryDataByGuid(config.RowGuid, config.Version)
+	if err != nil {
+		response.Fail(c, nil, err.Error())
+		return
+	}
+	response.Success(c, gin.H{"key": name, "value": configHistory.AgentConfigs}, "获取配置成功")
 }
 
 func (l RaspConfigController) UpdateRaspConfigStatusById(c *gin.Context) {
@@ -322,7 +404,7 @@ func (l RaspConfigController) PushRaspConfig(c *gin.Context) {
 		return
 	}
 	// 先更新数据库中的配置Id
-	hostList, _, err := hostRepository.GetRaspHosts(new(vo.RaspHostListRequest))
+	hostList, _, err := hostRepository.GetRaspHostsByConfigId(req.ID)
 	var hostNameList []string
 	for _, item := range hostList {
 		item.ConfigId = req.ID
@@ -335,7 +417,18 @@ func (l RaspConfigController) PushRaspConfig(c *gin.Context) {
 	}
 	// 开始推送最新的配置
 	hostController.PushHostsConfig(hostNameList, content)
-
+	// 标记已推送
+	raspConfig, err := l.RaspConfigRepository.GetRaspConfigById(req.ID)
+	if err != nil {
+		response.Fail(c, nil, "更新配置失败, "+err.Error())
+		return
+	}
+	raspConfig.IsModified = false
+	err = l.RaspConfigRepository.UpdateRaspConfig(raspConfig)
+	if err != nil {
+		response.Fail(c, nil, "更新配置失败, "+err.Error())
+		return
+	}
 	response.Success(c, nil, "推送策略成功")
 }
 
@@ -366,18 +459,12 @@ func (l RaspConfigController) CopyRaspConfig(c *gin.Context) {
 		return
 	}
 	destConfig := model.RaspConfig{
-		Name:          srcConfig.Name + "_Copy",
-		Desc:          srcConfig.Desc,
-		Status:        srcConfig.Status,
-		Creator:       ctxUser.Username,
-		Operator:      ctxUser.Username,
-		AgentMode:     srcConfig.AgentMode,
-		ModuleConfigs: srcConfig.ModuleConfigs,
-		LogPath:       srcConfig.LogPath,
-		AgentConfigs:  srcConfig.AgentConfigs,
-		RaspBinInfo:   srcConfig.RaspBinInfo,
-		RaspLibInfo:   srcConfig.RaspLibInfo,
-		IsDefault:     false,
+		Name:      srcConfig.Name + "_Copy",
+		Desc:      srcConfig.Desc,
+		Status:    srcConfig.Status,
+		Creator:   ctxUser.Username,
+		Operator:  ctxUser.Username,
+		IsDefault: false,
 	}
 	err = l.RaspConfigRepository.CreateRaspConfig(&destConfig)
 	if err != nil {
@@ -403,14 +490,14 @@ func (l RaspConfigController) GetRaspModules(c *gin.Context) {
 	}
 	modules, total, err := l.RaspConfigRepository.GetRaspModules()
 	if err != nil {
-		response.Fail(c, nil, "复制当前配置失败"+err.Error())
+		response.Fail(c, nil, "复制当前模块失败"+err.Error())
 		return
 	}
 	var results []map[string]interface{}
 	for _, module := range modules {
 		var item = make(map[string]interface{})
 		item["moduleName"] = module.ModuleName
-		item["moduleVersion"] = module.ModuleVersion
+		item["parameters"] = module.Parameters
 		results = append(results, item)
 	}
 	response.Success(c, gin.H{
@@ -446,37 +533,51 @@ func (l RaspConfigController) ExportRaspConfig(c *gin.Context) {
 		response.Fail(c, nil, "获取当前配置失败")
 		return
 	}
+	srcConfigHistory, err := l.RaspConfigHistoryRepository.GetRaspConfigHistoryDataByGuid(srcConfig.RowGuid, srcConfig.Version)
+	if err != nil {
+		response.Fail(c, nil, "获取当前配置版本失败")
+		return
+	}
 	// 获取module信息
 	var moduleConfigs []model.ModuleConfig
 	var libConfigs map[string]interface{}
 	var binConfigs map[string]interface{}
 	var raspModules []model.RaspModule
-	err = json.Unmarshal(srcConfig.ModuleConfigs, &moduleConfigs)
+	var raspComponents []model.RaspComponent
+	err = json.Unmarshal(srcConfigHistory.ModuleConfigs, &moduleConfigs)
 	if err != nil {
 		response.Fail(c, nil, "导出当前配置失败")
 		return
 	}
-	err = json.Unmarshal(srcConfig.RaspBinInfo, &binConfigs)
+	err = json.Unmarshal(srcConfigHistory.RaspBinInfo, &binConfigs)
 	if err != nil {
 		response.Fail(c, nil, "导出当前配置失败")
 		return
 	}
-	err = json.Unmarshal(srcConfig.RaspLibInfo, &libConfigs)
+	err = json.Unmarshal(srcConfigHistory.RaspLibInfo, &libConfigs)
 	if err != nil {
 		response.Fail(c, nil, "导出当前配置失败")
 		return
 	}
 	for _, item := range moduleConfigs {
-		moduleInfo, err := l.RaspModuleRepository.GetRaspModuleByName(item.ModuleName, item.ModuleVersion)
+		moduleInfo, err := l.RaspModuleRepository.GetRaspModuleByName(item.ModuleName)
 		if err != nil {
 			response.Fail(c, nil, "导出当前配置失败")
 			return
 		}
 		raspModules = append(raspModules, *moduleInfo)
+		componentList, _, err := l.RaspComponentRepository.GetRaspComponentsByGuid(moduleInfo.RowGuid)
+		if err != nil {
+			response.Fail(c, nil, "导出当前配置失败")
+			return
+		}
+		for _, componentInfo := range componentList {
+			raspComponents = append(raspComponents, *componentInfo)
+		}
 	}
 	// 获取file信息
 	var raspFiles []model.RaspFile
-	for _, item := range raspModules {
+	for _, item := range raspComponents {
 		fileInfo, err := l.RaspFileRepository.GetRaspFileByHash(item.Md5)
 		if err != nil {
 			response.Fail(c, nil, "导出当前配置失败")
@@ -489,17 +590,23 @@ func (l RaspConfigController) ExportRaspConfig(c *gin.Context) {
 		response.Fail(c, nil, "导出当前配置失败")
 		return
 	}
-	raspFiles = append(raspFiles, *fileInfo)
+	if fileInfo != nil {
+		raspFiles = append(raspFiles, *fileInfo)
+	}
 	fileInfo, err = l.RaspFileRepository.GetRaspFileByHash(binConfigs["md5"].(string))
 	if err != nil {
 		response.Fail(c, nil, "导出当前配置失败")
 		return
 	}
-	raspFiles = append(raspFiles, *fileInfo)
+	if fileInfo != nil {
+		raspFiles = append(raspFiles, *fileInfo)
+	}
 	// 构件配置对象
 	var exportConfig model.RaspExportConfig
 	exportConfig.RaspConfigInfo = *srcConfig
+	exportConfig.RaspConfigHistoryInfo = *srcConfigHistory
 	exportConfig.RaspModuleInfo = raspModules
+	exportConfig.RaspComponentInfo = raspComponents
 	exportConfig.RaspFileInfo = raspFiles
 
 	jsonStr, err := json.Marshal(exportConfig)
@@ -545,7 +652,7 @@ func (l RaspConfigController) ExportRaspConfig(c *gin.Context) {
 		response.Fail(c, nil, "删除临时失败")
 		return
 	}
-	c.Writer.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=%s", fmt.Sprintf("export_%v.zip", srcConfig.Name)))
+	c.Writer.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=%s", fmt.Sprintf("export_%v_v%v.zip", srcConfig.Name, srcConfig.Version)))
 	c.Writer.Header().Add("response-type", "blob")
 	c.Data(200, "application/octet-stream", data.Bytes())
 }
@@ -647,21 +754,20 @@ func (l RaspConfigController) ImportRaspConfig(c *gin.Context) {
 	}
 	// 写入module信息
 	for _, item := range exportConfig.RaspModuleInfo {
-		moduleInfo, err := l.RaspModuleRepository.GetRaspModuleByName(item.ModuleName, item.ModuleVersion)
+		moduleInfo, err := l.RaspModuleRepository.GetRaspModuleByName(item.ModuleName)
 		if err != nil {
 			response.Fail(c, nil, fmt.Sprintf("查询module信息失败, %v", err))
 			return
 		}
+		// 如果模块名不存在则直接创建
 		if moduleInfo == nil {
 			raspModule := &model.RaspModule{
+				RowGuid:       item.RowGuid,
 				ModuleName:    item.ModuleName,
-				ModuleType:    item.ModuleType,
 				ModuleVersion: item.ModuleVersion,
-				DownLoadURL:   item.DownLoadURL,
-				Md5:           item.Md5,
 				Desc:          item.Desc,
-				Status:        item.Status,
 				Parameters:    item.Parameters,
+				Upgradable:    item.Upgradable,
 				Creator:       ctxUser.Username,
 				Operator:      ctxUser.Username,
 			}
@@ -671,17 +777,53 @@ func (l RaspConfigController) ImportRaspConfig(c *gin.Context) {
 				return
 			}
 		} else {
+			// 如果模块名存在则替换版本、描述、默认用户参数
+			moduleInfo.RowGuid = item.RowGuid
 			moduleInfo.ModuleName = item.ModuleName
-			moduleInfo.ModuleType = item.ModuleType
 			moduleInfo.ModuleVersion = item.ModuleVersion
-			moduleInfo.DownLoadURL = item.DownLoadURL
-			moduleInfo.Md5 = item.Md5
 			moduleInfo.Desc = item.Desc
-			moduleInfo.Status = item.Status
 			moduleInfo.Parameters = item.Parameters
+			moduleInfo.Upgradable = item.Upgradable
 			moduleInfo.Creator = ctxUser.Username
 			moduleInfo.Operator = ctxUser.Username
 			err = l.RaspModuleRepository.UpdateRaspModule(moduleInfo)
+			if err != nil {
+				response.Fail(c, nil, fmt.Sprintf("更新module信息失败, %v", err))
+				return
+			}
+		}
+	}
+	// 写入component信息
+	for _, item := range exportConfig.RaspComponentInfo {
+		componentInfo, err := l.RaspComponentRepository.GetRaspComponentsByGuidAndName(item.ParentGuid, item.ComponentName)
+		if err != nil {
+			response.Fail(c, nil, fmt.Sprintf("查询component信息失败, %v", err))
+			return
+		}
+		if componentInfo == nil {
+			raspComponent := &model.RaspComponent{
+				ParentGuid:       item.ParentGuid,
+				ComponentName:    item.ComponentName,
+				ComponentType:    item.ComponentType,
+				ComponentVersion: item.ComponentVersion,
+				DownLoadURL:      item.DownLoadURL,
+				Md5:              item.Md5,
+				Parameters:       item.Parameters,
+			}
+			err = l.RaspComponentRepository.CreateRaspComponent(raspComponent)
+			if err != nil {
+				response.Fail(c, nil, fmt.Sprintf("新建component记录失败, %v", err))
+				return
+			}
+		} else {
+			componentInfo.ParentGuid = item.ParentGuid
+			componentInfo.ComponentName = item.ComponentName
+			componentInfo.ComponentType = item.ComponentType
+			componentInfo.ComponentVersion = item.ComponentVersion
+			componentInfo.DownLoadURL = item.DownLoadURL
+			componentInfo.Md5 = item.Md5
+			componentInfo.Parameters = item.Parameters
+			err = l.RaspComponentRepository.UpdateRaspComponent(componentInfo)
 			if err != nil {
 				response.Fail(c, nil, fmt.Sprintf("更新module信息失败, %v", err))
 				return
@@ -696,42 +838,277 @@ func (l RaspConfigController) ImportRaspConfig(c *gin.Context) {
 	}
 	if configInfo == nil {
 		raspConfig := &model.RaspConfig{
-			Name:          exportConfig.RaspConfigInfo.Name,
-			Desc:          exportConfig.RaspConfigInfo.Desc,
-			Status:        exportConfig.RaspConfigInfo.Status,
-			Creator:       ctxUser.Username,
-			Operator:      ctxUser.Username,
-			AgentMode:     exportConfig.RaspConfigInfo.AgentMode,
-			ModuleConfigs: exportConfig.RaspConfigInfo.ModuleConfigs,
-			LogPath:       exportConfig.RaspConfigInfo.LogPath,
-			AgentConfigs:  exportConfig.RaspConfigInfo.AgentConfigs,
-			RaspBinInfo:   exportConfig.RaspConfigInfo.RaspBinInfo,
-			RaspLibInfo:   exportConfig.RaspConfigInfo.RaspLibInfo,
-			IsDefault:     exportConfig.RaspConfigInfo.IsDefault,
+			RowGuid:   exportConfig.RaspConfigInfo.RowGuid,
+			Name:      exportConfig.RaspConfigInfo.Name,
+			Version:   1,
+			Desc:      exportConfig.RaspConfigInfo.Desc,
+			Status:    exportConfig.RaspConfigInfo.Status,
+			Creator:   ctxUser.Username,
+			Operator:  ctxUser.Username,
+			IsDefault: exportConfig.RaspConfigInfo.IsDefault,
 		}
 		err = l.RaspConfigRepository.CreateRaspConfig(raspConfig)
 		if err != nil {
 			response.Fail(c, nil, fmt.Sprintf("创建config信息失败, %v", err))
 			return
 		}
+		// 写入历史版本信息
+		raspConfigHistory := &model.RaspConfigHistory{
+			ParentGuid:    raspConfig.RowGuid,
+			Version:       1,
+			AgentMode:     exportConfig.RaspConfigHistoryInfo.AgentMode,
+			ModuleConfigs: exportConfig.RaspConfigHistoryInfo.ModuleConfigs,
+			LogPath:       exportConfig.RaspConfigHistoryInfo.LogPath,
+			AgentConfigs:  exportConfig.RaspConfigHistoryInfo.AgentConfigs,
+			RaspBinInfo:   exportConfig.RaspConfigHistoryInfo.RaspBinInfo,
+			RaspLibInfo:   exportConfig.RaspConfigHistoryInfo.RaspLibInfo,
+			Desc:          exportConfig.RaspConfigHistoryInfo.Desc,
+			Source:        "导入版本",
+		}
+		err = l.RaspConfigHistoryRepository.CreateRaspConfigHistory(raspConfigHistory)
+		if err != nil {
+			response.Fail(c, nil, fmt.Sprintf("创建config版本信息失败, %v", err))
+			return
+		}
 	} else {
 		configInfo.Name = exportConfig.RaspConfigInfo.Name
+		configInfo.Version += 1
 		configInfo.Desc = exportConfig.RaspConfigInfo.Desc
 		configInfo.Status = exportConfig.RaspConfigInfo.Status
 		configInfo.Creator = ctxUser.Username
 		configInfo.Operator = ctxUser.Username
-		configInfo.AgentMode = exportConfig.RaspConfigInfo.AgentMode
-		configInfo.ModuleConfigs = exportConfig.RaspConfigInfo.ModuleConfigs
-		configInfo.LogPath = exportConfig.RaspConfigInfo.LogPath
-		configInfo.AgentConfigs = exportConfig.RaspConfigInfo.AgentConfigs
-		configInfo.RaspBinInfo = exportConfig.RaspConfigInfo.RaspBinInfo
-		configInfo.RaspLibInfo = exportConfig.RaspConfigInfo.RaspLibInfo
 		configInfo.IsDefault = exportConfig.RaspConfigInfo.IsDefault
 		err = l.RaspConfigRepository.UpdateRaspConfig(configInfo)
 		if err != nil {
 			response.Fail(c, nil, fmt.Sprintf("更新config信息失败, %v", err))
 			return
 		}
+		// 写入历史版本信息
+		raspConfigHistory := &model.RaspConfigHistory{
+			ParentGuid:    configInfo.RowGuid,
+			Version:       configInfo.Version,
+			AgentMode:     exportConfig.RaspConfigHistoryInfo.AgentMode,
+			ModuleConfigs: exportConfig.RaspConfigHistoryInfo.ModuleConfigs,
+			LogPath:       exportConfig.RaspConfigHistoryInfo.LogPath,
+			AgentConfigs:  exportConfig.RaspConfigHistoryInfo.AgentConfigs,
+			RaspBinInfo:   exportConfig.RaspConfigHistoryInfo.RaspBinInfo,
+			RaspLibInfo:   exportConfig.RaspConfigHistoryInfo.RaspLibInfo,
+			Desc:          exportConfig.RaspConfigHistoryInfo.Desc,
+			Source:        "导入版本",
+		}
+		err = l.RaspConfigHistoryRepository.CreateRaspConfigHistory(raspConfigHistory)
+		if err != nil {
+			response.Fail(c, nil, fmt.Sprintf("创建config版本信息失败, %v", err))
+			return
+		}
 	}
 	response.Success(c, nil, "导入配置成功")
+}
+
+func (l RaspConfigController) SyncRaspConfig(c *gin.Context) {
+	var req vo.SyncRaspConfigRequest
+	// 参数绑定
+	if err := c.ShouldBind(&req); err != nil {
+		response.Fail(c, nil, err.Error())
+		return
+	}
+	// 参数校验
+	if err := common.Validate.Struct(&req); err != nil {
+		errStr := err.(validator.ValidationErrors)[0].Translate(common.Trans)
+		response.Fail(c, nil, errStr)
+		return
+	}
+	srcConfig, err := l.RaspConfigRepository.GetRaspConfigById(req.SrcConfigId)
+	if err != nil {
+		response.Fail(c, nil, "同步策略失败，无法获取源配置信息")
+		return
+	}
+	srcConfigHistory, err := l.RaspConfigHistoryRepository.GetRaspConfigHistoryDataByGuid(srcConfig.RowGuid, req.SrcConfigVersion)
+	if err != nil {
+		response.Fail(c, nil, "同步策略失败，无法获取源配置版本信息")
+		return
+	}
+	dstConfig, err := l.RaspConfigRepository.GetRaspConfigById(req.DstConfigId)
+	if err != nil {
+		response.Fail(c, nil, "同步策略失败，无法获取目标配置信息")
+		return
+	}
+	dstConfigHistory, err := l.RaspConfigHistoryRepository.GetRaspConfigHistoryDataByGuid(dstConfig.RowGuid, dstConfig.Version)
+	if err != nil {
+		response.Fail(c, nil, "同步策略失败，无法获取目标配置版本信息")
+		return
+	}
+	dstConfigHistoryList, _, err := l.RaspConfigHistoryRepository.GetRaspConfigHistoryByGuid(dstConfig.RowGuid)
+	if err != nil {
+		response.Fail(c, nil, "同步策略失败，无法获取目标配置版本信息")
+		return
+	}
+	var raspConfigHistory model.RaspConfigHistory
+	if req.SyncOptions == 1 {
+		// 仅更新高级配置信息
+		newModuleConfigs, err := l.updateModuleConfig(dstConfigHistory.ModuleConfigs)
+		if err != nil {
+			response.Fail(c, nil, "同步策略失败，更新防护模块信息失败")
+			return
+		}
+		raspConfigHistory = model.RaspConfigHistory{
+			ParentGuid: dstConfig.RowGuid,
+			Version:    dstConfigHistoryList[0].Version + 1,
+			// 不改变原来的配置
+			AgentMode:     dstConfigHistory.AgentMode,
+			ModuleConfigs: newModuleConfigs,
+			LogPath:       dstConfigHistory.LogPath,
+			AgentConfigs:  dstConfigHistory.AgentConfigs,
+			// 使用最新同步的数据
+			RaspBinInfo: srcConfigHistory.RaspBinInfo,
+			RaspLibInfo: srcConfigHistory.RaspLibInfo,
+			Desc:        srcConfigHistory.Desc,
+			Source:      "同步版本",
+		}
+	} else {
+		// 覆盖更新
+		raspConfigHistory = model.RaspConfigHistory{
+			ParentGuid:    dstConfig.RowGuid,
+			Version:       dstConfigHistoryList[0].Version + 1,
+			AgentMode:     srcConfigHistory.AgentMode,
+			ModuleConfigs: srcConfigHistory.ModuleConfigs,
+			LogPath:       srcConfigHistory.LogPath,
+			AgentConfigs:  srcConfigHistory.AgentConfigs,
+			RaspBinInfo:   srcConfigHistory.RaspBinInfo,
+			RaspLibInfo:   srcConfigHistory.RaspLibInfo,
+			Desc:          srcConfigHistory.Desc,
+			Source:        "同步版本",
+		}
+	}
+	err = l.RaspConfigHistoryRepository.CreateRaspConfigHistory(&raspConfigHistory)
+	if err != nil {
+		response.Fail(c, nil, "同步配置版本失败"+err.Error())
+		return
+	}
+	dstConfig.Version = raspConfigHistory.Version
+	dstConfig.IsModified = true
+	err = l.RaspConfigRepository.UpdateRaspConfig(dstConfig)
+	if err != nil {
+		response.Fail(c, nil, "同步配置版本失败"+err.Error())
+		return
+	}
+	response.Success(c, nil, fmt.Sprintf("同步配置成功，新版本为V%v", raspConfigHistory.Version))
+}
+
+// 使用最新的下载地址和版本
+func (l RaspConfigController) generateModuleConfig(srcModuleConfig datatypes.JSON) (datatypes.JSON, error) {
+	var result []map[string]interface{}
+	err := json.Unmarshal(srcModuleConfig, &result)
+	if err != nil {
+		return nil, err
+	}
+	for index, moduleConfig := range result {
+		moduleInfo, err := l.RaspModuleRepository.GetRaspModuleByName(moduleConfig["moduleName"].(string))
+		if err != nil {
+			return nil, err
+		}
+		componentList, _, err := l.RaspComponentRepository.GetRaspComponentsByGuid(moduleInfo.RowGuid)
+		if err != nil {
+			return nil, err
+		}
+		var components []map[string]interface{}
+		for _, item := range componentList {
+			var componentInfo = make(map[string]interface{})
+			componentInfo["componentName"] = item.ComponentName
+			componentInfo["componentType"] = item.ComponentType
+			componentInfo["componentVersion"] = item.ComponentVersion
+			componentInfo["downLoadURL"] = item.DownLoadURL
+			componentInfo["md5"] = item.Md5
+			componentInfo["parameters"] = item.Parameters
+			components = append(components, componentInfo)
+		}
+		result[index]["components"] = components
+	}
+
+	data, err := json.Marshal(result)
+	return data, err
+}
+
+func (l RaspConfigController) updateModuleConfig(srcModuleConfig datatypes.JSON) (datatypes.JSON, error) {
+	var result []model.RaspModuleConfig
+	err := json.Unmarshal(srcModuleConfig, &result)
+	if err != nil {
+		return nil, err
+	}
+	// 先更新jar包的md5和下载地址
+	for index, _ := range result {
+		moduleConfig := result[index]
+		moduleInfo, err := l.RaspModuleRepository.GetRaspModuleByName(moduleConfig.ModuleName)
+		if err != nil {
+			return nil, err
+		}
+		if moduleInfo == nil {
+			continue
+		}
+		componentList, _, err := l.RaspComponentRepository.GetRaspComponentsByGuid(moduleInfo.RowGuid)
+		if err != nil {
+			return nil, err
+		}
+		// 将components对象更新至新版
+		moduleConfig.Components = []model.ComponentConfig{}
+		for _, item := range componentList {
+			moduleConfig.Components = append(moduleConfig.Components, model.ComponentConfig{
+				ComponentName:    item.ComponentName,
+				ComponentType:    item.ComponentType,
+				ComponentVersion: item.ComponentVersion,
+				DownLoadURL:      item.DownLoadURL,
+				Md5:              item.Md5,
+				Parameters:       item.Parameters,
+			})
+		}
+		// 增量更新parameter对象
+		var raspModuleUserConfig model.RaspModuleUserConfig
+		err = json.Unmarshal(moduleInfo.Parameters, &raspModuleUserConfig)
+		if err != nil {
+			return nil, err
+		}
+		// 删除缺失过时的开关
+		var delKey []string
+		for k, _ := range moduleConfig.Parameters.Action {
+			_, ok := raspModuleUserConfig.Action[k]
+			if !ok {
+				delKey = append(delKey, k)
+			}
+		}
+		for _, k := range delKey {
+			delete(moduleConfig.Parameters.Action, k)
+		}
+		delKey = []string{}
+		for k, _ := range moduleConfig.Parameters.CnMap {
+			_, ok := raspModuleUserConfig.CnMap[k]
+			if !ok {
+				delKey = append(delKey, k)
+			}
+		}
+		for _, k := range delKey {
+			delete(moduleConfig.Parameters.CnMap, k)
+		}
+		// 添加新增的action
+		var addKey []string
+		for k, _ := range raspModuleUserConfig.Action {
+			_, ok := moduleConfig.Parameters.Action[k]
+			if !ok {
+				addKey = append(addKey, k)
+			}
+		}
+		for _, k := range addKey {
+			raspModuleUserConfig.Action[k] = moduleConfig.Parameters.Action[k]
+		}
+		addKey = []string{}
+		for k, _ := range raspModuleUserConfig.CnMap {
+			_, ok := moduleConfig.Parameters.CnMap[k]
+			if !ok {
+				addKey = append(addKey, k)
+			}
+		}
+		for _, k := range addKey {
+			raspModuleUserConfig.CnMap[k] = moduleConfig.Parameters.CnMap[k]
+		}
+	}
+	return json.Marshal(result)
 }

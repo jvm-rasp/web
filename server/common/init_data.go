@@ -327,6 +327,17 @@ func InitData() {
 	users := []model.User{
 		{
 			Model:        gorm.Model{ID: 1},
+			Username:     "root",
+			Password:     util.GenPasswd("123456"),
+			Mobile:       "13188887777",
+			Avatar:       "https://wpimg.wallstcn.com/f778738c-e4f8-4870-b634-56703b4acafe.gif",
+			Introduction: new(string),
+			Status:       1,
+			Creator:      "系统",
+			Roles:        roles[:1],
+		},
+		{
+			Model:        gorm.Model{ID: 2},
 			Username:     "admin",
 			Password:     util.GenPasswd("123456"),
 			Mobile:       "13188888888",
@@ -337,8 +348,8 @@ func InitData() {
 			Roles:        roles[:1],
 		},
 		{
-			Model:        gorm.Model{ID: 2},
-			Username:     "user2023-1",
+			Model:        gorm.Model{ID: 3},
+			Username:     "user",
 			Password:     util.GenPasswd("123456"),
 			Mobile:       "13899999999",
 			Avatar:       "https://wpimg.wallstcn.com/f778738c-e4f8-4870-b634-56703b4acafe.gif",
@@ -348,8 +359,8 @@ func InitData() {
 			Roles:        roles[1:2],
 		},
 		{
-			Model:        gorm.Model{ID: 3},
-			Username:     "user2023-2",
+			Model:        gorm.Model{ID: 4},
+			Username:     "guest",
 			Password:     util.GenPasswd("123456"),
 			Mobile:       "13833333333",
 			Avatar:       "https://wpimg.wallstcn.com/f778738c-e4f8-4870-b634-56703b4acafe.gif",
@@ -699,6 +710,27 @@ func InitData() {
 			Creator:  "系统",
 		},
 		{
+			Method:   "GET",
+			Path:     "/config/history/list",
+			Category: "config",
+			Desc:     "获取配置历史记录",
+			Creator:  "系统",
+		},
+		{
+			Method:   "GET",
+			Path:     "/config/history/data",
+			Category: "config",
+			Desc:     "获取配置历史信息",
+			Creator:  "系统",
+		},
+		{
+			Method:   "POST",
+			Path:     "/config/sync",
+			Category: "config",
+			Desc:     "同步配置策略",
+			Creator:  "系统",
+		},
+		{
 			Method:   "POST",
 			Path:     "/module/create",
 			Category: "module",
@@ -745,6 +777,20 @@ func InitData() {
 			Path:     "/module/delete",
 			Category: "module",
 			Desc:     "删除指定模块",
+			Creator:  "系统",
+		},
+		{
+			Method:   "GET",
+			Path:     "/module/component/list",
+			Category: "module",
+			Desc:     "获取组件列表",
+			Creator:  "系统",
+		},
+		{
+			Method:   "POST",
+			Path:     "/module/component/delete",
+			Category: "module",
+			Desc:     "删除组件列表",
 			Creator:  "系统",
 		},
 		{

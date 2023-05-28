@@ -92,3 +92,27 @@ export function getModules(params) {
     params
   })
 }
+
+export function getConfigHistoryByGuid(params) {
+  return request({
+    url: '/config/history/list',
+    method: 'get',
+    params
+  })
+}
+
+export function getConfigHistoryDataByGuid(params) {
+  return request({
+    url: '/config/history/data',
+    method: 'get',
+    params
+  })
+}
+
+export function syncConfigById(params) {
+  return request({
+    url: '/config/sync',
+    method: 'post',
+    data: params
+  })
+}

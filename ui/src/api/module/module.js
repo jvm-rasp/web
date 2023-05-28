@@ -8,6 +8,14 @@ export function getModules(params) {
   })
 }
 
+export function getComponents(params) {
+  return request({
+    url: '/module/component/list',
+    method: 'get',
+    params
+  })
+}
+
 export function createModule(params) {
   return request({
     url: '/module/create',
@@ -27,6 +35,14 @@ export function updateModule(params) {
 export function deleteModule(params) {
   return request({
     url: '/module/delete',
+    method: 'post',
+    data: params
+  })
+}
+
+export function deleteComponent(params) {
+  return request({
+    url: '/module/component/delete',
     method: 'post',
     data: params
   })

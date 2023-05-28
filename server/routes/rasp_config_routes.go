@@ -9,6 +9,7 @@ import (
 
 func InitRaspConfigRoutes(r *gin.RouterGroup, authMiddleware *jwt.GinJWTMiddleware) gin.IRoutes {
 	raspConfigController := controller.NewRaspConfigController()
+	raspConfigHistoryController := controller.NewRaspConfigHistoryController()
 	router := r.Group("/config")
 	// 开启jwt认证中间件
 	router.Use(authMiddleware.MiddlewareFunc())
@@ -26,6 +27,9 @@ func InitRaspConfigRoutes(r *gin.RouterGroup, authMiddleware *jwt.GinJWTMiddlewa
 		router.GET("/module/list", raspConfigController.GetRaspModules)
 		router.POST("/export", raspConfigController.ExportRaspConfig)
 		router.POST("/import", raspConfigController.ImportRaspConfig)
+		router.GET("/history/list", raspConfigHistoryController.GetRaspConfigHistory)
+		router.GET("/history/data", raspConfigHistoryController.GetRaspConfigHistoryData)
+		router.POST("/sync", raspConfigController.SyncRaspConfig)
 	}
 	return r
 }
