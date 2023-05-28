@@ -7,18 +7,15 @@ import (
 
 type RaspConfig struct {
 	gorm.Model
-	Name          string         `gorm:"type:varchar(32);comment:'策略名称'" json:"name"`
-	Desc          string         `gorm:"type:varchar(128);comment:'策略说明'" json:"desc"`
-	Status        bool           `gorm:"type:tinyint(1);default:1;comment:'是否禁用(0,禁用/1,启用, 默认启用)'" json:"status"`
-	Creator       string         `gorm:"type:varchar(20);comment:'创建人'" json:"creator"`
-	Operator      string         `gorm:"type:varchar(20);comment:'操作人'" json:"operator"`
-	AgentMode     uint           `gorm:"type:tinyint(1);comment:'Agent模式'" json:"agentMode"`
-	ModuleConfigs datatypes.JSON `gorm:"type:text;comment:'检测插件配置'" json:"moduleConfigs"`
-	LogPath       string         `gorm:"type:varchar(255);comment:'日志路径'" json:"logPath"`
-	AgentConfigs  datatypes.JSON `gorm:"type:text;comment:'Agent配置信息'" json:"agentConfigs"`
-	RaspBinInfo   datatypes.JSON `gorm:"type:text;comment:'Daemon下载信息'" json:"raspBinInfo"`
-	RaspLibInfo   datatypes.JSON `gorm:"type:text;comment:'Agent Lib下载信息'" json:"raspLibInfo"`
-	IsDefault     bool           `gorm:"type:tinyint(1);default:0;comment:'默认策略'" json:"isDefault"`
+	RowGuid    string `gorm:"type:varchar(255);comment:'唯一标识guid'" json:"rowGuid"`
+	Name       string `gorm:"type:varchar(255);comment:'策略名称'" json:"name"`
+	Version    int    `gorm:"type:int;comment:'版本号'" json:"version"`
+	Desc       string `gorm:"type:varchar(255);comment:'策略说明'" json:"desc"`
+	Status     bool   `gorm:"type:tinyint(1);default:1;comment:'是否禁用(0,禁用/1,启用, 默认启用)'" json:"status"`
+	Creator    string `gorm:"type:varchar(20);comment:'创建人'" json:"creator"`
+	Operator   string `gorm:"type:varchar(20);comment:'操作人'" json:"operator"`
+	IsDefault  bool   `gorm:"type:tinyint(1);default:0;comment:'默认策略'" json:"isDefault"`
+	IsModified bool   `gorm:"type:tinyint(1);default:0;comment:'是否已修改'" json:"isModified"`
 }
 
 type RaspFinalConfig struct {
@@ -35,9 +32,11 @@ type RaspFinalConfig struct {
 }
 
 type RaspExportConfig struct {
-	RaspFileInfo   []RaspFile   `json:"raspFileInfo"`
-	RaspModuleInfo []RaspModule `json:"raspModuleInfo"`
-	RaspConfigInfo RaspConfig   `json:"raspConfigInfo"`
+	RaspFileInfo          []RaspFile        `json:"raspFileInfo"`
+	RaspModuleInfo        []RaspModule      `json:"raspModuleInfo"`
+	RaspComponentInfo     []RaspComponent   `json:"raspComponentInfo"`
+	RaspConfigInfo        RaspConfig        `json:"raspConfigInfo"`
+	RaspConfigHistoryInfo RaspConfigHistory `json:"raspConfigHistoryInfo"`
 }
 
 type AgentConfig struct {
@@ -55,6 +54,15 @@ type ModuleConfig struct {
 	DownLoadUrl   string                 `json:"downLoadURL"`
 	Parameters    map[string]interface{} `json:"parameters"`
 	Md5           string                 `json:"md5"`
+}
+
+type ComponentConfig struct {
+	ComponentName    string         `json:"componentName"`
+	ComponentType    uint           `json:"componentType"`
+	ComponentVersion string         `json:"componentVersion"`
+	DownLoadURL      string         `json:"downLoadURL"`
+	Md5              string         `json:"md5"`
+	Parameters       datatypes.JSON `json:"parameters"`
 }
 
 type ZipFileInfo struct {

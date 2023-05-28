@@ -13,17 +13,23 @@ import (
 type IRaspModuleRepository interface {
 	GetRaspModules(req *vo.RaspModuleListRequest) ([]*model.RaspModule, int64, error)
 	GetRaspModuleById(id uint) (*model.RaspModule, error)
-	GetRaspModuleByName(moduleName string, moduleVersion string) (*model.RaspModule, error)
+	GetRaspModuleByNameAndVersion(moduleName string, moduleVersion string) (*model.RaspModule, error)
+	GetRaspModuleByName(moduleName string) (*model.RaspModule, error)
+	GetRaspModuleByComponentName(componentName string) (*model.RaspModule, error)
 	UpdateRaspModule(module *model.RaspModule) error
 	CreateRaspModule(module *model.RaspModule) error
 	DeleteRaspModule(ids []uint) error
 }
 
 type RaspModuleRepository struct {
+	RaspComponentRepository IRaspComponentRepository
 }
 
 func NewRaspModuleRepository() IRaspModuleRepository {
-	return RaspModuleRepository{}
+	repo1 := NewRaspComponentRepository()
+	return RaspModuleRepository{
+		RaspComponentRepository: repo1,
+	}
 }
 
 func (a RaspModuleRepository) GetRaspModules(req *vo.RaspModuleListRequest) ([]*model.RaspModule, int64, error) {
@@ -71,9 +77,34 @@ func (a RaspModuleRepository) GetRaspModuleById(id uint) (*model.RaspModule, err
 	return record, err
 }
 
-func (a RaspModuleRepository) GetRaspModuleByName(moduleName string, moduleVersion string) (*model.RaspModule, error) {
+func (a RaspModuleRepository) GetRaspModuleByNameAndVersion(moduleName string, moduleVersion string) (*model.RaspModule, error) {
 	var record *model.RaspModule
 	err := common.DB.Where("module_name = ?", moduleName).Where("module_version = ?", moduleVersion).First(&record).Error
+	if err == gorm.ErrRecordNotFound {
+		return nil, nil
+	}
+	return record, err
+}
+
+func (a RaspModuleRepository) GetRaspModuleByName(moduleName string) (*model.RaspModule, error) {
+	var record *model.RaspModule
+	err := common.DB.Where("module_name = ?", moduleName).First(&record).Error
+	if err == gorm.ErrRecordNotFound {
+		return nil, nil
+	}
+	return record, err
+}
+
+func (a RaspModuleRepository) GetRaspModuleByComponentName(componentName string) (*model.RaspModule, error) {
+	var record *model.RaspModule
+	componentInfo, err := a.RaspComponentRepository.GetRaspComponentByName(componentName)
+	if err != nil {
+		return nil, err
+	}
+	if componentInfo == nil {
+		return nil, nil
+	}
+	err = common.DB.Where("row_guid = ?", componentInfo.ParentGuid).First(&record).Error
 	if err == gorm.ErrRecordNotFound {
 		return nil, nil
 	}

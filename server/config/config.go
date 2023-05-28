@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"gorm.io/gorm/logger"
 	"os"
 	"server/util"
 	"strings"
@@ -19,6 +20,7 @@ var Conf = new(config)
 
 type config struct {
 	System    *SystemConfig    `mapstructure:"system" json:"system"`
+	Database  *DatabaseConfig  `mapstructure:"database" json:"database"`
 	Logs      *LogsConfig      `mapstructure:"logs" json:"logs"`
 	Casbin    *CasbinConfig    `mapstructure:"casbin" json:"casbin"`
 	Jwt       *JwtConfig       `mapstructure:"jwt" json:"jwt"`
@@ -127,4 +129,10 @@ type Env struct {
 	Ip       string
 	HostName string
 	WorkDir  string
+}
+
+type DatabaseConfig struct {
+	Driver  string          `mapstructure:"driver" json:"driver"`
+	Source  string          `mapstructure:"source" json:"source"`
+	LogMode logger.LogLevel `mapstructure:"log-mode" json:"logMode"`
 }

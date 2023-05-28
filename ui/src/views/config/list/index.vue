@@ -71,11 +71,13 @@
           </template>
         </el-table-column>
         <el-table-column show-overflow-tooltip sortable prop="name" label="配置名称" align="center" />
-        <el-table-column show-overflow-tooltip sortable prop="desc" label="配置描述" align="center" />
-        <el-table-column show-overflow-tooltip sortable prop="agentMode" label="接入模式" align="center">
+        <el-table-column show-overflow-tooltip sortable prop="version" label="配置版本" align="center" width="200">
           <template slot-scope="scope">
-            <el-tag size="small" :type="getAgentModeColor(scope.row.agentMode)" disable-transitions>
-              {{ getAgentModeLabel(scope.row.agentMode) }}
+            <el-tag :size="$store.getters.size" disable-transitions>
+              {{ 'V' + scope.row.version }}
+            </el-tag>
+            <el-tag v-if="scope.row.isModified" :size="$store.getters.size" style="margin-left: 5px;" type="danger" disable-transitions>
+              {{ '配置已更新未推送' }}
             </el-tag>
           </template>
         </el-table-column>
@@ -91,7 +93,7 @@
             />
           </template>
         </el-table-column>
-        <el-table-column show-overflow-tooltip sortable prop="status" label="配置状态" align="center">
+        <el-table-column show-overflow-tooltip sortable prop="isModified" label="配置状态" align="center">
           <template slot-scope="scope" label="配置状态" align="center">
             <el-switch
               v-model="scope.row.status"
@@ -110,7 +112,7 @@
         <el-table-column fixed="right" label="操作" align="center">
           <template slot-scope="scope">
             <el-button type="text" size="medium" @click="handlePush(scope.row)">推送</el-button>
-            <el-dropdown @command="handleCommand">
+            <el-dropdown trigger="click" @command="handleCommand">
               <span class="el-dropdown-link">
                 更多<i class="el-icon-arrow-down el-icon--right" />
               </span>
@@ -118,6 +120,7 @@
                 <el-dropdown-item :command="{cmd: 'edit', args: scope.row}">修 改</el-dropdown-item>
                 <el-dropdown-item :command="{cmd: 'copy', args: scope.row}">复 制</el-dropdown-item>
                 <el-dropdown-item :command="{cmd: 'export', args: scope.row}">导 出</el-dropdown-item>
+                <el-dropdown-item :command="{cmd: 'sync', args: scope.row}">同 步</el-dropdown-item>
                 <el-dropdown-item :command="{cmd: 'delete', args: scope.row}">删 除</el-dropdown-item>
               </el-dropdown-menu>
             </el-dropdown>
@@ -147,119 +150,163 @@
               </el-form-item>
             </el-col>
             <el-col :span="12">
-              <el-form-item label="接入模式" prop="agentMode">
+              <el-form-item label="配置版本" prop="version">
+                <el-select v-model="bindConfigData.version" placeholder="请选择">
+                  <el-option
+                    v-for="item in configHistoryData"
+                    :key="item.value"
+                    :label="item.label"
+                    :value="item.value"
+                  />
+                </el-select>
+                <el-button type="primary" icon="el-icon-search" style="margin-left: 10px;">版本信息</el-button>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-col :span="12">
+              <el-form-item label="防护模式" prop="agentMode">
                 <el-radio-group v-model="bindConfigData.agentMode">
-                  <el-radio :label="1">动态</el-radio>
-                  <el-radio :label="2">静态</el-radio>
-                  <el-radio :label="0">关闭</el-radio>
+                  <el-radio :label="1">开启防护</el-radio>
+                  <!--                  <el-radio :label="2">静态</el-radio>-->
+                  <el-radio :label="0">关闭防护</el-radio>
                 </el-radio-group>
               </el-form-item>
             </el-col>
           </el-row>
-          <el-row>
-            <el-col :span="24">
-              <el-form-item label="模块列表" prop="moduleConfigs">
-                <el-checkbox v-model="checkAll" :indeterminate="isIndeterminate" @change="handleCheckAllChange">全选</el-checkbox>
-                <div style="margin: 15px 0;" />
-                <el-checkbox-group v-model="selectedModuleName" @change="handleCheckedModulesChange">
-                  <el-checkbox v-for="module in moduleList" :key="module.moduleName" :label="module.moduleName">{{ module.moduleName }}</el-checkbox>
-                </el-checkbox-group>
+          <div v-if="bindConfigData.agentMode === 1">
+            <el-row>
+              <el-col :span="24">
+                <el-form-item label="模块列表" prop="moduleConfigs">
+                  <el-checkbox v-model="checkAll" :indeterminate="isIndeterminate" @change="handleCheckAllChange">全选</el-checkbox>
+                  <div style="margin: 15px 0;" />
+                  <el-checkbox-group v-model="selectedModuleName" @change="handleCheckedModulesChange">
+                    <el-col v-for="module in moduleList" :key="module.moduleName" :span="4">
+                      <el-checkbox :label="module.moduleName">{{ module.moduleName }}</el-checkbox>
+                    </el-col>
+                  </el-checkbox-group>
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row>
+              <el-col :span="24">
+                <el-form-item label="拦截选项">
+                  <el-switch
+                    v-model="showBlockParameters"
+                    :active-value="true"
+                    :inactive-value="false"
+                  />
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row v-if="showBlockParameters">
+              <el-form-item v-for="(module, index) in bindConfigData.moduleConfigs" :key="module.moduleName" :label="module.moduleName">
+                <el-tooltip class="item" effect="dark" content="刷新参数并重置为默认" placement="top-start">
+                  <i class="el-icon-refresh" @click="refreshModuleParameter(index, module.moduleName)" />
+                </el-tooltip>
+                <el-col v-for="name in Object.keys(module.parameters.action)" :key="name" :span="24">
+                  <el-radio-group v-model="module.parameters.action[name]" size="mini" fill="#409eff">
+                    <el-radio-button border :label="1">拦截攻击</el-radio-button>
+                    <el-radio-button border :label="0">记录日志</el-radio-button>
+                  </el-radio-group>
+                  <span style="margin-left: 10px;">{{ convertParameters2cn(module.parameters.cn_map, name) }}</span>
+                </el-col>
               </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row>
-            <el-form-item label="高级配置">
-              <el-switch
-                v-model="showAdvanced"
-                :active-value="true"
-                :inactive-value="false"
-              />
-            </el-form-item>
-          </el-row>
-          <el-row v-if="showAdvanced">
-            <el-col :span="12">
-              <el-form-item label="阻断反馈链接" label-width="120px" prop="agentConfigs.redirect_url">
-                <el-input v-model.trim="bindConfigData.agentConfigs.redirect_url" placeholder="配置名称" />
+            </el-row>
+            <el-row>
+              <el-form-item label="高级配置">
+                <el-switch
+                  v-model="showAdvanced"
+                  :active-value="true"
+                  :inactive-value="false"
+                />
               </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="阻断状态码" label-width="120px" prop="agentConfigs.block_status_code">
-                <el-input v-model.trim="bindConfigData.agentConfigs.block_status_code" placeholder="阻断状态码" />
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row v-if="showAdvanced">
-            <el-col :span="24">
-              <el-form-item label="json阻断文本" label-width="120px" prop="agentConfigs.json_block_content">
-                <el-input v-model.trim="bindConfigData.agentConfigs.json_block_content" placeholder="json格式的阻断文本" />
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row v-if="showAdvanced">
-            <el-col :span="24">
-              <el-form-item label="xml阻断文本" label-width="120px" prop="agentConfigs.xml_block_content">
-                <el-input v-model.trim="bindConfigData.agentConfigs.xml_block_content" placeholder="xml格式的阻断文本" />
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row v-if="showAdvanced">
-            <el-col :span="24">
-              <el-form-item label="html阻断文本" label-width="120px" prop="agentConfigs.html_block_content">
-                <el-input v-model.trim="bindConfigData.agentConfigs.html_block_content" placeholder="html格式的阻断文本" />
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row v-if="showAdvanced">
-            <el-col :span="24">
-              <el-form-item label="日志文件路径" label-width="120px" prop="logPath">
-                <el-input v-model.trim="bindConfigData.logPath" placeholder="日志文件路径" />
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row v-if="showAdvanced">
-            <el-col :span="12">
-              <el-form-item label="RASP Bin更新包" label-width="120px" prop="binFileUrl">
-                <el-input v-model.trim="bindConfigData.raspBinInfo.downLoadUrl" placeholder="RASP Bin更新包下载链接">
-                  <i slot="suffix" class="el-input__icon el-icon-more" @click="openUploadForm('raspBinInfo')" />
-                </el-input>
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="文件hash" label-width="120px" prop="binFileHash">
-                <el-input v-model.trim="bindConfigData.raspBinInfo.md5" placeholder="RASP Bin更新包hash" />
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row v-if="showAdvanced">
-            <el-col :span="12">
-              <el-form-item label="RASP Lib更新包" label-width="120px" prop="binFileUrl">
-                <el-input v-model.trim="bindConfigData.raspLibInfo.downLoadUrl" placeholder="RASP Lib更新包下载链接">
-                  <i slot="suffix" class="el-input__icon el-icon-more" @click="openUploadForm('raspLibInfo')" />
-                </el-input>
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="文件hash" label-width="120px" prop="binFileHash">
-                <el-input v-model.trim="bindConfigData.raspLibInfo.md5" placeholder="RASP Lib更新包hash" />
-              </el-form-item>
-            </el-col>
-          </el-row>
+            </el-row>
+            <el-row v-if="showAdvanced">
+              <el-col :span="12">
+                <el-form-item label="阻断反馈链接" label-width="120px" prop="agentConfigs.redirect_url">
+                  <el-input v-model.trim="bindConfigData.agentConfigs.redirect_url" placeholder="配置名称" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="阻断状态码" label-width="120px" prop="agentConfigs.block_status_code">
+                  <el-input v-model.trim="bindConfigData.agentConfigs.block_status_code" placeholder="阻断状态码" />
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row v-if="showAdvanced">
+              <el-col :span="24">
+                <el-form-item label="json阻断文本" label-width="120px" prop="agentConfigs.json_block_content">
+                  <el-input v-model.trim="bindConfigData.agentConfigs.json_block_content" placeholder="json格式的阻断文本" />
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row v-if="showAdvanced">
+              <el-col :span="24">
+                <el-form-item label="xml阻断文本" label-width="120px" prop="agentConfigs.xml_block_content">
+                  <el-input v-model.trim="bindConfigData.agentConfigs.xml_block_content" placeholder="xml格式的阻断文本" />
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row v-if="showAdvanced">
+              <el-col :span="24">
+                <el-form-item label="html阻断文本" label-width="120px" prop="agentConfigs.html_block_content">
+                  <el-input v-model.trim="bindConfigData.agentConfigs.html_block_content" placeholder="html格式的阻断文本" />
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row v-if="showAdvanced">
+              <el-col :span="24">
+                <el-form-item label="日志文件路径" label-width="120px" prop="logPath">
+                  <el-input v-model.trim="bindConfigData.logPath" placeholder="日志文件路径" />
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row v-if="showAdvanced">
+              <el-col :span="12">
+                <el-form-item label="RASP Bin更新包" label-width="120px" prop="binFileUrl">
+                  <el-input v-model.trim="bindConfigData.raspBinInfo.downLoadUrl" placeholder="RASP Bin更新包下载链接">
+                    <i slot="suffix" class="el-input__icon el-icon-more" @click="openUploadForm('raspBinInfo')" />
+                  </el-input>
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="文件hash" label-width="120px" prop="binFileHash">
+                  <el-input v-model.trim="bindConfigData.raspBinInfo.md5" placeholder="RASP Bin更新包hash" />
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row v-if="showAdvanced">
+              <el-col :span="12">
+                <el-form-item label="RASP Lib更新包" label-width="120px" prop="binFileUrl">
+                  <el-input v-model.trim="bindConfigData.raspLibInfo.downLoadUrl" placeholder="RASP Lib更新包下载链接">
+                    <i slot="suffix" class="el-input__icon el-icon-more" @click="openUploadForm('raspLibInfo')" />
+                  </el-input>
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="文件hash" label-width="120px" prop="binFileHash">
+                  <el-input v-model.trim="bindConfigData.raspLibInfo.md5" placeholder="RASP Lib更新包hash" />
+                </el-form-item>
+              </el-col>
+            </el-row>
+          </div>
           <el-row>
             <el-col :span="24">
               <el-form-item label="配置描述" prop="desc">
-                <el-input v-model.trim="bindConfigData.desc" placeholder="配置描述" />
+                <el-input v-model.trim="bindConfigData.desc" type="textarea" placeholder="配置描述" />
               </el-form-item>
             </el-col>
           </el-row>
         </el-form>
         <div slot="footer" class="dialog-footer">
           <el-button size="mini" @click="closeCreateConfig()">关 闭</el-button>
-          <el-button size="mini" :loading="submitCreateConfigLoading" type="primary" @click="submitNewConfigForm()">确 定</el-button>
+          <el-button size="mini" :loading="submitCreateConfigLoading" type="primary" @click="submitNewConfigForm()">保 存</el-button>
         </div>
       </el-dialog>
       <!-- 新建配置对话框 -->
       <el-dialog title="修改配置" :visible.sync="editConfigVisible" width="50%">
-        <el-form ref="editConfigForm" size="small" :model="bindConfigData" :rules="createConfigFormRules" label-width="100px">
+        <el-form size="small" :model="bindConfigData" label-width="100px">
           <el-row>
             <el-col :span="12">
               <el-form-item label="配置名称" prop="name">
@@ -267,114 +314,173 @@
               </el-form-item>
             </el-col>
             <el-col :span="12">
-              <el-form-item label="接入模式" prop="agentMode">
-                <el-radio-group v-model="bindConfigData.agentMode">
-                  <el-radio :label="1">动态</el-radio>
-                  <el-radio :label="2">静态</el-radio>
-                  <el-radio :label="0">关闭</el-radio>
+              <el-form-item label="配置版本" prop="version">
+                <el-select v-model="bindConfigData.version" placeholder="请选择" @change="configHistoryChanged">
+                  <el-option
+                    v-for="item in configHistoryData"
+                    :key="item.value"
+                    :label="item.label"
+                    :value="item.value"
+                  />
+                </el-select>
+                <el-button type="primary" icon="el-icon-search" style="margin-left: 10px;" @click="showConfigHistoryDesc(selectConfigHistory)">版本信息</el-button>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-col :span="12">
+              <el-form-item label="修改配置">
+                <el-switch
+                  v-model="isLocked"
+                  active-text="解锁"
+                  inactive-text="锁定"
+                  :active-value="false"
+                  :inactive-value="true"
+                />
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-col :span="12">
+              <el-form-item label="防护模式" prop="agentMode">
+                <el-radio-group v-model="bindConfigData.agentMode" :disabled="isLocked">
+                  <el-radio :label="1">开启防护</el-radio>
+                  <!--                  <el-radio :label="2">静态</el-radio>-->
+                  <el-radio :label="0">关闭防护</el-radio>
                 </el-radio-group>
               </el-form-item>
             </el-col>
           </el-row>
-          <el-row>
-            <el-col :span="24">
-              <el-form-item label="模块列表" prop="moduleConfigs">
-                <el-checkbox v-model="checkAll" :indeterminate="isIndeterminate" @change="handleCheckAllChange">全选</el-checkbox>
-                <div style="margin: 15px 0;" />
-                <el-checkbox-group v-model="selectedModuleName" @change="handleCheckedModulesChange">
-                  <el-checkbox v-for="module in moduleList" :key="module.moduleName" :label="module.moduleName">{{ module.moduleName }}</el-checkbox>
-                </el-checkbox-group>
+          <div v-if="bindConfigData.agentMode === 1">
+            <el-row>
+              <el-col :span="24">
+                <el-form-item label="模块列表" prop="moduleConfigs">
+                  <el-checkbox v-model="checkAll" :disabled="isLocked" :indeterminate="isIndeterminate" @change="handleCheckAllChange">全选</el-checkbox>
+                  <div style="margin: 15px 0;" />
+                  <el-checkbox-group v-model="selectedModuleName" :disabled="isLocked" @change="handleCheckedModulesChange">
+                    <el-col v-for="module in moduleList" :key="module.moduleName" :span="6">
+                      <el-checkbox :label="module.moduleName">{{ module.moduleName }}</el-checkbox>
+                    </el-col>
+                  </el-checkbox-group>
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row>
+              <el-col :span="24">
+                <el-form-item label="拦截选项">
+                  <el-switch
+                    v-model="showBlockParameters"
+                    :disabled="isLocked"
+                    :active-value="true"
+                    :inactive-value="false"
+                  />
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row v-if="showBlockParameters">
+              <el-form-item v-for="(module, index) in bindConfigData.moduleConfigs" :key="module.moduleName" :label="module.moduleName">
+                <el-tooltip class="item" effect="dark" content="刷新参数并重置为默认" placement="top-start">
+                  <i class="el-icon-refresh" @click="refreshModuleParameter(index, module.moduleName)" />
+                </el-tooltip>
+                <el-col v-for="name in Object.keys(module.parameters.action)" :key="name" :span="24">
+                  <el-radio-group v-model="module.parameters.action[name]" :disabled="isLocked" size="mini" fill="#409eff">
+                    <el-radio-button border :label="1">拦截攻击</el-radio-button>
+                    <el-radio-button border :label="0">记录日志</el-radio-button>
+                  </el-radio-group>
+                  <span style="margin-left: 10px;">{{ convertParameters2cn(module.parameters.cn_map, name) }}</span>
+                </el-col>
               </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row>
-            <el-form-item label="高级配置">
-              <el-switch
-                v-model="showAdvanced"
-                :active-value="true"
-                :inactive-value="false"
-              />
-            </el-form-item>
-          </el-row>
-          <el-row v-if="showAdvanced">
-            <el-col :span="12">
-              <el-form-item label="阻断反馈链接" label-width="120px" prop="agentConfigs.redirect_url">
-                <el-input v-model.trim="bindConfigData.agentConfigs.redirect_url" placeholder="配置名称" />
+            </el-row>
+            <el-row>
+              <el-form-item label="高级配置">
+                <el-switch
+                  v-model="showAdvanced"
+                  :disabled="isLocked"
+                  :active-value="true"
+                  :inactive-value="false"
+                />
               </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="阻断状态码" label-width="120px" prop="agentConfigs.block_status_code">
-                <el-input v-model.number="bindConfigData.agentConfigs.block_status_code" placeholder="阻断状态码" />
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row v-if="showAdvanced">
-            <el-col :span="24">
-              <el-form-item label="json阻断文本" label-width="120px" prop="agentConfigs.json_block_content">
-                <el-input v-model.trim="bindConfigData.agentConfigs.json_block_content" placeholder="json格式的阻断文本" />
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row v-if="showAdvanced">
-            <el-col :span="24">
-              <el-form-item label="xml阻断文本" label-width="120px" prop="agentConfigs.xml_block_content">
-                <el-input v-model.trim="bindConfigData.agentConfigs.xml_block_content" placeholder="xml格式的阻断文本" />
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row v-if="showAdvanced">
-            <el-col :span="24">
-              <el-form-item label="html阻断文本" label-width="120px" prop="agentConfigs.html_block_content">
-                <el-input v-model.trim="bindConfigData.agentConfigs.html_block_content" placeholder="html格式的阻断文本" />
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row v-if="showAdvanced">
-            <el-col :span="24">
-              <el-form-item label="日志文件路径" label-width="120px" prop="logPath">
-                <el-input v-model.trim="bindConfigData.logPath" placeholder="日志文件路径" />
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row v-if="showAdvanced">
-            <el-col :span="12">
-              <el-form-item label="RASP Bin更新包" label-width="120px" prop="binFileUrl">
-                <el-input v-model.trim="bindConfigData.raspBinInfo.downLoadUrl" placeholder="RASP Bin更新包下载链接">
-                  <i slot="suffix" class="el-input__icon el-icon-more" @click="openUploadForm('raspBinInfo')" />
-                </el-input>
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="文件hash" label-width="120px" prop="binFileHash">
-                <el-input v-model.trim="bindConfigData.raspBinInfo.md5" placeholder="RASP Bin更新包hash" />
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row v-if="showAdvanced">
-            <el-col :span="12">
-              <el-form-item label="RASP Lib更新包" label-width="120px" prop="binFileUrl">
-                <el-input v-model.trim="bindConfigData.raspLibInfo.downLoadUrl" placeholder="RASP Lib更新包下载链接">
-                  <i slot="suffix" class="el-input__icon el-icon-more" @click="openUploadForm('raspLibInfo')" />
-                </el-input>
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="文件hash" label-width="120px" prop="binFileHash">
-                <el-input v-model.trim="bindConfigData.raspLibInfo.md5" placeholder="RASP Lib更新包hash" />
-              </el-form-item>
-            </el-col>
-          </el-row>
+            </el-row>
+            <el-row v-if="showAdvanced">
+              <el-col :span="12">
+                <el-form-item label="阻断反馈链接" label-width="120px" prop="agentConfigs.redirect_url">
+                  <el-input v-model.trim="bindConfigData.agentConfigs.redirect_url" :disabled="isLocked" placeholder="配置名称" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="阻断状态码" label-width="120px" prop="agentConfigs.block_status_code">
+                  <el-input v-model.number="bindConfigData.agentConfigs.block_status_code" :disabled="isLocked" placeholder="阻断状态码" />
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row v-if="showAdvanced">
+              <el-col :span="24">
+                <el-form-item label="json阻断文本" label-width="120px" prop="agentConfigs.json_block_content">
+                  <el-input v-model.trim="bindConfigData.agentConfigs.json_block_content" :disabled="isLocked" placeholder="json格式的阻断文本" />
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row v-if="showAdvanced">
+              <el-col :span="24">
+                <el-form-item label="xml阻断文本" label-width="120px" prop="agentConfigs.xml_block_content">
+                  <el-input v-model.trim="bindConfigData.agentConfigs.xml_block_content" :disabled="isLocked" placeholder="xml格式的阻断文本" />
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row v-if="showAdvanced">
+              <el-col :span="24">
+                <el-form-item label="html阻断文本" label-width="120px" prop="agentConfigs.html_block_content">
+                  <el-input v-model.trim="bindConfigData.agentConfigs.html_block_content" :disabled="isLocked" placeholder="html格式的阻断文本" />
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row v-if="showAdvanced">
+              <el-col :span="24">
+                <el-form-item label="日志文件路径" label-width="120px" prop="logPath">
+                  <el-input v-model.trim="bindConfigData.logPath" :disabled="isLocked" placeholder="日志文件路径" />
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row v-if="showAdvanced">
+              <el-col :span="12">
+                <el-form-item label="RASP Bin更新包" label-width="120px" prop="binFileUrl">
+                  <el-input v-model.trim="bindConfigData.raspBinInfo.downLoadUrl" :disabled="isLocked" placeholder="RASP Bin更新包下载链接">
+                    <i slot="suffix" class="el-input__icon el-icon-more" @click="openUploadForm('raspBinInfo')" />
+                  </el-input>
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="文件hash" label-width="120px" prop="binFileHash">
+                  <el-input v-model.trim="bindConfigData.raspBinInfo.md5" :disabled="isLocked" placeholder="RASP Bin更新包hash" />
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row v-if="showAdvanced">
+              <el-col :span="12">
+                <el-form-item label="RASP Lib更新包" label-width="120px" prop="binFileUrl">
+                  <el-input v-model.trim="bindConfigData.raspLibInfo.downLoadUrl" :disabled="isLocked" placeholder="RASP Lib更新包下载链接">
+                    <i slot="suffix" class="el-input__icon el-icon-more" @click="openUploadForm('raspLibInfo')" />
+                  </el-input>
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="文件hash" label-width="120px" prop="binFileHash">
+                  <el-input v-model.trim="bindConfigData.raspLibInfo.md5" :disabled="isLocked" placeholder="RASP Lib更新包hash" />
+                </el-form-item>
+              </el-col>
+            </el-row>
+          </div>
           <el-row>
             <el-col :span="24">
               <el-form-item label="配置描述" prop="desc">
-                <el-input v-model.trim="bindConfigData.desc" placeholder="配置描述" />
+                <el-input v-model.trim="bindConfigData.desc" type="textarea" placeholder="配置描述" />
               </el-form-item>
             </el-col>
           </el-row>
         </el-form>
         <div slot="footer" class="dialog-footer">
           <el-button size="mini" @click="editConfigVisible = false">关 闭</el-button>
-          <el-button size="mini" :loading="submitCreateConfigLoading" type="primary" @click="editConfigForm()">更 新</el-button>
+          <el-button size="mini" :loading="submitCreateConfigLoading" type="primary" @click="updateConfigForm()">保 存</el-button>
         </div>
       </el-dialog>
       <!-- 选择更新模块-->
@@ -447,6 +553,55 @@
           <el-button size="mini" type="primary" @click="addSelectedFile">确 定</el-button>
         </div>
       </el-dialog>
+      <!-- 同步模块-->
+      <el-dialog title="同步策略" :visible.sync="syncConfigVisible" width="35%">
+        <el-form ref="syncConfigForm" :size="this.$store.getters.size">
+          <el-row>
+            <el-col :span="12">
+              <el-form-item label="配置名称" prop="name">
+                <el-select v-model="bindSyncConfigData.configId" placeholder="请选择" @change="handleSyncConfigChange">
+                  <el-option
+                    v-for="item in bindSyncConfigList"
+                    :key="item.value"
+                    :label="item.label"
+                    :value="item.value"
+                  />
+                </el-select>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="配置版本" prop="version">
+                <el-select v-model="bindSyncConfigData.configVersion" placeholder="请选择">
+                  <el-option
+                    v-for="item in bindSyncConfigVersionList"
+                    :key="item.value"
+                    :label="item.label"
+                    :value="item.value"
+                  />
+                </el-select>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-col :span="24">
+              <el-form-item label="同步选项" prop="name">
+                <el-radio-group v-model="bindSyncConfigData.syncOptions">
+                  <el-tooltip class="item" effect="dark" content="不改变您启用/禁用的模块和拦截选项" placement="top-start">
+                    <el-radio :label="1">同步配置</el-radio>
+                  </el-tooltip>
+                  <el-tooltip class="item" effect="dark" content="会改变您启用/禁用的模块和拦截选项（慎用）" placement="top-start">
+                    <el-radio :label="2">同步所有</el-radio>
+                  </el-tooltip>
+                </el-radio-group>
+              </el-form-item>
+            </el-col>
+          </el-row>
+        </el-form>
+        <div slot="footer" class="dialog-footer">
+          <el-button size="mini" @click="closeSyncConfig()">关 闭</el-button>
+          <el-button size="mini" :loading="loading" type="primary" @click="submitSyncConfig()">同 步</el-button>
+        </div>
+      </el-dialog>
     </el-card>
   </div>
 </template>
@@ -458,7 +613,12 @@ import {
   batchDeleteConfigByIds,
   updateConfig,
   updateStatusById,
-  updateDefaultById, pushConfigById, copyConfigById, exportConfigById, getModules
+  updateDefaultById,
+  pushConfigById,
+  copyConfigById,
+  exportConfigById,
+  getModules,
+  getConfigHistoryByGuid, syncConfigById
 } from '@/api/config/config'
 import vueJsonEditor from 'vue-json-editor'
 import { getUploadFiles } from '@/api/module/module'
@@ -522,6 +682,7 @@ export default {
       bindConfigData: {
         ID: '',
         name: '',
+        version: '',
         desc: '',
         status: true,
         creator: '',
@@ -561,6 +722,8 @@ export default {
       createConfigVisible: false,
       submitCreateConfigLoading: false,
       selectUploadFileVisible: false,
+      // 同步配置
+      syncConfigVisible: false,
 
       // 配置项约束
       createConfigFormRules: {
@@ -586,7 +749,36 @@ export default {
         '静态': 2
       },
       showAdvanced: false,
-      fileList: []
+      showBlockParameters: false,
+      fileList: [],
+      configHistoryData: [
+        { label: '无', value: 0 }
+      ],
+      // 选定策略的历史记录列表
+      bindConfigHistoryData: [],
+      // 当前选定记录数据
+      selectConfigHistory: {},
+      isCreateNewVersion: false,
+      isLocked: true,
+      // 绑定同步策略数据
+      bindSyncDstData: {},
+      bindSyncConfigList: [],
+      bindSyncConfigVersionList: [],
+      bindSyncConfigData: {
+        configId: '',
+        configVersion: '',
+        syncOptions: 1
+      }
+    }
+  },
+  watch: {
+    isLocked: {
+      handler: function(newValue, oldValue) {
+        if (this.editConfigVisible && newValue === false) {
+          console.log('create new version')
+          this.isCreateNewVersion = true
+        }
+      }
     }
   },
   created() {
@@ -606,6 +798,7 @@ export default {
     },
 
     handleCommand(command) {
+      this.isCreateNewVersion = false
       switch (command.cmd) {
         case 'delete':
           this.handleDelete(command.args)
@@ -619,19 +812,21 @@ export default {
         case 'export':
           this.handleExport(command.args)
           break
+        case 'sync':
+          this.handleSync(command.args)
+          break
       }
     },
 
     handleEdit(record) {
+      this.loading = true
+      this.isLocked = true
+      this.showBlockParameters = false
+      this.showAdvanced = false
       this.bindConfigData = JSON.parse(JSON.stringify(record))
-      this.selectedModuleName = []
-      record.moduleConfigs.forEach((item) => {
-        this.selectedModuleName.push(item.moduleName)
-      })
-      const checkedCount = this.selectedModuleName.length
-      this.checkAll = checkedCount === this.moduleList.length
-      this.isIndeterminate = checkedCount > 0 && checkedCount < this.moduleList.length
+      this.getConfigHistoryList(record)
       this.editConfigVisible = true
+      this.loading = false
     },
 
     handleDelete(record) {
@@ -727,6 +922,7 @@ export default {
         const fileName = 'export_' + record.name + '.zip'
         try {
           const data = await exportConfigById({ id: record.ID })
+          console.log(data)
           if (!data || data.size === 0) {
             this.$message.warning('文件导出失败')
             return
@@ -750,6 +946,31 @@ export default {
         }
         await this.getConfigTableData()
       })
+    },
+
+    handleSync(record) {
+      this.bindSyncConfigData.syncOptions = 1
+      this.bindSyncDstData = record
+      this.bindSyncConfigList = []
+      this.tableData.forEach((item) => {
+        if (item.ID === record.ID) {
+          return
+        }
+        this.bindSyncConfigList.push({ label: item.name, value: item.ID })
+      })
+      this.syncConfigVisible = true
+    },
+
+    async handleSyncConfigChange(value) {
+      const record = this.tableData.find((item) => {
+        return item.ID === value
+      })
+      const { data } = await getConfigHistoryByGuid({ configGuid: record.rowGuid })
+      this.bindSyncConfigVersionList = []
+      data.list.forEach((item) => {
+        this.bindSyncConfigVersionList.push({ label: 'V' + item.version, value: item.version })
+      })
+      this.bindSyncConfigData.configVersion = this.bindSyncConfigVersionList[0].value
     },
 
     handleCheckAllChange(value) {
@@ -792,23 +1013,72 @@ export default {
     },
 
     async getModuleListData() {
-      const { data } = await getModules(this.moduleQueryParams)
-      this.moduleList = data.list
+      this.loading = true
+      try {
+        const { data } = await getModules(this.moduleQueryParams)
+        this.moduleList = data.list === null ? [] : data.list
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async getConfigHistoryList(record) {
+      this.loading = true
+      try {
+        const { data } = await getConfigHistoryByGuid({ configGuid: record.rowGuid })
+        this.bindConfigHistoryData = data.list
+        // 历史版本信息数据
+        this.configHistoryData = []
+        this.bindConfigHistoryData.forEach((item) => {
+          this.configHistoryData.push({ label: 'V' + item.version, value: item.version })
+          if (item.version === record.version) {
+            this.selectConfigHistory = item
+            this.bindConfigData.agentMode = item.agentMode
+            this.bindConfigData.moduleConfigs = item.moduleConfigs
+            this.bindConfigData.logPath = item.logPath
+            this.bindConfigData.agentConfigs = item.agentConfigs
+            this.bindConfigData.raspBinInfo = item.raspBinInfo
+            this.bindConfigData.raspLibInfo = item.raspLibInfo
+          }
+        })
+        // 当前版本勾选模块数据
+        this.selectedModuleName = []
+        this.selectConfigHistory.moduleConfigs.forEach((item) => {
+          this.selectedModuleName.push(item.moduleName)
+          this.moduleList.forEach((item2, index) => {
+            if (item.moduleName === item2.moduleName && item.moduleVersion === item2.moduleVersion) {
+              this.moduleList[index].parameters = item.parameters
+            }
+          })
+        })
+        const checkedCount = this.selectedModuleName.length
+        this.checkAll = checkedCount === this.moduleList.length
+        this.isIndeterminate = checkedCount > 0 && checkedCount < this.moduleList.length
+      } finally {
+        this.loading = false
+      }
     },
 
     // 配置创建
     create() {
+      this.isLocked = true
+      this.showBlockParameters = false
+      this.showAdvanced = false
       this.selectedModuleName = []
+      this.configHistoryData = [
+        { label: '无', value: 0 }
+      ]
       this.bindConfigData = {
         id: '',
         name: '',
+        version: 0,
         desc: '',
         status: true,
         creator: '',
         operator: '',
         CreatedAt: '',
         UpdatedAt: '',
-        agentMode: '',
+        agentMode: 1,
         moduleConfigs: [],
         logPath: '../logs',
         agentConfigs: {
@@ -844,44 +1114,107 @@ export default {
       this.selectUploadFileVisible = false
       this.selectKeyName = null
     },
-
+    // 关闭配置同步窗口
+    closeSyncConfig() {
+      this.syncConfigVisible = false
+    },
     // 提交表单
     submitNewConfigForm() {
-      this.$refs['createConfigForm'].validate(async valid => {
-        if (valid) {
-          this.submitCreateConfigLoading = true
-          let msg = ''
-          try {
-            const { message } = await createConfig(this.bindConfigData)
-            msg = message
-          } finally {
-            this.submitCreateConfigLoading = false
+      // 填写版本信息
+      this.$prompt('请输入版本更新内容', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消'
+      }).then(({ value }) => {
+        this.bindConfigData.historyDesc = value
+        this.$refs['createConfigForm'].validate(async valid => {
+          if (valid) {
+            this.submitCreateConfigLoading = true
+            let msg = ''
+            try {
+              const { message } = await createConfig(this.bindConfigData)
+              msg = message
+            } finally {
+              this.submitCreateConfigLoading = false
+            }
+            this.resetForm()
+            await this.getConfigTableData()
+            this.$message({
+              showClose: true,
+              message: msg,
+              type: 'success'
+            })
+          } else {
+            this.$message({
+              showClose: true,
+              message: '表单校验失败',
+              type: 'error'
+            })
+            return false
           }
-          this.resetForm()
-          await this.getConfigTableData()
-          this.$message({
-            showClose: true,
-            message: msg,
-            type: 'success'
+        })
+      }).catch(() => {
+        this.$message({
+          type: 'info',
+          message: '取消输入'
+        })
+      })
+    },
+
+    // 提交同步配置表单
+    async submitSyncConfig() {
+      this.loading = true
+      let msg = ''
+      try {
+        const { message } = await syncConfigById(
+          {
+            srcConfigId: this.bindSyncConfigData.configId,
+            srcConfigVersion: this.bindSyncConfigData.configVersion,
+            dstConfigId: this.bindSyncDstData.ID,
+            syncOptions: this.bindSyncConfigData.syncOptions
           })
-        } else {
-          this.$message({
-            showClose: true,
-            message: '表单校验失败',
-            type: 'error'
-          })
-          return false
-        }
+        msg = message
+      } finally {
+        this.loading = false
+      }
+      await this.getConfigTableData()
+      this.syncConfigVisible = false
+      this.$message({
+        showClose: true,
+        message: msg,
+        type: 'success'
       })
     },
 
     // 更新表单
-    editConfigForm() {
-      this.$refs['editConfigForm'].validate(async valid => {
-        if (valid) {
+    async updateConfigForm() {
+      // 填写版本信息
+      if (!this.isCreateNewVersion) {
+        this.submitCreateConfigLoading = true
+        let msg = ''
+        try {
+          this.bindConfigData.IsNewVersion = false
+          const { message } = await updateConfig(this.bindConfigData)
+          msg = message
+        } finally {
+          this.submitCreateConfigLoading = false
+        }
+        await this.getConfigTableData()
+        this.editConfigVisible = false
+        this.$message({
+          showClose: true,
+          message: msg,
+          type: 'success'
+        })
+      } else {
+        this.$prompt('请输入版本更新内容', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消'
+        }).then(async({ value }) => {
+          this.bindConfigData.historyDesc = value
           this.submitCreateConfigLoading = true
           let msg = ''
           try {
+            this.bindConfigData.IsNewVersion = true
             const { message } = await updateConfig(this.bindConfigData)
             msg = message
           } finally {
@@ -894,15 +1227,13 @@ export default {
             message: msg,
             type: 'success'
           })
-        } else {
+        }).catch(() => {
           this.$message({
-            showClose: true,
-            message: '表单校验失败',
-            type: 'error'
+            type: 'info',
+            message: '取消输入'
           })
-          return false
-        }
-      })
+        })
+      }
     },
 
     resetForm() {
@@ -1104,6 +1435,60 @@ export default {
     },
     getUserToken() {
       return getToken()
+    },
+    convertParameters2cn(cn_map, en_name) {
+      if (cn_map[en_name]) {
+        return cn_map[en_name]
+      } else {
+        return en_name
+      }
+    },
+    showConfigHistoryDesc(record) {
+      const time = moment(record.CreatedAt).format('YYYY-MM-DD HH:mm:ss')
+      const source = record.source
+      const desc = record.desc
+      const message = '时间: ' + time + '\n' + '来源: ' + source + '\n' + '描述: ' + desc
+      this.$alert('<pre>' + message + '</pre>', '版本信息', {
+        confirmButtonText: '确定',
+        dangerouslyUseHTMLString: true
+      })
+    },
+    configHistoryChanged(value) {
+      const index = this.bindConfigHistoryData.findIndex((item) => {
+        if (item.version === value) {
+          return true
+        }
+      })
+      const item = this.bindConfigHistoryData[index]
+      this.selectConfigHistory = item
+      // 当前版本勾选模块数据
+      this.selectedModuleName = []
+      this.selectConfigHistory.moduleConfigs.forEach((item) => {
+        this.selectedModuleName.push(item.moduleName)
+        this.moduleList.forEach((item2, index) => {
+          if (item.moduleName === item2.moduleName && item.moduleVersion === item2.moduleVersion) {
+            this.moduleList[index].parameters = item.parameters
+          }
+        })
+      })
+      const checkedCount = this.selectedModuleName.length
+      this.checkAll = checkedCount === this.moduleList.length
+      this.isIndeterminate = checkedCount > 0 && checkedCount < this.moduleList.length
+      // 更新配置参数记录
+      this.bindConfigData.agentMode = item.agentMode
+      this.bindConfigData.moduleConfigs = item.moduleConfigs
+      this.bindConfigData.logPath = item.logPath
+      this.bindConfigData.agentConfigs = item.agentConfigs
+      this.bindConfigData.raspBinInfo = item.raspBinInfo
+      this.bindConfigData.raspLibInfo = item.raspLibInfo
+    },
+    async refreshModuleParameter(index, moduleName) {
+      await this.getModuleListData()
+      this.moduleList.forEach((item) => {
+        if (item.moduleName === moduleName) {
+          this.bindConfigData.moduleConfigs[index].parameters = item.parameters
+        }
+      })
     }
   }
 }

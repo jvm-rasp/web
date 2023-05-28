@@ -16,6 +16,7 @@ type IJavaProcessInfoRepository interface {
 	SaveProcessInfo(*model.JavaProcessInfo) error
 	UpdateProcessInfo(info *model.JavaProcessInfo) error
 	DeleteProcessByPid(hostName string, pid uint) error
+	DeleteProcessByHostName(hostName string) error
 	GetProcessByPid(hostName string, pid uint) (*model.JavaProcessInfo, error)
 	GetSuccessInjectCount(hostName string) (int64, error)
 	GetFailedInjectCount(hostName string) (int64, error)
@@ -91,6 +92,11 @@ func (j JavaProcessInfoRepository) DeleteProcess(id uint) error {
 		return err
 	}
 	err = j.UpdateRaspHostInjectCounts(hostName)
+	return err
+}
+
+func (j JavaProcessInfoRepository) DeleteProcessByHostName(hostName string) error {
+	err := common.DB.Where("host_name = ?", hostName).Unscoped().Delete(&model.JavaProcessInfo{}).Error
 	return err
 }
 

@@ -484,7 +484,7 @@ func (l LogController) handleUpdateConfigId(req vo.RaspLogRequest) {
 	}
 	if len(dbData) > 0 {
 		dbConfigId := dbData[0].ConfigId
-		if dbConfigId != configId {
+		if dbConfigId != configId && dbConfigId > 0 {
 			hostController := NewRaspHostController()
 			content, err := hostController.GeneratePushConfig(dbConfigId)
 			if err != nil {
@@ -607,7 +607,8 @@ func (l LogController) handleAgentErrorLog(req vo.RaspLogRequest) {
 		panic(err)
 	}
 	// 写入上报错误日志
-	common.ReportLog.Error(req.Message)
+	errorLogStr, _ := json.Marshal(errorLogs)
+	common.ReportLog.Error(string(errorLogStr))
 }
 
 func (l LogController) handleDaemonErrorLog(req vo.RaspLogRequest) {
@@ -625,7 +626,8 @@ func (l LogController) handleDaemonErrorLog(req vo.RaspLogRequest) {
 		panic(err)
 	}
 	// 写入上报错误日志
-	common.ReportLog.Error(req.Message)
+	errorLogStr, _ := json.Marshal(errorLogs)
+	common.ReportLog.Error(string(errorLogStr))
 }
 
 func (l LogController) handleModuleErrorLog(req vo.RaspLogRequest) {
@@ -650,7 +652,8 @@ func (l LogController) handleModuleErrorLog(req vo.RaspLogRequest) {
 		panic(err)
 	}
 	// 写入上报错误日志
-	common.ReportLog.Error(req.Message)
+	errorLogStr, _ := json.Marshal(errorLogs)
+	common.ReportLog.Error(string(errorLogStr))
 }
 
 func (l LogController) handleAttackLog(req vo.RaspLogRequest) {

@@ -65,7 +65,7 @@
             {{ (params.pageNum - 1) * params.pageSize + scope.$index + 1 }}
           </template>
         </el-table-column>
-        <!--        <el-table-column show-overflow-tooltip sortable prop="hostName" label="实例名称" align="center" />-->
+        <el-table-column show-overflow-tooltip sortable prop="hostName" label="实例名称" align="center" />
         <el-table-column show-overflow-tooltip sortable prop="ip" label="实例IP" width="150" align="center" />
         <el-table-column show-overflow-tooltip sortable prop="agentMode" label="接入方式" width="120" align="center">
           <template slot-scope="scope">
@@ -188,8 +188,7 @@
         </el-form>
         <div slot="footer" class="dialog-footer">
           <el-button size="mini" @click="closeConfigForm()">取 消</el-button>
-          <el-button size="mini" :loading="submitConfigPushLoading" type="primary" @click="submitConfigPushForm()">确 定
-          </el-button>
+          <el-button size="mini" :loading="submitConfigPushLoading" type="primary" @click="submitConfigPushForm()">推 送</el-button>
         </div>
       </el-dialog>
 
@@ -239,7 +238,6 @@ export default {
         pageNum: 1,
         pageSize: 10
       },
-      currentHostName: '',
       showProcessInfoVisible: false,
       processTableData: [],
       processTotal: 0,
@@ -440,7 +438,7 @@ export default {
     // process table
     showHostAndProcessDetail(row) {
       this.showProcessInfoVisible = true
-      this.currentHostName = row.hostName
+      this.processParams.hostName = row.hostName
       this.getProcessTable()
     },
     // 分页
@@ -455,7 +453,7 @@ export default {
     // 关闭配置创建
     closeProcessInfoVisible() {
       this.showProcessInfoVisible = false
-      this.currentHostName = ''
+      this.processParams.hostName = ''
     },
     getAgentStatusColor(status) {
       if (status === 1) {
@@ -500,7 +498,7 @@ export default {
       const t1 = new Date(d1)
       const t2 = new Date()
       const diff = t2 - t1
-      return diff <= 5 * 60 * 1000
+      return diff <= 10 * 60 * 1000
     },
     getConfigNameById(configId) {
       const matches = this.allConfigs.filter((item) => { return item.ID === configId })

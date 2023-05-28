@@ -5,6 +5,7 @@ import "gorm.io/datatypes"
 // CreateRaspConfigRequest 创建接口结构体
 type CreateRaspConfigRequest struct {
 	Name          string         `json:"name" form:"name" validate:"required"`
+	Version       int            `json:"version" form:"version" validate:"gte=0"`
 	Desc          string         `json:"desc" form:"desc" validate:"min=2,max=100"`
 	Status        bool           `json:"status" form:"status" validate:"boolean"`
 	AgentMode     uint           `json:"agentMode" form:"agentMode" validate:"oneof=0 1 2"`
@@ -13,11 +14,13 @@ type CreateRaspConfigRequest struct {
 	AgentConfigs  datatypes.JSON `json:"agentConfigs" form:"agentConfigs"`
 	RaspBinInfo   datatypes.JSON `json:"raspBinInfo" form:"raspBinInfo"`
 	RaspLibInfo   datatypes.JSON `json:"raspLibInfo" form:"raspLibInfo"`
+	HistoryDesc   string         `json:"historyDesc" form:"historyDesc" validate:"required"`
 }
 
 type UpdateRaspConfigRequest struct {
 	ID            uint           `json:"id" form:"id" validate:"required,min=1"`
 	Name          string         `json:"name" form:"name" validate:"required"`
+	Version       int            `json:"version" form:"version" validate:"gte=0"`
 	Desc          string         `json:"desc" form:"desc" validate:"min=2,max=100"`
 	Status        bool           `json:"status" form:"status" validate:"boolean"`
 	AgentMode     uint           `json:"agentMode" form:"agentMode" validate:"oneof=0 1 2"`
@@ -26,6 +29,8 @@ type UpdateRaspConfigRequest struct {
 	AgentConfigs  datatypes.JSON `json:"agentConfigs" form:"agentConfigs"`
 	RaspBinInfo   datatypes.JSON `json:"raspBinInfo" form:"raspBinInfo"`
 	RaspLibInfo   datatypes.JSON `json:"raspLibInfo" form:"raspLibInfo"`
+	HistoryDesc   string         `json:"historyDesc" form:"historyDesc"`
+	IsNewVersion  bool           `json:"IsNewVersion" form:"IsNewVersion" validate:"boolean"`
 }
 
 // 获取接口列表结构体
@@ -68,4 +73,11 @@ type RaspCheckboxModuleListRequest struct {
 
 type ExportRaspConfigRequest struct {
 	ID uint `json:"id" form:"id" validate:"required"`
+}
+
+type SyncRaspConfigRequest struct {
+	SrcConfigId      uint `json:"srcConfigId" form:"srcConfigId" validate:"required"`
+	SrcConfigVersion int  `json:"srcConfigVersion" form:"srcConfigVersion" validate:"required"`
+	DstConfigId      uint `json:"dstConfigId" form:"dstConfigId" validate:"required"`
+	SyncOptions      int  `json:"syncOptions" form:"syncOptions" validate:"required"`
 }
