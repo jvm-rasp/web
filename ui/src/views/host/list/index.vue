@@ -29,6 +29,9 @@
           <el-button :loading="loading" icon="el-icon-search" type="primary" @click="search">查询</el-button>
         </el-form-item>
         <el-form-item>
+          <el-button :loading="loading" icon="el-icon-plus" type="warning" @click="addHost">新增</el-button>
+        </el-form-item>
+        <el-form-item>
           <el-button
             :disabled="multipleSelection.length === 0"
             :loading="loading"
@@ -36,16 +39,6 @@
             type="danger"
             @click="batchDelete"
           >批量删除
-          </el-button>
-        </el-form-item>
-        <el-form-item>
-          <el-button
-            :disabled="multipleSelection.length === 0"
-            :loading="loading"
-            icon="el-icon-delete"
-            type="warning"
-            @click="batchUpdate"
-          >批量更新
           </el-button>
         </el-form-item>
       </el-form>
@@ -192,13 +185,28 @@
         </div>
       </el-dialog>
 
+      <el-dialog title="添加主机" :visible.sync="addHostDialogVisible" width="30%">
+        <el-form ref="hostDialogForm" label-width="80px" size="small" :model="hostFormData">
+          <el-form-item label="主机IP" prop="ip">
+            <el-input v-model="hostFormData.ip" />
+          </el-form-item>
+          <el-form-item label="主机端口" prop="port">
+            <el-input v-model.number="hostFormData.port" />
+          </el-form-item>
+        </el-form>
+        <div slot="footer" class="dialog-footer">
+          <el-button size="mini" @click="closeAddHostForm()">取 消</el-button>
+          <el-button size="mini" :loading="loading" type="primary" @click="submitAddHostForm()">添 加</el-button>
+        </div>
+      </el-dialog>
+
     </el-card>
   </div>
 </template>
 
 <script>
 
-import { batchDeleteHost, getHosts, getProcesss, pushConfig, updateConfig } from '@/api/host/host'
+import { addHostRequest, batchDeleteHost, getHosts, getProcesss, pushConfig, updateConfig } from '@/api/host/host'
 import { getConfigs } from '@/api/config/config'
 import moment from 'moment/moment'
 
@@ -223,6 +231,11 @@ export default {
         configId: ''
       },
 
+      hostFormData: {
+        ip: '',
+        port: 5354
+      },
+
       // 表格数据
       tableData: [],
       total: 0,
@@ -245,7 +258,8 @@ export default {
 
       // 配置更新
       updateConfigVisible: false,
-      submitConfigPushLoading: false
+      submitConfigPushLoading: false,
+      addHostDialogVisible: false
     }
   },
   created() {
@@ -257,6 +271,10 @@ export default {
     search() {
       this.params.pageNum = 1
       this.getTableData()
+    },
+
+    addHost() {
+      this.addHostDialogVisible = true
     },
 
     // 获取表格数据
@@ -338,6 +356,12 @@ export default {
       this.getTableData()
     },
 
+    closeAddHostForm() {
+      this.addHostDialogVisible = false
+      this.hostFormData.ip = ''
+      this.getTableData()
+    },
+
     submitConfigPushForm() {
       this.$refs['configDialogForm'].validate(async valid => {
         if (valid) {
@@ -379,6 +403,25 @@ export default {
           return false
         }
       })
+    },
+
+    async submitAddHostForm() {
+      this.loading = true
+      try {
+        const response = await addHostRequest({
+          ip: this.hostFormData.ip,
+          port: this.hostFormData.port
+        })
+        const messageType = response.code === 200 ? 'success' : 'error'
+        this.$message({
+          showClose: true,
+          message: response.message,
+          type: messageType
+        })
+      } finally {
+        this.loading = false
+        this.closeAddHostForm()
+      }
     },
 
     // 批量删除

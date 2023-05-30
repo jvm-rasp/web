@@ -25,3 +25,8 @@ type PushConfigRequest struct {
 	// 主机名称列表
 	HostNames []string `json:"hostNames" form:"hostNames" validate:"required"`
 }
+
+type AddHostRequest struct {
+	Ip   string `json:"ip"`
+	Port int    `json:"port"`
+}
