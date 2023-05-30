@@ -55,3 +55,11 @@ export function updateConfig(params) {
     data: params
   })
 }
+
+export function addHostRequest(params) {
+  return request({
+    url: '/host/add',
+    method: 'post',
+    data: params
+  })
+}

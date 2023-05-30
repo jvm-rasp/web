@@ -1,11 +1,13 @@
 package controller
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
+	"net"
 	"server/common"
 	"server/config"
 	"server/model"
@@ -15,6 +17,7 @@ import (
 	"server/util"
 	"server/vo"
 	"strings"
+	"time"
 )
 
 type IRaspHostController interface {
@@ -24,6 +27,7 @@ type IRaspHostController interface {
 	UpdateConfig(c *gin.Context)
 	PushHostsConfig(hostList []string, content []byte) []string
 	GeneratePushConfig(configId uint) ([]byte, error)
+	AddHost(c *gin.Context)
 }
 
 var AgentMode = map[uint]string{
@@ -333,4 +337,51 @@ func (h RaspHostController) GetUserBlockParameterList(userBlockParameter []map[s
 		}
 	}
 	return result
+}
+
+func (h RaspHostController) AddHost(c *gin.Context) {
+	var req vo.AddHostRequest
+	// 参数绑定
+	if err := c.ShouldBind(&req); err != nil {
+		response.Fail(c, nil, err.Error())
+		return
+	}
+	// 参数校验
+	if err := common.Validate.Struct(&req); err != nil {
+		errStr := err.(validator.ValidationErrors)[0].Translate(common.Trans)
+		response.Fail(c, nil, errStr)
+		return
+	}
+	udpAddr, err := net.ResolveUDPAddr("udp4", fmt.Sprintf("%v:%v", req.Ip, req.Port))
+	if err != nil {
+		response.Fail(c, nil, "添加主机失败, err: "+err.Error())
+		return
+	}
+	conn, err := net.DialUDP("udp", nil, udpAddr)
+	message := fmt.Sprintf("%v://%v:%v/%v",
+		util.Ternary(config.Conf.Ssl.Enable, "wss", "ws"),
+		util.GetDefaultIp(),
+		config.Conf.System.Port,
+		config.Conf.System.UrlPathPrefix)
+	pack := &socket.Package{
+		Magic:     socket.MagicBytes,
+		Version:   socket.PROTOCOL_VERSION,
+		Type:      0x09,
+		BodySize:  int32(len(message)),
+		TimeStamp: time.Now().Unix(),
+		Signature: socket.EmptySignature,
+		Body:      []byte((message)),
+	}
+	buf := bytes.NewBuffer(nil)
+	err = pack.Pack(buf)
+	if err != nil {
+		response.Fail(c, nil, "添加主机失败, err: "+err.Error())
+		return
+	}
+	_, err = conn.Write(buf.Bytes())
+	if err != nil {
+		response.Fail(c, nil, "添加主机失败, err: "+err.Error())
+		return
+	}
+	response.Success(c, nil, "已发送请求, 等待主机上线")
 }

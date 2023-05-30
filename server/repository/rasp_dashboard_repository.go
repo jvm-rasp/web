@@ -9,7 +9,7 @@ type IRaspDashboardRepository interface {
 	GetHighLevelCount(level int) (int64, error)
 	GetBlockCount() (int64, error)
 	GetAllCount() (int64, error)
-	GetAttackTypes() ([]map[string]interface{}, error)
+	GetAttackTypes() ([]model.AttackTypes, error)
 }
 
 type RaspDashboardRepository struct {
@@ -37,8 +37,8 @@ func (r RaspDashboardRepository) GetAllCount() (int64, error) {
 	return count, err
 }
 
-func (r RaspDashboardRepository) GetAttackTypes() ([]map[string]interface{}, error) {
-	var results []map[string]interface{}
+func (r RaspDashboardRepository) GetAttackTypes() ([]model.AttackTypes, error) {
+	var results []model.AttackTypes
 	err := common.DB.Model(&model.RaspAttack{}).Select("attack_type as name, count(*) as value").Group("attack_type").Find(&results).Error
 	return results, err
 }

@@ -822,6 +822,13 @@ func InitData() {
 			Creator:  "系统",
 		},
 		{
+			Method:   "POST",
+			Path:     "/host/add",
+			Category: "host",
+			Desc:     "新增主机配置",
+			Creator:  "系统",
+		},
+		{
 			Method:   "GET",
 			Path:     "/attack/list",
 			Category: "attack",
