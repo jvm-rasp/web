@@ -5,7 +5,7 @@ import (
 	"github.com/gorilla/websocket"
 	"net/http"
 	"server/common"
-	"server/model"
+	"server/repository"
 	"sync"
 )
 
@@ -102,14 +102,17 @@ func (c *Client) Read() {
 		// c.Message <- message
 		if messageType == websocket.TextMessage {
 			hostName := c.Id
-			heatbeatTime := string(message)
-			host := &model.RaspHost{
-				HostName:      hostName,
-				HeartbeatTime: heatbeatTime,
-			}
-			err := common.DB.Model(host).Where("host_name = ?", host.HostName).Updates(host).Error
+			heartbeatTime := string(message)
+			hostInfo, err := RaspHostRepository.GetRaspHostByHostName(hostName)
 			if err != nil {
-				common.Log.Warnf("update host [%s] heatbeat err: %s", hostName, err)
+				common.Log.Warnf("update host [%s] heartbeat err: %s", hostName, err)
+			}
+			if hostInfo != nil {
+				hostInfo.HeartbeatTime = heartbeatTime
+				err = RaspHostRepository.UpdateRaspHost(hostInfo)
+				if err != nil {
+					common.Log.Warnf("update host [%s] heartbeat err: %s", hostName, err)
+				}
 			}
 		}
 	}
@@ -254,6 +257,8 @@ var WebsocketManager = Manager{
 	groupCount:       0,
 	clientCount:      0,
 }
+
+var RaspHostRepository = repository.NewRaspHostRepository()
 
 // gin 处理 websocket handler
 func (manager *Manager) WsClient(ctx *gin.Context) {

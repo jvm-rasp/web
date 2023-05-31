@@ -310,7 +310,6 @@ func (l LogController) handleHostEnvLog(req vo.RaspLogRequest) {
 	host.BuildDateTime = buildDateTime
 	host.BuildGitBranch = buildGitBranch
 	host.BuildGitBranch = buildGitCommit
-	host.HeartbeatTime = req.Ts
 
 	if len(dbData) == 0 {
 		configId, err := l.RaspHostRepository.CreateRaspHost(host)
@@ -349,8 +348,6 @@ func (l LogController) handleHeartbeatLog(req vo.RaspLogRequest) {
 	} else {
 		host = dbData[0]
 	}
-
-	// host.HeartbeatTime = req.Ts
 
 	if len(dbData) == 0 {
 		configId, err := l.RaspHostRepository.CreateRaspHost(host)

@@ -3,6 +3,7 @@ package repository
 import (
 	"errors"
 	"fmt"
+	"gorm.io/gorm"
 	"server/common"
 	"server/model"
 	"server/vo"
@@ -144,12 +145,18 @@ func (h RaspHostRepository) UpdateRaspHost(host *model.RaspHost) error {
 
 func (h RaspHostRepository) GetRaspHostById(id uint) (*model.RaspHost, error) {
 	var host *model.RaspHost
-	err := common.DB.Model(&model.RaspHost{}).Where("id = ?", id).Find(&host).Error
+	err := common.DB.Where("id = ?", id).First(&host).Error
+	if err == gorm.ErrRecordNotFound {
+		return nil, nil
+	}
 	return host, err
 }
 
 func (h RaspHostRepository) GetRaspHostByHostName(hostName string) (*model.RaspHost, error) {
 	var host *model.RaspHost
-	err := common.DB.Model(&model.RaspHost{}).Where("host_name = ?", hostName).Find(&host).Error
+	err := common.DB.Where("host_name = ?", hostName).First(&host).Error
+	if err == gorm.ErrRecordNotFound {
+		return nil, nil
+	}
 	return host, err
 }
