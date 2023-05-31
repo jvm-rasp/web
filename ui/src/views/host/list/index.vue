@@ -233,7 +233,7 @@ export default {
 
       hostFormData: {
         ip: '',
-        port: 5354
+        port: 8080
       },
 
       // 表格数据
@@ -359,6 +359,7 @@ export default {
     closeAddHostForm() {
       this.addHostDialogVisible = false
       this.hostFormData.ip = ''
+      this.hostFormData.port = 8080
       this.getTableData()
     },
 
