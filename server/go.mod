@@ -16,6 +16,7 @@ require (
 	github.com/h2non/filetype v1.1.3
 	github.com/hashicorp/mdns v1.0.5
 	github.com/juju/ratelimit v1.0.1
+	github.com/mholt/archiver/v4 v4.0.0-alpha.8
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/spf13/viper v1.7.1
 	github.com/thoas/go-funk v0.7.0
@@ -40,7 +41,6 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/klauspost/compress v1.15.9 // indirect
 	github.com/klauspost/pgzip v1.2.5 // indirect
-	github.com/mholt/archiver/v4 v4.0.0-alpha.8 // indirect
 	github.com/miekg/dns v1.1.41 // indirect
 	github.com/nwaples/rardecode/v2 v2.0.0-beta.2 // indirect
 	github.com/pierrec/lz4/v4 v4.1.15 // indirect
@@ -94,7 +94,7 @@ require (
 	google.golang.org/protobuf v1.25.0 // indirect
 	gopkg.in/ini.v1 v1.62.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	gorm.io/driver/mysql v1.5.0 // indirect
+	gorm.io/driver/mysql v1.5.0
 	gorm.io/driver/postgres v1.5.0 // indirect
 	gorm.io/driver/sqlserver v1.4.2 // indirect
 )

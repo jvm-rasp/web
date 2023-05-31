@@ -350,7 +350,7 @@ func (l LogController) handleHeartbeatLog(req vo.RaspLogRequest) {
 		host = dbData[0]
 	}
 
-	host.HeartbeatTime = req.Ts
+	// host.HeartbeatTime = req.Ts
 
 	if len(dbData) == 0 {
 		configId, err := l.RaspHostRepository.CreateRaspHost(host)

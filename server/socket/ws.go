@@ -5,6 +5,7 @@ import (
 	"github.com/gorilla/websocket"
 	"net/http"
 	"server/common"
+	"server/model"
 	"sync"
 )
 
@@ -98,7 +99,19 @@ func (c *Client) Read() {
 		if err != nil || messageType == websocket.CloseMessage {
 			break
 		}
-		c.Message <- message
+		// c.Message <- message
+		if messageType == websocket.TextMessage {
+			hostName := c.Id
+			heatbeatTime := string(message)
+			host := &model.RaspHost{
+				HostName:      hostName,
+				HeartbeatTime: heatbeatTime,
+			}
+			err := common.DB.Model(host).Where("host_name = ?", host.HostName).Updates(host).Error
+			if err != nil {
+				common.Log.Warnf("update host [%s] heatbeat err: %s", hostName, err)
+			}
+		}
 	}
 }
 
