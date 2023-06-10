@@ -12,6 +12,7 @@ import (
 
 type IRaspHostRepository interface {
 	GetRaspHosts(req *vo.RaspHostListRequest) ([]*model.RaspHost, int64, error)
+	GetRaspHostList() ([]*model.RaspHost, int64, error)
 	GetRaspHostsByConfigId(id uint) ([]*model.RaspHost, int64, error)
 	CreateRaspHost(host *model.RaspHost) (uint, error)
 	DeleteRaspHost(ids []uint) error
@@ -79,6 +80,14 @@ func (h RaspHostRepository) GetRaspHosts(req *vo.RaspHostListRequest) ([]*model.
 	} else {
 		err = db.Find(&list).Error
 	}
+	return list, total, err
+}
+
+func (h RaspHostRepository) GetRaspHostList() ([]*model.RaspHost, int64, error) {
+	var list []*model.RaspHost
+	db := common.DB.Model(&model.RaspHost{}).Order("created_at DESC")
+	var total int64
+	err := db.Count(&total).Find(&list).Error
 	return list, total, err
 }
 

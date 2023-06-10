@@ -1,31 +1,36 @@
-package common
+package socket
 
 import (
 	"fmt"
 	"github.com/hashicorp/mdns"
 	"net"
 	"os"
+	"server/common"
 	"server/config"
 	"server/util"
 )
 
-type MDNSServer struct {
-	c       chan os.Signal
-	server  *mdns.Server
-	service *mdns.MDNSService
-}
-
 func InitMDNSService() {
 	if config.Conf.Mdns.Enable {
-		server := NewMDNSServer()
-		server.NewService()
+		//server := NewMDNSServer()
+		//server.NewService()
+		//go server.Start()
+		//Log.Infof("初始化mdns服务完成")
+
+		server := NewUDPServer()
 		go server.Start()
-		Log.Infof("初始化mdns服务完成")
+		common.Log.Infof("初始化mdns服务完成")
 	}
 }
 
 func NewMDNSServer() *MDNSServer {
 	return new(MDNSServer)
+}
+
+type MDNSServer struct {
+	c       chan os.Signal
+	server  *mdns.Server
+	service *mdns.MDNSService
 }
 
 func (s *MDNSServer) NewService() {
@@ -67,7 +72,7 @@ func (s *MDNSServer) Start() {
 	defer s.ShutDown()
 	select {
 	case sig := <-s.c:
-		Log.Debugf("Got %s signal. Aborting...\n", sig)
+		common.Log.Debugf("Got %s signal. Aborting...\n", sig)
 		break
 	}
 }

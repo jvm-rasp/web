@@ -68,6 +68,7 @@
         <el-table-column show-overflow-tooltip sortable prop="topic" label="日志类型" align="center" width="150" />
         <el-table-column show-overflow-tooltip sortable prop="time" label="时间" align="center" :formatter="dateFormat" width="200" />
         <el-table-column show-overflow-tooltip sortable prop="level" label="日志等级" align="center" width="150" />
+        <el-table-column show-overflow-tooltip sortable prop="hostName" label="实例名" align="center" width="150" />
         <el-table-column show-overflow-tooltip sortable prop="message" label="日志消息" align="center" />
         <el-table-column fixed="right" label="操作" align="center" width="150">
           <template slot-scope="scope">
@@ -90,7 +91,8 @@
       />
       <!-- 新建配置对话框 -->
       <el-dialog title="日志详情" :visible.sync="logDetailVisible" width="70%">
-        <el-descriptions title="" size="medium" :column="3" border>
+        <el-descriptions title="" size="this.$store.getters.size" :column="2" border>
+          <el-descriptions-item label="实例名">{{ bindLogData.hostName }}</el-descriptions-item>
           <el-descriptions-item label="日志类型">{{ bindLogData.topic }}</el-descriptions-item>
           <el-descriptions-item label="时间">{{ bindLogData.time }}</el-descriptions-item>
           <el-descriptions-item label="日志等级">{{ bindLogData.level }}</el-descriptions-item>

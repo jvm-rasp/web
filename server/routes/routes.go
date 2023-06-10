@@ -27,9 +27,11 @@ func InitRoutes() *gin.Engine {
 
 	// 启用限流中间件
 	// 默认每50毫秒填充一个令牌，最多填充200个
-	fillInterval := time.Duration(config.Conf.RateLimit.FillInterval)
-	capacity := config.Conf.RateLimit.Capacity
-	r.Use(middleware.RateLimitMiddleware(time.Millisecond*fillInterval, capacity))
+	if config.Conf.RateLimit.Enable {
+		fillInterval := time.Duration(config.Conf.RateLimit.FillInterval)
+		capacity := config.Conf.RateLimit.Capacity
+		r.Use(middleware.RateLimitMiddleware(time.Millisecond*fillInterval, capacity))
+	}
 
 	// 启用全局跨域中间件
 	r.Use(middleware.CORSMiddleware())
@@ -68,6 +70,7 @@ func InitRoutes() *gin.Engine {
 	InitRaspAttackRoutes(apiGroup, authMiddleware)
 	InitFileUploadRoutes(apiGroup, authMiddleware)
 	InitRaspLogRoutes(apiGroup, authMiddleware)
+	InitSystemSettingRoutes(apiGroup, authMiddleware)
 	// 注册静态资源路由
 	InitStaticRouter(apiGroup, r)
 	common.Log.Info("初始化路由完成！")

@@ -73,6 +73,8 @@ func dbAutoMigrate() {
 		&model.RaspAttackDetail{},
 		&model.RaspFile{},
 		&model.RaspErrorLogs{},
+		&model.HostResource{},
+		&model.SystemSetting{},
 	)
 	if err != nil {
 		return

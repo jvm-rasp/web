@@ -39,6 +39,7 @@ func (h *HtmlHandler) Favicon(c *gin.Context) {
 
 func InitStaticRouter(r *gin.RouterGroup, engine *gin.Engine) gin.IRoutes {
 	r.StaticFS("/static", http.FS(common.NewResource()))
+	r.Static("/install", "install")
 	html := NewHtmlHandler()
 	router := r.Group("/")
 	{

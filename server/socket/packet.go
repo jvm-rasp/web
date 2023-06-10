@@ -6,6 +6,18 @@ import (
 	"io"
 )
 
+const INFO byte = 0x01
+const UNINSTALL byte = 0x02
+const FLUSH byte = 0x03
+const ERROR byte = 0x04
+const UPDATE byte = 0x05
+const UNLOAD byte = 0x06
+const ACTIVE byte = 0x07
+const FROZEN byte = 0x08
+const CONFIG byte = 0x09
+const SEARCH_SERVER byte = 0x10
+const UPDATE_SERVER byte = 0x11
+
 var MagicBytes = [3]byte{88, 77, 68}
 
 var EmptySignature = make([]byte, 128)

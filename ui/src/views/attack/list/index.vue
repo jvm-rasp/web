@@ -117,7 +117,7 @@
       <el-tabs type="border-card">
         <el-tab-pane label="漏洞详情">
           <el-descriptions title="" size="medium" :column="2" border>
-            <el-descriptions-item label="主机名称">{{ selectRecord.record.hostName }}</el-descriptions-item>
+            <el-descriptions-item label="应用名称">{{ selectRecord.detail.appName }}</el-descriptions-item>
             <el-descriptions-item label="受攻击IP">{{ selectRecord.record.hostIp }}</el-descriptions-item>
             <el-descriptions-item label="攻击IP">{{ selectRecord.record.remoteIp }}</el-descriptions-item>
             <el-descriptions-item label="攻击时间">{{ selectRecord.record.attackTime }}</el-descriptions-item>
