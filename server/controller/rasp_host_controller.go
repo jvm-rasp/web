@@ -8,8 +8,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	"net"
+	"server/Interface"
 	"server/common"
 	"server/config"
+	"server/global"
 	"server/model"
 	"server/repository"
 	"server/response"
@@ -19,16 +21,6 @@ import (
 	"strings"
 	"time"
 )
-
-type IRaspHostController interface {
-	GetRaspHosts(c *gin.Context)
-	BatchDeleteHostByIds(c *gin.Context)
-	PushConfig(c *gin.Context)
-	UpdateConfig(c *gin.Context)
-	PushHostsConfig(hostList []string, content []byte) []string
-	GeneratePushConfig(configId uint) ([]byte, error)
-	AddHost(c *gin.Context)
-}
 
 var AgentMode = map[uint]string{
 	0: "disable",
@@ -46,24 +38,28 @@ type RaspHostController struct {
 	RaspComponentRepository     repository.IRaspComponentRepository
 }
 
-func NewRaspHostController() IRaspHostController {
-	repo1 := repository.NewRaspHostRepository()
-	repo2 := repository.NewRaspConfigRepository()
-	repo3 := repository.NewRaspFileRepository()
-	repo4 := repository.NewRaspModuleRepository()
-	repo5 := repository.NewRaspComponentRepository()
-	repo6 := repository.NewRaspConfigHistoryRepository()
-	repo7 := repository.NewJavaProcessInfoRepository(repo1)
-	raspHostController := RaspHostController{
-		RaspHostRepository:          repo1,
-		RaspConfigRepository:        repo2,
-		RaspFileRepository:          repo3,
-		RaspModuleRepository:        repo4,
-		RaspComponentRepository:     repo5,
-		RaspConfigHistoryRepository: repo6,
-		JavaProcessInfoRepository:   repo7,
+func NewRaspHostController() Interface.IRaspHostController {
+	if global.IRaspHostController == nil {
+		repo1 := repository.NewRaspHostRepository()
+		repo2 := repository.NewRaspConfigRepository()
+		repo3 := repository.NewRaspFileRepository()
+		repo4 := repository.NewRaspModuleRepository()
+		repo5 := repository.NewRaspComponentRepository()
+		repo6 := repository.NewRaspConfigHistoryRepository()
+		repo7 := repository.NewJavaProcessInfoRepository(repo1)
+		raspHostController := RaspHostController{
+			RaspHostRepository:          repo1,
+			RaspConfigRepository:        repo2,
+			RaspFileRepository:          repo3,
+			RaspModuleRepository:        repo4,
+			RaspComponentRepository:     repo5,
+			RaspConfigHistoryRepository: repo6,
+			JavaProcessInfoRepository:   repo7,
+		}
+		raspHostController.InitPushConfigService()
+		global.IRaspHostController = raspHostController
 	}
-	return raspHostController
+	return global.IRaspHostController
 }
 
 func (h RaspHostController) GetRaspHosts(c *gin.Context) {
@@ -176,6 +172,9 @@ func (h RaspHostController) GeneratePushConfig(configId uint) ([]byte, error) {
 	raspConfig, err := h.RaspConfigRepository.GetRaspConfigById(configId)
 	if err != nil {
 		return nil, errors.New("获取配置文本失败:" + err.Error())
+	}
+	if raspConfig == nil {
+		return nil, errors.New(fmt.Sprintf("获取配置文本失败: 未找到configId=%v的配置", configId))
 	}
 	raspConfigHistory, err := h.RaspConfigHistoryRepository.GetRaspConfigHistoryDataByGuid(raspConfig.RowGuid, raspConfig.Version)
 	if err != nil {
@@ -367,7 +366,7 @@ func (h RaspHostController) AddHost(c *gin.Context) {
 	pack := &socket.Package{
 		Magic:     socket.MagicBytes,
 		Version:   socket.PROTOCOL_VERSION,
-		Type:      0x09,
+		Type:      socket.UPDATE_SERVER,
 		BodySize:  int32(len(message)),
 		TimeStamp: time.Now().Unix(),
 		Signature: socket.EmptySignature,
@@ -385,4 +384,27 @@ func (h RaspHostController) AddHost(c *gin.Context) {
 		return
 	}
 	response.Success(c, nil, "已发送请求, 等待主机上线")
+}
+
+func (h RaspHostController) InitPushConfigService() {
+	global.PushConfigQueue = make(chan *vo.PushConfigRequest, 128)
+	go h.handlePushConfig()
+}
+
+func (h RaspHostController) handlePushConfig() {
+	for {
+		select {
+		case pushConfig, ok := <-global.PushConfigQueue:
+			if !ok {
+				common.Log.Warn("the chan of push config is closed")
+				return
+			}
+			content, err := h.GeneratePushConfig(pushConfig.ConfigId)
+			if err != nil {
+				common.Log.Errorf("生成配置失败, error: %v", err)
+				continue
+			}
+			h.PushHostsConfig(pushConfig.HostNames, content)
+		}
+	}
 }

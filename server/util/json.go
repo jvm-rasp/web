@@ -28,3 +28,15 @@ func JsonI2Struct(str interface{}, obj interface{}) {
 	JsonStr := str.(string)
 	Json2Struct(JsonStr, obj)
 }
+
+// struct 转为 另一个struct
+func Struct2Struct(src interface{}, obj interface{}) {
+	data, err := json.Marshal(src)
+	if err != nil {
+		panic(fmt.Sprintf("[Struct2Struct]转换异常: %v", err))
+	}
+	err = json.Unmarshal(data, obj)
+	if err != nil {
+		panic(fmt.Sprintf("[Struct2Struct]转换异常: %v", err))
+	}
+}

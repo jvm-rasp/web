@@ -6,6 +6,7 @@ require (
 	github.com/appleboy/gin-jwt/v2 v2.6.4
 	github.com/casbin/casbin/v2 v2.22.0
 	github.com/casbin/gorm-adapter/v3 v3.1.0
+	github.com/fatih/structs v1.1.0
 	github.com/fsnotify/fsnotify v1.6.0
 	github.com/gin-gonic/gin v1.6.3
 	github.com/go-playground/locales v0.14.1
@@ -15,6 +16,7 @@ require (
 	github.com/gookit/goutil v0.6.8
 	github.com/h2non/filetype v1.1.3
 	github.com/hashicorp/mdns v1.0.5
+	github.com/imroc/req v0.3.2
 	github.com/juju/ratelimit v1.0.1
 	github.com/mholt/archiver/v4 v4.0.0-alpha.8
 	github.com/patrickmn/go-cache v2.1.0+incompatible
@@ -24,6 +26,7 @@ require (
 	go.uber.org/zap v1.16.0
 	golang.org/x/crypto v0.7.0
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
+	gopkg.in/yaml.v3 v3.0.1
 	gorm.io/datatypes v1.2.0
 	gorm.io/driver/sqlite v1.5.0
 	gorm.io/gorm v1.25.1

@@ -185,10 +185,18 @@
         </div>
       </el-dialog>
 
-      <el-dialog title="添加主机" :visible.sync="addHostDialogVisible" width="30%">
-        <el-form ref="hostDialogForm" label-width="80px" size="small" :model="hostFormData">
+      <el-dialog title="添加主机" :visible.sync="addHostDialogVisible" width="40%">
+        <el-form label-width="80px" size="small">
+          <el-form-item label="安装命令">
+            <code>{{ getInstallScript() }}</code>
+          </el-form-item>
+          <el-form-item label="卸载命令">
+            <code>{{ getUnInstallScript() }}</code>
+          </el-form-item>
+        </el-form>
+        <el-form ref="hostDialogForm" label-width="80px" :inline="true" size="small" :model="hostFormData">
           <el-form-item label="主机IP" prop="ip">
-            <el-input v-model="hostFormData.ip" />
+            <el-input v-model.trim="hostFormData.ip" />
           </el-form-item>
           <el-form-item label="主机端口" prop="port">
             <el-input v-model.number="hostFormData.port" />
@@ -551,6 +559,18 @@ export default {
       } else {
         return '无'
       }
+    },
+    getInstallScript() {
+      const origin = location.origin
+      const pathname = location.pathname
+      const cmd = `curl -k ${origin}${pathname}install/install-agent.sh | sh`
+      return cmd
+    },
+    getUnInstallScript() {
+      const origin = location.origin
+      const pathname = location.pathname
+      const cmd = `curl -k ${origin}${pathname}install/uninstall-agent.sh | sh`
+      return cmd
     }
   }
 }

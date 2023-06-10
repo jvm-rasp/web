@@ -29,6 +29,7 @@
               action="./config/import"
               :headers="{Authorization: 'Bearer ' + getUserToken()}"
               :show-file-list="false"
+              :before-upload="onBeforeUpload"
               :on-preview="handlePreview"
               :on-remove="handleRemove"
               :before-remove="beforeRemove"
@@ -1422,7 +1423,11 @@ export default {
       this.$alert('文件已上传，请在管理页面删除')
       return false
     },
+    onBeforeUpload(file) {
+      this.loading = true
+    },
     onUploadSuccess(response, file, fileList) {
+      this.loading = false
       this.fileList = fileList
       const { message, code } = response
       const type = code === 200 ? 'success' : 'error'
@@ -1432,6 +1437,7 @@ export default {
         type: type
       })
       this.getConfigTableData()
+      this.fileList = []
     },
     getUserToken() {
       return getToken()

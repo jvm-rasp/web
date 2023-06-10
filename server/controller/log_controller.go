@@ -9,6 +9,7 @@ import (
 	"github.com/vjeantet/grok"
 	"gorm.io/datatypes"
 	"server/common"
+	"server/global"
 	"server/model"
 	"server/repository"
 	"server/response"
@@ -31,11 +32,12 @@ type ILogController interface {
 }
 
 type LogController struct {
-	RaspHostRepository    repository.IRaspHostRepository
-	JavaProcessRepository repository.IJavaProcessInfoRepository
-	RaspAttackRepository  repository.IRaspAttackRepository
-	RaspErrorRepository   repository.IRaspErrorLogsRepository
-	RaspConfigRepository  repository.IRaspConfigRepository
+	RaspHostRepository     repository.IRaspHostRepository
+	JavaProcessRepository  repository.IJavaProcessInfoRepository
+	RaspAttackRepository   repository.IRaspAttackRepository
+	RaspErrorRepository    repository.IRaspErrorLogsRepository
+	RaspConfigRepository   repository.IRaspConfigRepository
+	HostResourceRepository repository.IHostResourceRepository
 }
 
 func NewLogController() ILogController {
@@ -44,12 +46,14 @@ func NewLogController() ILogController {
 	repository3 := repository.NewRaspAttackRepository()
 	repository4 := repository.NewRaspErrorLogsRepository()
 	repository5 := repository.NewRaspConfigRepository()
+	repository6 := repository.NewHostResourceRepository()
 	controller := LogController{
-		RaspHostRepository:    repository1,
-		JavaProcessRepository: repository2,
-		RaspAttackRepository:  repository3,
-		RaspErrorRepository:   repository4,
-		RaspConfigRepository:  repository5,
+		RaspHostRepository:     repository1,
+		JavaProcessRepository:  repository2,
+		RaspAttackRepository:   repository3,
+		RaspErrorRepository:    repository4,
+		RaspConfigRepository:   repository5,
+		HostResourceRepository: repository6,
 	}
 	return controller
 }
@@ -64,7 +68,6 @@ func (l LogController) ReportLog(c *gin.Context) {
 	case vo.JRASP_DAEMON:
 		l.handleDaemonLog(req)
 	case vo.JRASP_AGENT:
-		l.handleAgentErrorLog(req)
 	case vo.JRASP_MODULE:
 	case vo.JRASP_ATTACK:
 		l.handleAttackLog(req)
@@ -196,6 +199,7 @@ const (
 	NACOS_INIT_INFO       = 1024
 	Agent_CONFIG_UPDATE   = 1025
 	CONFIG_ID             = 1030
+	RESOURCE_NAME_UPDATE  = 1033
 )
 
 func (l LogController) handleDaemonLog(req vo.RaspLogRequest) {
@@ -218,6 +222,8 @@ func (l LogController) handleDaemonLog(req vo.RaspLogRequest) {
 		l.handleAgentConfigUpdateLog(req)
 	case CONFIG_ID:
 		l.handleUpdateConfigId(req)
+	case RESOURCE_NAME_UPDATE:
+		l.handleUpdateResourceName(req)
 	default:
 	}
 }
@@ -242,19 +248,6 @@ func (l LogController) handleStartupLog(req vo.RaspLogRequest) {
 	host.AgentMode = detailMap["agentMode"]
 
 	if len(dbData) <= 0 {
-		configId, err := l.RaspHostRepository.CreateRaspHost(host)
-		if err != nil {
-			panic(err)
-		}
-		// 推送默认配置
-		if configId != 0 {
-			hostController := NewRaspHostController()
-			content, err := hostController.GeneratePushConfig(configId)
-			if err != nil {
-				panic(err)
-			}
-			hostController.PushHostsConfig([]string{host.HostName}, content)
-		}
 		return
 	}
 
@@ -312,19 +305,7 @@ func (l LogController) handleHostEnvLog(req vo.RaspLogRequest) {
 	host.BuildGitBranch = buildGitCommit
 
 	if len(dbData) == 0 {
-		configId, err := l.RaspHostRepository.CreateRaspHost(host)
-		if err != nil {
-			panic(err)
-		}
-		// 推送默认配置
-		if configId != 0 {
-			hostController := NewRaspHostController()
-			content, err := hostController.GeneratePushConfig(configId)
-			if err != nil {
-				panic(err)
-			}
-			hostController.PushHostsConfig([]string{host.HostName}, content)
-		}
+		return
 	} else {
 		err := l.RaspHostRepository.UpdateRaspHostByHostName(host)
 		if err != nil {
@@ -356,12 +337,10 @@ func (l LogController) handleHeartbeatLog(req vo.RaspLogRequest) {
 		}
 		// 推送默认配置
 		if configId != 0 {
-			hostController := NewRaspHostController()
-			content, err := hostController.GeneratePushConfig(configId)
-			if err != nil {
-				panic(err)
+			global.PushConfigQueue <- &vo.PushConfigRequest{
+				ConfigId:  configId,
+				HostNames: []string{host.HostName},
 			}
-			hostController.PushHostsConfig([]string{host.HostName}, content)
 		}
 	} else {
 		err := l.RaspHostRepository.UpdateRaspHostByHostName(host)
@@ -482,12 +461,10 @@ func (l LogController) handleUpdateConfigId(req vo.RaspLogRequest) {
 	if len(dbData) > 0 {
 		dbConfigId := dbData[0].ConfigId
 		if dbConfigId != configId && dbConfigId > 0 {
-			hostController := NewRaspHostController()
-			content, err := hostController.GeneratePushConfig(dbConfigId)
-			if err != nil {
-				panic(err)
+			global.PushConfigQueue <- &vo.PushConfigRequest{
+				ConfigId:  configId,
+				HostNames: []string{req.HostName},
 			}
-			hostController.PushHostsConfig([]string{req.HostName}, content)
 		}
 	} else {
 		common.Log.Warnf("主机: %v 不存在, 无法推送消息", req.HostName)
@@ -594,10 +571,11 @@ func (l LogController) handleAgentErrorLog(req vo.RaspLogRequest) {
 		return
 	}
 	errorLogs := &model.RaspErrorLogs{
-		Topic:   vo.JRASP_AGENT,
-		Time:    maps["time"],
-		Level:   maps["level"],
-		Message: req.Message,
+		Topic:    vo.JRASP_AGENT,
+		Time:     maps["time"],
+		Level:    maps["level"],
+		HostName: req.Host.Name,
+		Message:  req.Message,
 	}
 	err = l.RaspErrorRepository.CreateRaspLogs(errorLogs)
 	if err != nil {
@@ -612,13 +590,19 @@ func (l LogController) handleDaemonErrorLog(req vo.RaspLogRequest) {
 	if req.Level == "INFO" {
 		return
 	}
-	errorLogs := &model.RaspErrorLogs{
-		Topic:   vo.JRASP_DAEMON,
-		Time:    req.Ts,
-		Level:   req.Level,
-		Message: req.Message,
+	var message map[string]interface{}
+	err := json.Unmarshal([]byte(req.Message), &message)
+	if err != nil {
+		panic(err)
 	}
-	err := l.RaspErrorRepository.CreateRaspLogs(errorLogs)
+	errorLogs := &model.RaspErrorLogs{
+		Topic:    vo.JRASP_DAEMON,
+		Time:     req.Ts,
+		Level:    req.Level,
+		HostName: message["hostName"].(string),
+		Message:  req.Message,
+	}
+	err = l.RaspErrorRepository.CreateRaspLogs(errorLogs)
 	if err != nil {
 		panic(err)
 	}
@@ -639,10 +623,11 @@ func (l LogController) handleModuleErrorLog(req vo.RaspLogRequest) {
 		return
 	}
 	errorLogs := &model.RaspErrorLogs{
-		Topic:   vo.JRASP_MODULE,
-		Time:    maps["time"],
-		Level:   maps["level"],
-		Message: req.Message,
+		Topic:    vo.JRASP_MODULE,
+		Time:     maps["time"],
+		Level:    maps["level"],
+		HostName: req.HostName,
+		Message:  req.Message,
 	}
 	err = l.RaspErrorRepository.CreateRaspLogs(errorLogs)
 	if err != nil {
@@ -697,6 +682,7 @@ func (l LogController) handleAttackLog(req vo.RaspLogRequest) {
 		// 构建攻击详情
 		detail.ParentGuid = attack.RowGuid
 		detail.Context = datatypes.JSON(util.Struct2Json(attackDetail.Context))
+		detail.AppName = attackDetail.AppName
 		detail.StackTrace = attackDetail.StackTrace
 		detail.Payload = attackDetail.Payload
 		detail.IsBlocked = attackDetail.IsBlocked
@@ -718,6 +704,30 @@ func (l LogController) handleAttackLog(req vo.RaspLogRequest) {
 	err = l.RaspAttackRepository.CreateRaspAttackDetail(&detail)
 	if err != nil {
 		return
+	}
+}
+
+func (l LogController) handleUpdateResourceName(req vo.RaspLogRequest) {
+	detailMap := make(map[string]interface{})
+	err := json.Unmarshal([]byte(req.Detail), &detailMap)
+	if err != nil {
+		panic(err)
+		return
+	}
+	resourceInfo, err := l.HostResourceRepository.GetResourceByNameAndIP(detailMap["hostName"].(string), detailMap["ip"].(string))
+	if err != nil {
+		panic(err)
+	}
+	if resourceInfo == nil {
+		resourceInfo = &model.HostResource{
+			HostName:     detailMap["hostName"].(string),
+			Ip:           detailMap["ip"].(string),
+			ResourceName: detailMap["resourceName"].(string),
+		}
+		err = l.HostResourceRepository.CreateResource(resourceInfo)
+		if err != nil {
+			panic(err)
+		}
 	}
 }
 

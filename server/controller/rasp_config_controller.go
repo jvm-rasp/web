@@ -1037,7 +1037,7 @@ func (l RaspConfigController) updateModuleConfig(srcModuleConfig datatypes.JSON)
 	}
 	// 先更新jar包的md5和下载地址
 	for index, _ := range result {
-		moduleConfig := result[index]
+		moduleConfig := &result[index]
 		moduleInfo, err := l.RaspModuleRepository.GetRaspModuleByName(moduleConfig.ModuleName)
 		if err != nil {
 			return nil, err
@@ -1097,7 +1097,7 @@ func (l RaspConfigController) updateModuleConfig(srcModuleConfig datatypes.JSON)
 			}
 		}
 		for _, k := range addKey {
-			raspModuleUserConfig.Action[k] = moduleConfig.Parameters.Action[k]
+			moduleConfig.Parameters.Action[k] = raspModuleUserConfig.Action[k]
 		}
 		addKey = []string{}
 		for k, _ := range raspModuleUserConfig.CnMap {
@@ -1107,7 +1107,7 @@ func (l RaspConfigController) updateModuleConfig(srcModuleConfig datatypes.JSON)
 			}
 		}
 		for _, k := range addKey {
-			raspModuleUserConfig.CnMap[k] = moduleConfig.Parameters.CnMap[k]
+			moduleConfig.Parameters.CnMap[k] = raspModuleUserConfig.CnMap[k]
 		}
 	}
 	return json.Marshal(result)

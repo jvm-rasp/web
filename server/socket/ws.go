@@ -5,8 +5,13 @@ import (
 	"github.com/gorilla/websocket"
 	"net/http"
 	"server/common"
+	"server/global"
+	"server/vo"
+
+	"server/model"
 	"server/repository"
 	"sync"
+	"time"
 )
 
 // 注册识别的key
@@ -102,12 +107,32 @@ func (c *Client) Read() {
 		// c.Message <- message
 		if messageType == websocket.TextMessage {
 			hostName := c.Id
+			ip := c.Socket.RemoteAddr().String()
 			heartbeatTime := string(message)
 			hostInfo, err := RaspHostRepository.GetRaspHostByHostName(hostName)
 			if err != nil {
 				common.Log.Warnf("update host [%s] heartbeat err: %s", hostName, err)
 			}
-			if hostInfo != nil {
+			if hostInfo == nil {
+				// 如果是第一次连接则注册进库中
+				hostInfo = &model.RaspHost{
+					HostName:      hostName,
+					Ip:            ip,
+					HeartbeatTime: time.Now().Format("2006-01-02 15:04:05.000"),
+				}
+				configId, err := RaspHostRepository.CreateRaspHost(hostInfo)
+				if err != nil {
+					panic(err)
+				}
+				// 推送默认配置
+				if configId != 0 {
+					global.PushConfigQueue <- &vo.PushConfigRequest{
+						ConfigId:  configId,
+						HostNames: []string{hostInfo.HostName},
+					}
+				}
+			} else {
+				// 如果库中已有则更新
 				hostInfo.HeartbeatTime = heartbeatTime
 				err = RaspHostRepository.UpdateRaspHost(hostInfo)
 				if err != nil {

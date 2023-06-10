@@ -26,6 +26,7 @@ type RaspAttackDetail struct {
 	gorm.Model
 	ParentGuid string         `gorm:"type:varchar(255);index;comment:'关联的攻击记录标识guid'" json:"parentGuid"`
 	Context    datatypes.JSON `gorm:"type:text;comment:'上下文信息'" json:"context"`
+	AppName    string         `gorm:"type:varchar(255);comment:'应用名称'" json:"appName"`
 	StackTrace string         `gorm:"type:text;comment:'堆栈信息'" json:"stackTrace"`
 	Payload    string         `gorm:"type:text;comment:'攻击payload'" json:"payload"`
 	IsBlocked  bool           `gorm:"type:tinyint;comment:'是否阻断：0,放行；1：阻断'" json:"isBlocked"`

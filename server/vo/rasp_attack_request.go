@@ -24,6 +24,7 @@ type UpdateRaspStatusRequest struct {
 
 type AttackDetail struct {
 	Context    Context `json:"context"`
+	AppName    string  `json:"appName"`
 	StackTrace string  `json:"stackTrace"`
 	Payload    string  `json:"payload"`
 	IsBlocked  bool    `json:"isBlocked"`

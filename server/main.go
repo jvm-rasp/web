@@ -11,6 +11,7 @@ import (
 	"server/common"
 	"server/config"
 	"server/middleware"
+	"server/report"
 	"server/repository"
 	"server/routes"
 	"server/socket"
@@ -25,6 +26,9 @@ func main() {
 
 	// 初始化日志
 	common.InitLogger()
+
+	// 初始化安装脚本
+	common.InitInstallScripts()
 
 	// 初始化上报日志
 	if config.Conf.Logs.EnableReportLog {
@@ -45,7 +49,7 @@ func main() {
 	common.InitData()
 
 	// 初始化mdns服务
-	common.InitMDNSService()
+	socket.InitMDNSService()
 
 	// 操作日志中间件处理日志时没有将日志发送到rabbitmq或者kafka中, 而是发送到了channel中
 	// 这里开启3个goroutine处理channel将日志记录到数据库
@@ -58,6 +62,10 @@ func main() {
 	go socket.WebsocketManager.Start()
 	// 给客户端发送消息
 	go socket.WebsocketManager.SendService()
+
+	// 检查是否开启远程更新及日志上报
+	report.InitUpdateManager()
+	go report.UpdateManager.Start()
 
 	// 注册所有路由
 	r := routes.InitRoutes()

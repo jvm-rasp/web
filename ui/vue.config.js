@@ -37,7 +37,7 @@ module.exports = {
       errors: true
     },
     proxy: {
-      '/base/|/api/|/menu/|/log/|/role/|/user/|/config/|/dashboard/|/host/|/attack/|/module/|/defense/|/process/|/file/|/rasp-log/': {
+      '/base/|/api/|/menu/|/log/|/role/|/user/|/config/|/dashboard/|/host/|/attack/|/module/|/defense/|/process/|/file/|/rasp-log/|/settings/': {
         target: process.env.VUE_APP_BASE_API,
         changeOrigin: true
       }

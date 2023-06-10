@@ -173,21 +173,23 @@ func (j JavaProcessInfoRepository) UpdateRaspHostInjectCounts(hostName string) e
 	if err != nil {
 		return err
 	}
-	raspHost.NotInject, err = j.GetNotInjectCount(hostName)
-	if err != nil {
-		return err
-	}
-	raspHost.SuccessInject, err = j.GetSuccessInjectCount(hostName)
-	if err != nil {
-		return err
-	}
-	raspHost.FailedInject, err = j.GetFailedInjectCount(hostName)
-	if err != nil {
-		return err
-	}
-	err = j.RaspHostRepository.UpdateRaspHost(raspHost)
-	if err != nil {
-		return err
+	if raspHost != nil {
+		raspHost.NotInject, err = j.GetNotInjectCount(hostName)
+		if err != nil {
+			return err
+		}
+		raspHost.SuccessInject, err = j.GetSuccessInjectCount(hostName)
+		if err != nil {
+			return err
+		}
+		raspHost.FailedInject, err = j.GetFailedInjectCount(hostName)
+		if err != nil {
+			return err
+		}
+		err = j.RaspHostRepository.UpdateRaspHost(raspHost)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }

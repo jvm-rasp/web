@@ -2,14 +2,15 @@ package config
 
 import (
 	"fmt"
-	"gorm.io/gorm/logger"
-	"os"
-	"server/util"
-	"strings"
-
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
 	"go.uber.org/zap/zapcore"
+	"gorm.io/gorm/logger"
+	"os"
+	"path/filepath"
+	"runtime"
+	"server/util"
+	"strings"
 )
 
 // 系统配置，对应yml
@@ -76,6 +77,21 @@ func InitConfig() {
 	Conf.Env.WorkDir = workDir
 	Conf.Env.Ip = util.GetDefaultIp()
 	Conf.Env.HostName, _ = os.Hostname()
+
+	// 可执行文件路径
+	execPath, err := filepath.Abs(os.Args[0])
+	if err != nil {
+		panic(fmt.Errorf("获取可执行文件路径失败, error: %v", err))
+	} else {
+		// md5 值
+		md5Str, err := util.GetFileMd5(execPath)
+		if err != nil {
+			panic(fmt.Errorf("获取可执行文件md5失败, error: %v", err))
+		}
+		Conf.Env.BinFileHash = md5Str
+	}
+	// 获取OS类型
+	Conf.Env.OsType = runtime.GOOS
 }
 
 type SystemConfig struct {
@@ -111,6 +127,7 @@ type JwtConfig struct {
 }
 
 type RateLimitConfig struct {
+	Enable       bool  `mapstructure:"enable" json:"enable"`
 	FillInterval int64 `mapstructure:"fill-interval" json:"fillInterval"`
 	Capacity     int64 `mapstructure:"capacity" json:"capacity"`
 }
@@ -126,9 +143,11 @@ type Mdns struct {
 }
 
 type Env struct {
-	Ip       string
-	HostName string
-	WorkDir  string
+	Ip          string
+	HostName    string
+	WorkDir     string
+	BinFileHash string
+	OsType      string
 }
 
 type DatabaseConfig struct {
