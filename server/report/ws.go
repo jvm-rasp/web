@@ -174,7 +174,7 @@ func (this *UpdateClient) generateHeartbeat() (*ServerHeartRequest, error) {
 		agentInfo.HostName = item.HostName
 		agentInfo.Ip = item.Ip
 		agentInfo.AgentMode = item.AgentMode
-		agentInfo.CreateTime = item.CreatedAt.Format()
+		agentInfo.CreateTime = item.CreatedAt.Format("2006-01-02 15:04:05.000")
 		agentInfo.HeartbeatTime = item.HeartbeatTime
 		agentInfo.Version = item.Version
 		agentInfo.ExeFileHash = item.ExeFileHash
