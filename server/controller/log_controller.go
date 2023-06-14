@@ -315,23 +315,17 @@ func (l LogController) handleHostEnvLog(req vo.RaspLogRequest) {
 }
 
 func (l LogController) handleHeartbeatLog(req vo.RaspLogRequest) {
-	dbData, err := l.RaspHostRepository.QueryRaspHost(req.HostName)
+	hostInfo, err := l.RaspHostRepository.GetRaspHostByHostName(req.HostName)
 	if err != nil {
 		panic(err)
 	}
 
-	var host *model.RaspHost
-	if len(dbData) == 0 {
-		host = &model.RaspHost{
+	if hostInfo == nil {
+		hostInfo = &model.RaspHost{
 			HostName: req.HostName,
 			Ip:       req.Ip,
 		}
-	} else {
-		host = dbData[0]
-	}
-
-	if len(dbData) == 0 {
-		configId, err := l.RaspHostRepository.CreateRaspHost(host)
+		configId, err := l.RaspHostRepository.CreateRaspHost(hostInfo)
 		if err != nil {
 			panic(err)
 		}
@@ -339,18 +333,18 @@ func (l LogController) handleHeartbeatLog(req vo.RaspLogRequest) {
 		if configId != 0 {
 			global.PushConfigQueue <- &vo.PushConfigRequest{
 				ConfigId:  configId,
-				HostNames: []string{host.HostName},
+				HostNames: []string{hostInfo.HostName},
 			}
 		}
 	} else {
-		err := l.RaspHostRepository.UpdateRaspHostByHostName(host)
+		err = l.RaspHostRepository.UpdateRaspHostByHostName(hostInfo)
 		if err != nil {
 			panic(err)
 		}
 	}
 
 	// db 数据
-	dblist, err := l.JavaProcessRepository.GetAllJavaProcessInfos(req.HostName)
+	dbList, err := l.JavaProcessRepository.GetAllJavaProcessInfos(req.HostName)
 	if err != nil {
 		panic(err)
 	}
@@ -362,7 +356,7 @@ func (l LogController) handleHeartbeatLog(req vo.RaspLogRequest) {
 		panic(err)
 	}
 
-	for _, v := range dblist {
+	for _, v := range dbList {
 		// db有，上报数据中没有，删除db数据
 		if len(detailMap) == 0 || detailMap[strconv.Itoa(v.Pid)] == nil {
 			err := l.JavaProcessRepository.DeleteProcess(v.ID)
@@ -377,7 +371,7 @@ func (l LogController) handleHeartbeatLog(req vo.RaspLogRequest) {
 	// db没有，上报数据中有，新增db数据
 	for k, v := range detailMap {
 		var existed = false
-		for _, v2 := range dblist {
+		for _, v2 := range dbList {
 			if strconv.Itoa(v2.Pid) == k {
 				existed = true
 			}
