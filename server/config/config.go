@@ -89,6 +89,9 @@ func InitConfig() {
 			panic(fmt.Errorf("获取可执行文件md5失败, error: %v", err))
 		}
 		Conf.Env.BinFileHash = md5Str
+		// 可执行文件名
+		execName := filepath.Base(execPath)
+		Conf.Env.BinFileName = execName
 	}
 	// 获取OS类型
 	Conf.Env.OsType = runtime.GOOS
@@ -146,6 +149,7 @@ type Env struct {
 	Ip          string
 	HostName    string
 	WorkDir     string
+	BinFileName string
 	BinFileHash string
 	OsType      string
 }

@@ -2,10 +2,15 @@ package report
 
 import (
 	"crypto/tls"
+	"encoding/json"
 	"fmt"
 	"github.com/fatih/structs"
+	"github.com/go-playground/validator/v10"
+	"github.com/gookit/goutil/fsutil"
 	"github.com/gorilla/websocket"
+	"github.com/mitchellh/mapstructure"
 	url2 "net/url"
+	"os"
 	"server/common"
 	"server/config"
 	"server/repository"
@@ -20,25 +25,49 @@ const WS_URL_FORMAT = "%s://%s/log-collect/ws/%s/%s"
 var UpdateManager *UpdateClient
 
 type UpdateClient struct {
-	SystemSettingRepository   repository.ISystemSettingRepository
-	RaspHostRepository        repository.IRaspHostRepository
-	JavaProcessInfoRepository repository.IJavaProcessInfoRepository
-	conn                      *websocket.Conn
-	err                       error
-	AutoUpdate                bool
-	isConnected               bool
+	SystemSettingRepository     repository.ISystemSettingRepository
+	RaspHostRepository          repository.IRaspHostRepository
+	JavaProcessInfoRepository   repository.IJavaProcessInfoRepository
+	RaspFileRepository          repository.IRaspFileRepository
+	RaspModuleRepository        repository.IRaspModuleRepository
+	RaspComponentRepository     repository.IRaspComponentRepository
+	RaspConfigRepository        repository.IRaspConfigRepository
+	RaspConfigHistoryRepository repository.IRaspConfigHistoryRepository
+	conn                        *websocket.Conn
+	err                         error
+	AutoUpdate                  bool
+	isConnected                 bool
 }
 
 func InitUpdateManager() {
+	// 判断bin目录下是否存在server.del文件，如果存在则删除
+	exist := fsutil.PathExists(config.Conf.Env.BinFileName + ".del")
+	if exist {
+		err := os.Remove(config.Conf.Env.BinFileName + ".del")
+		if err != nil {
+			common.Log.Errorf(" delete server.del error: %v", err)
+		}
+	}
+
 	SystemSettingRepository := repository.NewSystemSettingRepository()
 	RaspHostRepository := repository.NewRaspHostRepository()
 	JavaProcessInfoRepository := repository.NewJavaProcessInfoRepository(RaspHostRepository)
+	RaspFileRepository := repository.NewRaspFileRepository()
+	RaspModuleRepository := repository.NewRaspModuleRepository()
+	RaspComponentRepository := repository.NewRaspComponentRepository()
+	RaspConfigRepository := repository.NewRaspConfigRepository()
+	RaspConfigHistoryRepository := repository.NewRaspConfigHistoryRepository()
 	UpdateManager = &UpdateClient{
-		isConnected:               false,
-		AutoUpdate:                false,
-		SystemSettingRepository:   SystemSettingRepository,
-		RaspHostRepository:        RaspHostRepository,
-		JavaProcessInfoRepository: JavaProcessInfoRepository,
+		isConnected:                 false,
+		AutoUpdate:                  false,
+		SystemSettingRepository:     SystemSettingRepository,
+		RaspHostRepository:          RaspHostRepository,
+		JavaProcessInfoRepository:   JavaProcessInfoRepository,
+		RaspFileRepository:          RaspFileRepository,
+		RaspModuleRepository:        RaspModuleRepository,
+		RaspComponentRepository:     RaspComponentRepository,
+		RaspConfigRepository:        RaspConfigRepository,
+		RaspConfigHistoryRepository: RaspConfigHistoryRepository,
 	}
 }
 
@@ -114,7 +143,32 @@ func (this *UpdateClient) Connect() {
 			}
 			if messageType == websocket.TextMessage {
 				common.Log.Infof("读取远程更新服务端信息成功: \n%v", string(message))
+				var webSocketMessage WebSocketMessageRequest
+				err = json.Unmarshal(message, &webSocketMessage)
+				if err != nil {
+					common.Log.Error("反序列化消息失败, %v", err)
+					continue
+				}
+				// 参数校验
+				if err = common.Validate.Struct(&webSocketMessage); err != nil {
+					errStr := err.(validator.ValidationErrors)[0].Translate(common.Trans)
+					if err != nil {
+						common.Log.Error("校验数据格式出错 err: %s", errStr)
+					}
+					continue
+				}
+				switch webSocketMessage.MessageType {
+				case CLIENT_UPGRADE:
+					var messageContent ClientUpgradeRequest
+					err = mapstructure.Decode(webSocketMessage.MessageContent, &messageContent)
+					if err != nil {
+						common.Log.Error("反序列化消息失败, %v", err)
+						break
+					}
+					this.handleClientUpgrade(messageContent)
+				}
 			}
+
 		}
 	}
 }

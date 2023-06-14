@@ -459,7 +459,9 @@ func (l RaspConfigController) CopyRaspConfig(c *gin.Context) {
 		return
 	}
 	destConfig := model.RaspConfig{
+		RowGuid:   uuid.NewString(),
 		Name:      srcConfig.Name + "_Copy",
+		Version:   1,
 		Desc:      srcConfig.Desc,
 		Status:    srcConfig.Status,
 		Creator:   ctxUser.Username,
@@ -471,6 +473,30 @@ func (l RaspConfigController) CopyRaspConfig(c *gin.Context) {
 		response.Fail(c, nil, "复制当前配置失败"+err.Error())
 		return
 	}
+	srcConfigHistoryList, _, err := l.RaspConfigHistoryRepository.GetRaspConfigHistoryByGuid(srcConfig.RowGuid)
+	if err != nil {
+		response.Fail(c, nil, "复制当前配置失败"+err.Error())
+		return
+	}
+	srcConfigHistory := srcConfigHistoryList[0]
+	destConfigHistory := model.RaspConfigHistory{
+		ParentGuid:    destConfig.RowGuid,
+		Version:       destConfig.Version,
+		AgentMode:     srcConfigHistory.AgentMode,
+		ModuleConfigs: srcConfigHistory.ModuleConfigs,
+		LogPath:       srcConfigHistory.LogPath,
+		AgentConfigs:  srcConfigHistory.AgentConfigs,
+		RaspBinInfo:   srcConfigHistory.RaspBinInfo,
+		RaspLibInfo:   srcConfigHistory.RaspLibInfo,
+		Desc:          srcConfigHistory.Desc,
+		Source:        srcConfigHistory.Source,
+	}
+	err = l.RaspConfigHistoryRepository.CreateRaspConfigHistory(&destConfigHistory)
+	if err != nil {
+		response.Fail(c, nil, "复制当前配置失败"+err.Error())
+		return
+	}
+
 	response.Success(c, nil, "复制配置成功")
 	return
 }

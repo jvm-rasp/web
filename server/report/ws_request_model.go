@@ -3,7 +3,8 @@ package report
 const (
 	CLIENT_UPDATE         int = 1
 	CLIENT_HEARTBEAT      int = 2
-	CLIENT_UPGRADE_RESULT int = 3
+	CLIENT_UPGRADE        int = 3
+	CLIENT_UPGRADE_RESULT int = 4
 )
 
 type WebSocketMessageRequest struct {
@@ -61,6 +62,8 @@ type ClientUpgradeRequest struct {
 	BatchGuid   string `json:"batchGuid" structs:"batchGuid"`
 	ProjectGuid string `json:"projectGuid" structs:"projectGuid"`
 	HostName    string `json:"hostName" structs:"hostName"`
+	DownloadUrl string `json:"downloadUrl" structs:"downloadUrl"`
+	Md5         string `json:"md5" structs:"md5"`
 	Type        string `json:"type" structs:"type"`
 	State       int    `json:"state" structs:"state"`
 	Message     string `json:"message" structs:"message"`
