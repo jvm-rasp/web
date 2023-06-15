@@ -21,7 +21,7 @@ import (
 )
 
 // grok
-const pattern = "%{TIMESTAMP_ISO8601:time}\\s*%{LOGLEVEL:level}\\s*\\[%{DATA:thread}\\]\\s*\\[%{DATA:api}\\]\\s*%{GREEDYDATA:message}"
+const pattern = "%{TIMESTAMP_ISO8601:time}\\s*%{LOGLEVEL:level}\\s*%{DATA:host}\\s*\\[%{DATA:thread}\\]\\s*\\[%{DATA:api}\\]\\s*%{GREEDYDATA:message}"
 
 type ILogController interface {
 	ReportLog(c *gin.Context)
@@ -568,7 +568,7 @@ func (l LogController) handleAgentErrorLog(req vo.RaspLogRequest) {
 		Topic:    vo.JRASP_AGENT,
 		Time:     maps["time"],
 		Level:    maps["level"],
-		HostName: req.Host.Name,
+		HostName: maps["host"],
 		Message:  req.Message,
 	}
 	err = l.RaspErrorRepository.CreateRaspLogs(errorLogs)
@@ -620,7 +620,7 @@ func (l LogController) handleModuleErrorLog(req vo.RaspLogRequest) {
 		Topic:    vo.JRASP_MODULE,
 		Time:     maps["time"],
 		Level:    maps["level"],
-		HostName: req.HostName,
+		HostName: maps["host"],
 		Message:  req.Message,
 	}
 	err = l.RaspErrorRepository.CreateRaspLogs(errorLogs)
@@ -649,7 +649,7 @@ func (l LogController) handleAttackLog(req vo.RaspLogRequest) {
 	}
 
 	attack := model.RaspAttack{
-		HostName: req.Host.Name,
+		HostName: maps["host"],
 	}
 	// 构件攻击详情对象
 	detail := model.RaspAttackDetail{}
