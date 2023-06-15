@@ -342,7 +342,7 @@ func InitData() {
 		{
 			Model:        gorm.Model{ID: 1},
 			Username:     "root",
-			Password:     util.GenPasswd("Epoint@2019"),
+			Password:     util.GenPasswd("123456"),
 			Mobile:       "13188887777",
 			Avatar:       "https://wpimg.wallstcn.com/f778738c-e4f8-4870-b634-56703b4acafe.gif",
 			Introduction: new(string),
@@ -353,7 +353,7 @@ func InitData() {
 		{
 			Model:        gorm.Model{ID: 2},
 			Username:     "admin",
-			Password:     util.GenPasswd("Epoint@2019"),
+			Password:     util.GenPasswd("123456"),
 			Mobile:       "13188888888",
 			Avatar:       "https://wpimg.wallstcn.com/f778738c-e4f8-4870-b634-56703b4acafe.gif",
 			Introduction: new(string),
