@@ -54,11 +54,11 @@ MacBook-Pro root$ ./server
 
 ## 访问
 
-+ 访问 `http://localhost:8088/rasp-admin` 
++ 访问 `http://localhost:8088/rasp-admin` (默认关闭https)
 
 + 账号和密码： admin 123456
 
-(默认关闭关闭https)
+
 
 ## 替换证书（非必须）
 
