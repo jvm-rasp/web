@@ -344,9 +344,8 @@
           <el-row>
             <el-col :span="12">
               <el-form-item label="防护模式" prop="agentMode">
-                <el-radio-group v-model="bindConfigData.agentMode" :disabled="isLocked">
+                <el-radio-group v-model="bindConfigData.agentMode" :disabled="isLocked" @change="forceUpdate">
                   <el-radio :label="1">开启防护</el-radio>
-                  <!--                  <el-radio :label="2">静态</el-radio>-->
                   <el-radio :label="0">关闭防护</el-radio>
                 </el-radio-group>
               </el-form-item>
@@ -1495,6 +1494,9 @@ export default {
           this.bindConfigData.moduleConfigs[index].parameters = item.parameters
         }
       })
+    },
+    forceUpdate() {
+      this.$forceUpdate()
     }
   }
 }
