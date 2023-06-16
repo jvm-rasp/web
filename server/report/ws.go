@@ -146,14 +146,14 @@ func (this *UpdateClient) Connect() {
 				var webSocketMessage WebSocketMessageRequest
 				err = json.Unmarshal(message, &webSocketMessage)
 				if err != nil {
-					common.Log.Error("反序列化消息失败, %v", err)
+					common.Log.Errorf("反序列化消息失败, %v", err)
 					continue
 				}
 				// 参数校验
 				if err = common.Validate.Struct(&webSocketMessage); err != nil {
 					errStr := err.(validator.ValidationErrors)[0].Translate(common.Trans)
 					if err != nil {
-						common.Log.Error("校验数据格式出错 err: %s", errStr)
+						common.Log.Errorf("校验数据格式出错 err: %s", errStr)
 					}
 					continue
 				}
@@ -162,7 +162,7 @@ func (this *UpdateClient) Connect() {
 					var messageContent ClientUpgradeRequest
 					err = mapstructure.Decode(webSocketMessage.MessageContent, &messageContent)
 					if err != nil {
-						common.Log.Error("反序列化消息失败, %v", err)
+						common.Log.Errorf("反序列化消息失败, %v", err)
 						break
 					}
 					this.handleClientUpgrade(messageContent)

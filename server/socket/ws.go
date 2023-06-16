@@ -146,7 +146,7 @@ func (c *Client) Read() {
 // 给 client 发送消息
 func (c *Client) Write() {
 	defer func() {
-		common.Log.Info("client [%s] disconnect", c.Id)
+		common.Log.Infof("client [%s] disconnect", c.Id)
 		if err := c.Socket.Close(); err != nil {
 			common.Log.Warnf("client [%s] disconnect err: %s", c.Id, err)
 		}
@@ -157,12 +157,12 @@ func (c *Client) Write() {
 		case message, ok := <-c.Message:
 			if !ok {
 				_ = c.Socket.WriteMessage(websocket.CloseMessage, []byte{})
-				common.Log.Warn("the chan of write message to remote is closed")
+				common.Log.Warnf("the chan of write message to remote is closed")
 				return
 			}
 			err := c.Socket.WriteMessage(websocket.BinaryMessage, message)
 			if err != nil {
-				common.Log.Error("write message to remote client[%s] err: %s", c.Id, err)
+				common.Log.Errorf("write message to remote client[%s] err: %s", c.Id, err)
 			}
 		}
 	}
