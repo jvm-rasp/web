@@ -7,7 +7,10 @@ web是jrasp的管理端工程，负责配置策略和日志消费。前端由vue
 ## 预览
 
 https://www.server.jrasp.com:8088/rasp-admin
+
 账号和密码： admin 123456
+
+(服务器带宽低，打开较慢)
 
 ## 编译工具
 
@@ -51,8 +54,15 @@ MacBook-Pro root$ ./server
 
 ## 访问
 
-+ 访问 `https://localhost:8088/rasp-admin` （浏览器信任证书）
++ 访问 `http://localhost:8088/rasp-admin` 
+
 + 账号和密码： admin 123456
 
+(默认关闭关闭https)
+
 ## 替换证书（非必须）
+
+参考：[https配置](./https.md)
+
+
 
