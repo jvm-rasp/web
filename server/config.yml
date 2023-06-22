@@ -74,4 +74,4 @@ mdns:
 
 pprof:
   # 是否开启性能诊断
-  enable: true
+  enable: false
