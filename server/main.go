@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"github.com/gin-contrib/pprof"
 	"net/http"
 	"os"
 	"os/signal"
@@ -69,6 +70,12 @@ func main() {
 
 	// 注册所有路由
 	r := routes.InitRoutes()
+
+	// start pprof for debug
+	// 使用参考：http://liumurong.org/2019/12/gin_pprof/
+	if config.Conf.Pprof.Enable {
+		pprof.Register(r) // 性能
+	}
 
 	host := ""
 	if config.Conf.System.Mode == "release" {

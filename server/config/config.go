@@ -29,6 +29,7 @@ type config struct {
 	Ssl       *Ssl             `mapstructure:"ssl" json:"ssl"`
 	Mdns      *Mdns            `mapstructure:"mdns" json:"mdns"`
 	Env       *Env             `json:"env"`
+	Pprof     *Pprof           `mapstructure:"pprof" json:"pprof"`
 }
 
 // 设置读取配置信息
@@ -158,4 +159,9 @@ type DatabaseConfig struct {
 	Driver  string          `mapstructure:"driver" json:"driver"`
 	Source  string          `mapstructure:"source" json:"source"`
 	LogMode logger.LogLevel `mapstructure:"log-mode" json:"logMode"`
+}
+
+// Pprof 性能诊断配置
+type Pprof struct {
+	Enable bool `mapstructure:"enable" json:"enable"`
 }
