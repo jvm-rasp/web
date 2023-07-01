@@ -29,7 +29,7 @@ func main() {
 	common.InitLogger()
 
 	// 初始化安装脚本
-	common.InitInstallScripts()
+	// common.InitInstallScripts()
 
 	// 初始化上报日志
 	if config.Conf.Logs.EnableReportLog {

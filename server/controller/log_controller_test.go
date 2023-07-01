@@ -17,4 +17,7 @@ func Test_splitContent(t *testing.T) {
 	if maps["host"] != "MacBook-Pro.local" {
 		log.Fatalf("grok message error")
 	}
+	if maps["message"] != "server socket start init..." {
+		log.Fatalf("grok message error")
+	}
 }

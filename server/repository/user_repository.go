@@ -15,22 +15,19 @@ import (
 )
 
 type IUserRepository interface {
-	Login(user *model.User) (*model.User, error)       // 登录
-	ChangePwd(username string, newPasswd string) error // 更新密码
-
-	CreateUser(user *model.User) error                              // 创建用户
-	GetUserById(id uint) (model.User, error)                        // 获取单个用户
-	GetUsers(req *vo.UserListRequest) ([]*model.User, int64, error) // 获取用户列表
-	UpdateUser(user *model.User) error                              // 更新用户
-	BatchDeleteUserByIds(ids []uint) error                          // 批量删除
-
+	Login(user *model.User) (*model.User, error)                        // 登录
+	ChangePwd(username string, newPasswd string) error                  // 更新密码
+	CreateUser(user *model.User) error                                  // 创建用户
+	GetUserById(id uint) (model.User, error)                            // 获取单个用户
+	GetUsers(req *vo.UserListRequest) ([]*model.User, int64, error)     // 获取用户列表
+	UpdateUser(user *model.User) error                                  // 更新用户
+	BatchDeleteUserByIds(ids []uint) error                              // 批量删除
 	GetCurrentUser(c *gin.Context) (model.User, error)                  // 获取当前登录用户信息
 	GetCurrentUserMinRoleSort(c *gin.Context) (uint, model.User, error) // 获取当前用户角色排序最小值（最高等级角色）以及当前用户信息
 	GetUserMinRoleSortsByIds(ids []uint) ([]int, error)                 // 根据用户ID获取用户角色排序最小值
-
-	SetUserInfoCache(username string, user model.User) // 设置用户信息缓存
-	UpdateUserInfoCacheByRoleId(roleId uint) error     // 根据角色ID更新拥有该角色的用户信息缓存
-	ClearUserInfoCache()                               // 清理所有用户信息缓存
+	SetUserInfoCache(username string, user model.User)                  // 设置用户信息缓存
+	UpdateUserInfoCacheByRoleId(roleId uint) error                      // 根据角色ID更新拥有该角色的用户信息缓存
+	ClearUserInfoCache()                                                // 清理所有用户信息缓存
 }
 
 type UserRepository struct {

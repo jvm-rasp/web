@@ -107,6 +107,7 @@ type SystemConfig struct {
 	RSAPrivateKey   string `mapstructure:"rsa-private-key" json:"rsaPrivateKey"`
 	RSAPublicBytes  []byte `mapstructure:"-" json:"-"`
 	RSAPrivateBytes []byte `mapstructure:"-" json:"-"`
+	Host            string `mapstructure:"host" json:"host"`
 }
 
 type LogsConfig struct {
