@@ -63,13 +63,37 @@ func (uc UserController) GetUsers(c *gin.Context) {
 		return
 	}
 
-	// 获取
+	// 获取当前用户有权限看到的用户
+	// 获取当前用户最高权限
+	minRoleLevel, current, err := uc.UserRepository.GetCurrentUserMinRoleSort(c)
+	if err != nil {
+		response.Fail(c, nil, err.Error())
+		return
+	}
+
+	// 获取全部用户
 	users, total, err := uc.UserRepository.GetUsers(&req)
 	if err != nil {
 		response.Fail(c, nil, "获取用户列表失败: "+err.Error())
 		return
 	}
-	response.Success(c, gin.H{"users": dto.ToUsersDto(users), "total": total}, "获取用户列表成功")
+
+	var resultUsers []*model.User
+	for i := 0; i < len(users); i++ {
+		var allRoleSorts []int
+		for j := 0; j < len(users[i].Roles); j++ {
+			allRoleSorts = append(allRoleSorts, int(users[i].Roles[j].Sort))
+		}
+		currentRoleSortMin := uint(funk.MinInt(allRoleSorts).(int))
+		if currentRoleSortMin < minRoleLevel {
+			resultUsers = append(resultUsers, users[i])
+		}
+	}
+
+	// 加上当前用户自己
+	resultUsers = append(resultUsers, &current)
+
+	response.Success(c, gin.H{"users": dto.ToUsersDto(resultUsers), "total": total}, "获取用户列表成功")
 }
 
 // 更新用户登录密码
