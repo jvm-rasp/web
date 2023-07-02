@@ -27,7 +27,6 @@ type config struct {
 	Jwt       *JwtConfig       `mapstructure:"jwt" json:"jwt"`
 	RateLimit *RateLimitConfig `mapstructure:"rate-limit" json:"rateLimit"`
 	Ssl       *Ssl             `mapstructure:"ssl" json:"ssl"`
-	Mdns      *Mdns            `mapstructure:"mdns" json:"mdns"`
 	Env       *Env             `json:"env"`
 	Pprof     *Pprof           `mapstructure:"pprof" json:"pprof"`
 }
@@ -141,10 +140,6 @@ type Ssl struct {
 	Enable   bool
 	KeyFile  string
 	CertFile string
-}
-
-type Mdns struct {
-	Enable bool
 }
 
 type Env struct {

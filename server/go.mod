@@ -15,7 +15,6 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/gookit/goutil v0.6.8
 	github.com/h2non/filetype v1.1.3
-	github.com/hashicorp/mdns v1.0.5
 	github.com/imroc/req v0.3.2
 	github.com/juju/ratelimit v1.0.1
 	github.com/mholt/archiver/v4 v4.0.0-alpha.8
@@ -45,7 +44,6 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/klauspost/compress v1.15.9 // indirect
 	github.com/klauspost/pgzip v1.2.5 // indirect
-	github.com/miekg/dns v1.1.41 // indirect
 	github.com/nwaples/rardecode/v2 v2.0.0-beta.2 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.1 // indirect
 	github.com/pierrec/lz4/v4 v4.1.15 // indirect

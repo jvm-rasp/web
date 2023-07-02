@@ -70,10 +70,6 @@ ssl:
   # ssl 证书路径
   certFile: certFile.pem
 
-mdns:
-  # 是否开启内网服务发现功能
-  enable: false
-
 pprof:
   # 是否开启性能诊断
   enable: false
