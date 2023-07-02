@@ -49,10 +49,15 @@ MacBook-Pro root$ ./server
 2023-05-01 13:48:58     INFO    socket/ws.go:27 server/socket.(*Manager).Start  websocket manage start
 ```
 
+以后台进程启动
+```shell
+nohup ./server >/dev/null 2>&1 &
+```
+
 ## 访问
 
-+ 访问 `https://localhost:8088/rasp-admin` （浏览器信任证书）
++ 访问 `http://localhost:8088/rasp-admin` 
 + 账号和密码： admin 123456
 
 ## 替换证书（非必须）
-
+默认启动方式为非http方式，可以更新ssl证书并开启ssl功能
