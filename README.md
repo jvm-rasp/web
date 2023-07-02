@@ -60,4 +60,25 @@ nohup ./server >/dev/null 2>&1 &
 + 账号和密码： admin 123456
 
 ## 替换证书（非必须）
-默认启动方式为非http方式，可以更新ssl证书并开启ssl功能
+默认启动方式为非http方式，可以更新ssl证书并开启ssl功能。修改`config.yml`中的如下配置
+```yaml
+ssl:
+  # https开关,默认关闭
+  enable: false
+  # ssl 证书key
+  keyFile: keyFile.key
+  # ssl 证书路径
+  certFile: certFile.pem
+```
+
+## 使用mysql数据库（非必须）
+默认使用sqlite数据库，可以替换为mysql数据库。修改`config.yml`中的如下配置
+```yaml
+database:
+  # driver: mysql, sqlite
+  driver: sqlite
+#  source: root:Gepoint@tcp(127.0.0.1:3306)/jrasp?charset=utf8mb4&collation=utf8mb4_general_ci&parseTime=True&loc=Local&timeout=1000ms
+  source: jrasp.db
+  # silent=1 error=2 warn=3 info=4
+  log-mode: 1
+```
