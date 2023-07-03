@@ -110,13 +110,12 @@ type SystemConfig struct {
 }
 
 type LogsConfig struct {
-	Level           zapcore.Level `mapstructure:"level" json:"level"`
-	Path            string        `mapstructure:"path" json:"path"`
-	MaxSize         int           `mapstructure:"max-size" json:"maxSize"`
-	MaxBackups      int           `mapstructure:"max-backups" json:"maxBackups"`
-	MaxAge          int           `mapstructure:"max-age" json:"maxAge"`
-	Compress        bool          `mapstructure:"compress" json:"compress"`
-	EnableReportLog bool          `mapstructure:"enable-report-log" json:"enableReportLog"`
+	Level      zapcore.Level `mapstructure:"level" json:"level"`
+	Path       string        `mapstructure:"path" json:"path"`
+	MaxSize    int           `mapstructure:"max-size" json:"maxSize"`
+	MaxBackups int           `mapstructure:"max-backups" json:"maxBackups"`
+	MaxAge     int           `mapstructure:"max-age" json:"maxAge"`
+	Compress   bool          `mapstructure:"compress" json:"compress"`
 }
 
 type CasbinConfig struct {

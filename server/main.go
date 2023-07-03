@@ -12,7 +12,6 @@ import (
 	"server/common"
 	"server/config"
 	"server/middleware"
-	"server/report"
 	"server/repository"
 	"server/routes"
 	"server/socket"
@@ -51,10 +50,6 @@ func main() {
 	go socket.WebsocketManager.Start()
 	// 给客户端发送消息
 	go socket.WebsocketManager.SendService()
-
-	// 检查是否开启远程更新及日志上报
-	report.InitUpdateManager()
-	go report.UpdateManager.Start()
 
 	// 注册所有路由
 	r := routes.InitRoutes()

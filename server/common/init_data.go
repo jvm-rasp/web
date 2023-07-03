@@ -2,7 +2,6 @@ package common
 
 import (
 	"errors"
-	"reflect"
 	"server/config"
 	"server/model"
 	"server/util"
@@ -97,7 +96,6 @@ func InitData() {
 	menuIcon := "menu"
 	roleIcon := "role"
 	userIcon := "user"
-	settingIcon := "config"
 
 	menus := []model.Menu{
 		{
@@ -252,11 +250,11 @@ func InitData() {
 		},
 		{
 			Model:     gorm.Model{ID: systemId + 1},
-			Name:      "Settings",
-			Title:     "系统配置",
-			Icon:      &settingIcon,
-			Path:      "settings",
-			Component: "/system/settings/index",
+			Name:      "User",
+			Title:     "用户管理",
+			Icon:      &userIcon,
+			Path:      "user",
+			Component: "/system/user/index",
 			Sort:      systemId + 1,
 			ParentId:  &systemId,
 			Roles:     roles[:1],
@@ -264,11 +262,11 @@ func InitData() {
 		},
 		{
 			Model:     gorm.Model{ID: systemId + 2},
-			Name:      "User",
-			Title:     "用户管理",
-			Icon:      &userIcon,
-			Path:      "user",
-			Component: "/system/user/index",
+			Name:      "Role",
+			Title:     "角色管理",
+			Icon:      &roleIcon,
+			Path:      "role",
+			Component: "/system/role/index",
 			Sort:      systemId + 2,
 			ParentId:  &systemId,
 			Roles:     roles[:1],
@@ -276,11 +274,11 @@ func InitData() {
 		},
 		{
 			Model:     gorm.Model{ID: systemId + 3},
-			Name:      "Role",
-			Title:     "角色管理",
-			Icon:      &roleIcon,
-			Path:      "role",
-			Component: "/system/role/index",
+			Name:      "Menu",
+			Title:     "菜单管理",
+			Icon:      &menuIcon,
+			Path:      "menu",
+			Component: "/system/menu/index",
 			Sort:      systemId + 3,
 			ParentId:  &systemId,
 			Roles:     roles[:1],
@@ -288,11 +286,11 @@ func InitData() {
 		},
 		{
 			Model:     gorm.Model{ID: systemId + 4},
-			Name:      "Menu",
-			Title:     "菜单管理",
-			Icon:      &menuIcon,
-			Path:      "menu",
-			Component: "/system/menu/index",
+			Name:      "Api",
+			Title:     "接口管理",
+			Icon:      &apiIcon,
+			Path:      "api",
+			Component: "/system/api/index",
 			Sort:      systemId + 4,
 			ParentId:  &systemId,
 			Roles:     roles[:1],
@@ -300,24 +298,12 @@ func InitData() {
 		},
 		{
 			Model:     gorm.Model{ID: systemId + 5},
-			Name:      "Api",
-			Title:     "接口管理",
-			Icon:      &apiIcon,
-			Path:      "api",
-			Component: "/system/api/index",
-			Sort:      systemId + 5,
-			ParentId:  &systemId,
-			Roles:     roles[:1],
-			Creator:   "系统",
-		},
-		{
-			Model:     gorm.Model{ID: systemId + 6},
 			Name:      "OperationLog",
 			Title:     "操作日志",
 			Icon:      &apiLogIcon,
 			Path:      "operation-log",
 			Component: "/system/operation-log/index",
-			Sort:      systemId + 6,
+			Sort:      systemId + 5,
 			ParentId:  &systemId,
 			Roles:     roles[:1],
 			Creator:   "系统",
@@ -361,28 +347,6 @@ func InitData() {
 			Creator:      "系统",
 			Roles:        roles[:1],
 		},
-		//{
-		//	Model:        gorm.Model{ID: 3},
-		//	Username:     "user",
-		//	Password:     util.GenPasswd("123456"),
-		//	Mobile:       "13899999999",
-		//	Avatar:       "https://wpimg.wallstcn.com/f778738c-e4f8-4870-b634-56703b4acafe.gif",
-		//	Introduction: new(string),
-		//	Status:       1,
-		//	Creator:      "系统",
-		//	Roles:        roles[1:2],
-		//},
-		//{
-		//	Model:        gorm.Model{ID: 4},
-		//	Username:     "guest",
-		//	Password:     util.GenPasswd("123456"),
-		//	Mobile:       "13833333333",
-		//	Avatar:       "https://wpimg.wallstcn.com/f778738c-e4f8-4870-b634-56703b4acafe.gif",
-		//	Introduction: new(string),
-		//	Status:       1,
-		//	Creator:      "系统",
-		//	Roles:        roles[1:2],
-		//},
 	}
 
 	for _, user := range users {
@@ -947,27 +911,6 @@ func InitData() {
 			Desc:     "批量删除rasp日志",
 			Creator:  "系统",
 		},
-		{
-			Method:   "POST",
-			Path:     "/settings/update",
-			Category: "settings",
-			Desc:     "更新系统配置",
-			Creator:  "系统",
-		},
-		{
-			Method:   "GET",
-			Path:     "/settings/list",
-			Category: "settings",
-			Desc:     "获取系统配置",
-			Creator:  "系统",
-		},
-		{
-			Method:   "POST",
-			Path:     "/settings/getProjectInfo",
-			Category: "settings",
-			Desc:     "获取项目guid",
-			Creator:  "系统",
-		},
 	}
 	newApi := make([]model.Api, 0)
 	newRoleCasbin := make([]model.RoleCasbin, 0)
@@ -1027,48 +970,6 @@ func InitData() {
 		isAdd, err := CasbinEnforcer.AddPolicies(rules)
 		if !isAdd {
 			Log.Errorf("写入casbin数据失败：%v", err)
-		}
-	}
-
-	// 写入系统默认设置
-	settings := []model.SystemSetting{
-		{
-			Name:  "autoUpdate",
-			Type:  reflect.Bool.String(),
-			Value: "false",
-		},
-		{
-			Name:  "reportUrl",
-			Type:  reflect.String.String(),
-			Value: "",
-		},
-		{
-			Name:  "projectGuid",
-			Type:  reflect.String.String(),
-			Value: "",
-		},
-		{
-			Name:  "updateUrl",
-			Type:  reflect.String.String(),
-			Value: "ws://security.epoint.com.cn:8024",
-		},
-		{
-			Name:  "projectType",
-			Type:  reflect.String.String(),
-			Value: "live-project",
-		},
-	}
-	newSettings := make([]model.SystemSetting, 0)
-	for i, item := range settings {
-		item.ID = uint(i + 1)
-		err := DB.First(&item, item.ID).Error
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			newSettings = append(newSettings, item)
-		}
-	}
-	if len(newSettings) > 0 {
-		if err := DB.Create(&newSettings).Error; err != nil {
-			Log.Errorf("写入settings数据失败：%v", err)
 		}
 	}
 }
