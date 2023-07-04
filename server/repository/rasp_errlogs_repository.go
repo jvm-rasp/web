@@ -12,8 +12,8 @@ type IRaspErrorLogsRepository interface {
 	GetRaspLogs(req *vo.RaspLogsListRequest) ([]*model.RaspErrorLogs, int64, error)
 	CreateRaspLogs(errorLogs *model.RaspErrorLogs) error
 	DeleteRaspLogs(ids []uint) error
+	DeleteRaspLogsByJob(maxSize int) error
 }
-
 type RaspErrorLogsRepository struct {
 }
 
@@ -68,4 +68,18 @@ func (r RaspErrorLogsRepository) CreateRaspLogs(errorLogs *model.RaspErrorLogs) 
 func (r RaspErrorLogsRepository) DeleteRaspLogs(ids []uint) error {
 	err := common.DB.Where("id IN (?)", ids).Unscoped().Delete(&model.RaspErrorLogs{}).Error
 	return err
+}
+
+func (r RaspErrorLogsRepository) DeleteRaspLogsByJob(maxSize int) error {
+	var logs []model.RaspErrorLogs
+	if err := common.DB.Limit(1).Offset(maxSize).Order("id desc").Find(&logs).Error; err != nil {
+		return err
+	}
+	if logs != nil && len(logs) > 0 {
+		maxId := logs[0].ID
+		if err := common.DB.Where("id <= ?", maxId).Delete(&model.RaspErrorLogs{}).Error; err != nil {
+			return err
+		}
+	}
+	return nil
 }

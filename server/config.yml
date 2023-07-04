@@ -73,3 +73,12 @@ ssl:
 pprof:
   # 是否开启性能诊断
   enable: false
+
+
+job:
+  # enable job start
+  enable: true
+  # every 10mins excute
+  cronExpression: '@every 10m'
+  # table max rows
+  tableMaxSize: 10000

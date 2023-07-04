@@ -18,6 +18,7 @@ type IRaspAttackRepository interface {
 	DeleteRaspAttack(guids []string) error
 	DeleteRaspDetail(guids []string) error
 	UpdateRaspAttack(attack *model.RaspAttack) error
+    DeleteAttackLogsByJob(maxSize int) error
 }
 
 type RaspAttackRepository struct {
@@ -101,4 +102,19 @@ func (r RaspAttackRepository) GetRaspAttackById(id uint) (*model.RaspAttack, err
 func (r RaspAttackRepository) UpdateRaspAttack(attack *model.RaspAttack) error {
 	err := common.DB.Save(attack).Error
 	return err
+}
+
+
+func (r RaspAttackRepository) DeleteAttackLogsByJob(maxSize int) error {
+	var logs []model.RaspAttack
+	if err := common.DB.Limit(1).Offset(maxSize).Order("id desc").Find(&logs).Error; err != nil {
+		return err
+	}
+	if logs != nil && len(logs) > 0 {
+		maxId := logs[0].ID
+		if err := common.DB.Where("id <= ?", maxId).Delete(&model.RaspAttack{}).Error; err != nil {
+			return err
+		}
+	}
+	return nil
 }

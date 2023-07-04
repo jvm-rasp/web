@@ -17,6 +17,7 @@ require (
 	github.com/juju/ratelimit v1.0.1
 	github.com/mholt/archiver/v4 v4.0.0-alpha.8
 	github.com/patrickmn/go-cache v2.1.0+incompatible
+	github.com/robfig/cron/v3 v3.0.1
 	github.com/spf13/viper v1.7.1
 	github.com/thoas/go-funk v0.7.0
 	github.com/vjeantet/grok v1.0.1

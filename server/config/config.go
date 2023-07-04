@@ -29,6 +29,8 @@ type config struct {
 	Ssl       *Ssl             `mapstructure:"ssl" json:"ssl"`
 	Env       *Env             `json:"env"`
 	Pprof     *Pprof           `mapstructure:"pprof" json:"pprof"`
+
+	TableDeleteJob *TableDeleteJob `mapstructure:"job" json:"job"`
 }
 
 // 设置读取配置信息
@@ -159,4 +161,11 @@ type DatabaseConfig struct {
 // Pprof 性能诊断配置
 type Pprof struct {
 	Enable bool `mapstructure:"enable" json:"enable"`
+}
+
+// 定时删除job配置
+type TableDeleteJob struct {
+	Enable         bool   `mapstructure:"enable" json:"enable"`                 // 是否开启 `
+	CronExpression string `mapstructure:"cronExpression" json:"cronExpression"` // 执行频率
+	TableMaxSize   int    `mapstructure:"tableMaxSize" json:"tableMaxSize"`     // 最大数据 1w
 }

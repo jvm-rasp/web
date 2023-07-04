@@ -12,6 +12,7 @@ type IOperationLogRepository interface {
 	GetOperationLogs(req *vo.OperationLogListRequest) ([]model.OperationLog, int64, error)
 	BatchDeleteOperationLogByIds(ids []uint) error
 	SaveOperationLogChannel(olc <-chan *model.OperationLog) //处理OperationLogChan将日志记录到数据库
+	DeleteOperationLogsByJob(maxSize int) error
 }
 
 type OperationLogRepository struct {
@@ -66,8 +67,8 @@ func (o OperationLogRepository) BatchDeleteOperationLogByIds(ids []uint) error {
 	return err
 }
 
-//var Logs []model.OperationLog //全局变量多个线程需要加锁，所以每个线程自己维护一个
-//处理OperationLogChan将日志记录到数据库
+// var Logs []model.OperationLog //全局变量多个线程需要加锁，所以每个线程自己维护一个
+// 处理OperationLogChan将日志记录到数据库
 func (o OperationLogRepository) SaveOperationLogChannel(olc <-chan *model.OperationLog) {
 	// 只会在线程开启的时候执行一次
 	Logs := make([]model.OperationLog, 0)
@@ -81,4 +82,19 @@ func (o OperationLogRepository) SaveOperationLogChannel(olc <-chan *model.Operat
 			Logs = make([]model.OperationLog, 0)
 		}
 	}
+}
+
+func (o OperationLogRepository) DeleteOperationLogsByJob(maxSize int) error {
+	var logs []model.OperationLog
+	if err := common.DB.Limit(1).Offset(maxSize).Order("id desc").Find(&logs).Error; err != nil {
+		return err
+	}
+	if logs != nil && len(logs) > 0 {
+		maxId := logs[0].ID
+		if err := common.DB.Where("id <= ?", maxId).Delete(&model.OperationLog{}).Error; err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
