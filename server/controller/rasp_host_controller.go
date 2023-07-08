@@ -283,7 +283,6 @@ func (h RaspHostController) GeneratePushConfig(configId uint) ([]byte, error) {
 			util.GetDefaultIp(),
 			config.Conf.System.Port,
 			config.Conf.System.UrlPathPrefix),
-		//EnableMdns:     config.Conf.Mdns.Enable,
 		EnableMdns:     true,
 		AgentConfigs:   agentConfigsFields,
 		RaspLibConfigs: raspLibInfo,

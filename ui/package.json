@@ -1,8 +1,8 @@
 {
-  "name": "go-web-mini-ui",
-  "version": "1.0.0",
-  "description": "go-web-mini前端项目",
-  "author": "liming <764995901@qq.com>",
+  "name": "jrasp-web-ui",
+  "version": "1.1.2",
+  "description": "jrasp前端项目",
+  "author": "sear2022 <1870011370@qq.com>",
   "scripts": {
     "dev": "vue-cli-service serve",
     "lint": "eslint --ext .js,.vue src",
@@ -101,6 +101,6 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/gnimli/go-web-mini-ui.git"
+    "url": "git+https://github.com/jvm-rasp/web.git"
   }
 }
