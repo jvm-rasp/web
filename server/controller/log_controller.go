@@ -575,9 +575,7 @@ func (l LogController) handleAgentErrorLog(req vo.RaspLogRequest) {
 	if err != nil {
 		panic(err)
 	}
-	// 写入上报错误日志
-	errorLogStr, _ := json.Marshal(errorLogs)
-	common.ReportLog.Error(string(errorLogStr))
+
 }
 
 func (l LogController) handleDaemonErrorLog(req vo.RaspLogRequest) {
@@ -600,9 +598,6 @@ func (l LogController) handleDaemonErrorLog(req vo.RaspLogRequest) {
 	if err != nil {
 		panic(err)
 	}
-	// 写入上报错误日志
-	errorLogStr, _ := json.Marshal(errorLogs)
-	common.ReportLog.Error(string(errorLogStr))
 }
 
 func (l LogController) handleModuleErrorLog(req vo.RaspLogRequest) {
@@ -627,9 +622,6 @@ func (l LogController) handleModuleErrorLog(req vo.RaspLogRequest) {
 	if err != nil {
 		panic(err)
 	}
-	// 写入上报错误日志
-	errorLogStr, _ := json.Marshal(errorLogs)
-	common.ReportLog.Error(string(errorLogStr))
 }
 
 func (l LogController) handleAttackLog(req vo.RaspLogRequest) {
@@ -686,9 +678,6 @@ func (l LogController) handleAttackLog(req vo.RaspLogRequest) {
 		detail.AttackTime = time.Unix(attackDetail.AttackTime/1000, 0)
 		detail.Level = attackDetail.Level
 		detail.MetaInfo = attackDetail.MetaInfo
-
-		// 写入上报日志
-		common.ReportLog.Warn(msg)
 	}
 
 	err = l.RaspAttackRepository.CreateRaspAttack(&attack)

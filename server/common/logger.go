@@ -14,9 +14,6 @@ import (
 // var Log *zap.Logger
 var Log *zap.SugaredLogger
 
-// 上报攻击日志变量
-var ReportLog = zap.New(zapcore.NewTee(), zap.AddCaller()).Sugar()
-
 /**
  * 初始化日志
  * filename 日志文件路径
