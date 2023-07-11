@@ -3,6 +3,7 @@ package socket
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
+	"net"
 	"net/http"
 	"server/common"
 	"server/global"
@@ -107,7 +108,8 @@ func (c *Client) Read() {
 		// c.Message <- message
 		if messageType == websocket.TextMessage {
 			hostName := c.Id
-			ip := c.Socket.RemoteAddr().String()
+			// bugfix:  修复上报ip bug
+			ip := c.Socket.RemoteAddr().(*net.TCPAddr).IP.String()
 			heartbeatTime := string(message)
 			hostInfo, err := RaspHostRepository.GetRaspHostByHostName(hostName)
 			if err != nil {

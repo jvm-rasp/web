@@ -65,9 +65,10 @@ func (f FileController) Upload(c *gin.Context) {
 		}
 	}
 
+	// 创建时间戳
+	ts := strconv.FormatInt(time.Now().Unix(), 10)
+
 	for _, file := range files {
-		// 创建时间戳
-		ts := strconv.FormatInt(time.Now().Unix(), 10)
 		// 创建目录树
 		dir := path.Join(dataPath, file.Filename, ts)
 		err := os.MkdirAll(dir, os.ModePerm)
