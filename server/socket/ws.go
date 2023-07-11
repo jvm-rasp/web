@@ -148,7 +148,7 @@ func (c *Client) Read() {
 // 给 client 发送消息
 func (c *Client) Write() {
 	defer func() {
-		common.Log.Info("client [%s] disconnect", c.Id)
+		common.Log.Infof("client [%s] disconnect", c.Id)
 		if err := c.Socket.Close(); err != nil {
 			common.Log.Warnf("client [%s] disconnect err: %s", c.Id, err)
 		}
