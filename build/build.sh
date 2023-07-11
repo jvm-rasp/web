@@ -1,4 +1,4 @@
-#!/bin/zsh
+#!/bin/bash
 
 echo "build web project(Golang) start:" $(date +"%Y-%m-%d %H:%M:%S")
 
