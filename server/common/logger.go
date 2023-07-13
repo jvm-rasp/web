@@ -66,7 +66,7 @@ func InitLogger() {
 		return level >= zap.ErrorLevel
 	})
 	lowPriority := zap.LevelEnablerFunc(func(level zapcore.Level) bool {
-		return level < zap.ErrorLevel && level >= config.Conf.Logs.Level
+		return level < zap.ErrorLevel && level >= zapcore.Level(config.Conf.Logs.Level)
 	})
 
 	// info文件writeSyncer

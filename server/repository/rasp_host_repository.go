@@ -6,6 +6,7 @@ import (
 	"gorm.io/gorm"
 	"server/common"
 	"server/model"
+	"server/util"
 	"server/vo"
 	"strings"
 )
@@ -100,6 +101,9 @@ func (h RaspHostRepository) GetRaspHostsByConfigId(id uint) ([]*model.RaspHost, 
 }
 
 func (h RaspHostRepository) CreateRaspHost(raspHost *model.RaspHost) (uint, error) {
+	if raspHost.HostName == "" || raspHost.Ip == "" {
+		common.Log.Errorf("hostInfo信息为空, stacktrace: %v", util.GetCallers())
+	}
 	// 先获取默认策略
 	var list []*model.RaspConfig
 	result := common.DB.Model(&model.RaspConfig{}).Where("is_default = ?", true).Find(&list)

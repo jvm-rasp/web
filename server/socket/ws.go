@@ -161,12 +161,12 @@ func (c *Client) Write() {
 		case message, ok := <-c.Message:
 			if !ok {
 				_ = c.Socket.WriteMessage(websocket.CloseMessage, []byte{})
-				common.Log.Warn("the chan of write message to remote is closed")
+				common.Log.Warnf("the chan of write message to remote is closed")
 				return
 			}
 			err := c.Socket.WriteMessage(websocket.BinaryMessage, message)
 			if err != nil {
-				common.Log.Error("write message to remote client[%s] err: %s", c.Id, err)
+				common.Log.Errorf("write message to remote client[%s] err: %s", c.Id, err)
 			}
 		}
 	}
@@ -302,7 +302,7 @@ func (manager *Manager) WsClient(ctx *gin.Context) {
 
 	conn, err := upGrader.Upgrade(ctx.Writer, ctx.Request, nil)
 	if err != nil {
-		common.Log.Error("websocket connect error: %s", ctx.Param(REGISTER_CLIENT_KEY))
+		common.Log.Errorf("websocket connect error: %s", ctx.Param(REGISTER_CLIENT_KEY))
 		return
 	}
 
