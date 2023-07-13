@@ -23,3 +23,5 @@ target
 
 package-lock.json
 yarn.lock
+
+jrasp-server-*

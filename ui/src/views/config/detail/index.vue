@@ -4,7 +4,7 @@
       <!-- 条件搜索框 -->
       <el-row>
         <el-form :size="this.$store.getters.size" :inline="true" :model="params" class="demo-form-inline">
-          <el-form-item label="配置名称">
+          <el-form-item label="!!!!配置名称">
             <el-input v-model.trim="params.name" clearable placeholder="名称" @clear="search" />
           </el-form-item>
           <el-form-item label="配置状态">
@@ -788,6 +788,9 @@ export default {
     this.getModuleListData()
   },
   methods: {
+    prev() {
+      this.$router.go(-1)
+    },
     // 查询
     search() {
       this.params.pageNum = 1
@@ -893,7 +896,7 @@ export default {
     handle() {
       // 进入到详情页面
       //  路径/home对应我在router目录下index.js中定义的path属性值
-      this.$router.push({ path: '/detail' })
+      this.$router.push({ path: '/config/detail' })
     },
     handlePush(record) {
       this.$confirm('确定推送此配置至所有服务器?', '提示', {
