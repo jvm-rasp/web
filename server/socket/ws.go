@@ -113,7 +113,9 @@ func (c *Client) Read() {
 			heartbeatTime := string(message)
 			hostInfo, err := RaspHostRepository.GetRaspHostByHostName(hostName)
 			if err != nil {
-				common.Log.Warnf("update host [%s] heartbeat err: %s", hostName, err)
+				// 获取host失败，记录日志
+				common.Log.Errorf("update host [%s] heartbeat err: %s", hostName, err)
+				continue
 			}
 			if hostInfo == nil {
 				// 如果是第一次连接则注册进库中

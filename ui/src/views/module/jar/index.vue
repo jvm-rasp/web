@@ -14,7 +14,7 @@
             <el-input v-model.trim="params.mimeType" clearable placeholder="文件类型" @clear="search" />
           </el-form-item>
           <el-form-item label="创建人">
-            <el-input v-model.trim="params.creator" clearable placeholder="文件类型" @clear="search" />
+            <el-input v-model.trim="params.creator" clearable placeholder="创建人" @clear="search" />
           </el-form-item>
           <el-form-item>
             <el-button :loading="loading" icon="el-icon-search" type="primary" @click="search">查询</el-button>

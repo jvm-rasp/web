@@ -142,7 +142,8 @@ func (ur UserRepository) GetUserById(id uint) (model.User, error) {
 // 获取用户列表
 func (ur UserRepository) GetUsers(req *vo.UserListRequest) ([]*model.User, int64, error) {
 	var list []*model.User
-	db := common.DB.Model(&model.User{}).Order("created_at DESC")
+	// 不显示 root 账号
+	db := common.DB.Model(&model.User{}).Where("username != ?", "root").Order("created_at DESC")
 
 	username := strings.TrimSpace(req.Username)
 	if username != "" {
