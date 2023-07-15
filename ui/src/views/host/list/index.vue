@@ -169,7 +169,7 @@
             <el-input v-model="configFormData.hostName" readonly />
           </el-form-item>
           <el-form-item label="配置名称" prop="configId">
-            <el-select v-model="configFormData.configId" clearable placeholder="前选择配置" width="100%">
+            <el-select v-model="configFormData.configId">
               <el-option
                 v-for="item in allConfigs"
                 :key="item.ID"
@@ -577,4 +577,7 @@ export default {
 </script>
 
 <style scoped>
+.el-form-item .el-select {
+  width: 100%;
+}
 </style>
