@@ -69,8 +69,6 @@
             {{ getConfigNameById(scope.row.configId) }}
           </template>
         </el-table-column>
-        <!-- <el-table-column show-overflow-tooltip sortable prop="heartbeatTime" :formatter="dateFormat" label="心跳时间" width="180" align="center" />-->
-        <!--        <el-table-column show-overflow-tooltip sortable prop="CreatedAt" :formatter="dateFormat" label="注册时间" width="180" align="center" />-->
         <el-table-column fixed="right" label="操作" width="180" align="center">
           <template slot-scope="scope">
             <el-button type="text" size="medium" @click="handleDelete(scope.row)">删除</el-button>
@@ -91,44 +89,6 @@
         @size-change="handleSizeChange"
         @current-change="handleCurrentChange"
       />
-
-      <!-- 新建进程详情对话框 -->
-      <el-dialog title="进程详情" :visible.sync="showProcessInfoVisible">
-        <!-- 进程列表 -->
-        <el-table
-          v-loading="processLoading"
-          :data="processTableData"
-          border
-          stripe
-          style="width: 100%"
-        >
-          <el-table-column show-overflow-tooltip sortable prop="pid" label="PID" align="center" />
-          <el-table-column show-overflow-tooltip sortable prop="startTime" label="启动时间" align="center" />
-          <el-table-column show-overflow-tooltip sortable prop="status" label="保护状态" align="center">
-            <template slot-scope="scope">
-              <el-tag size="small" :type="getAgentStatusColor(scope.row.status)" disable-transitions>
-                {{ getAgentStatusText(scope.row.status) }}
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column show-overflow-tooltip sortable prop="appNamesInfo" label="保护应用" align="center" />
-          <el-table-column show-overflow-tooltip sortable prop="cmdlineInfo" label="命令行信息" align="center" />
-        </el-table>
-        <el-pagination
-          :current-page="processParams.pageNum"
-          :page-size="processParams.pageSize"
-          :total="processTotal"
-          :page-sizes="[1, 2, 5, 10]"
-          layout="total, prev, pager, next, sizes"
-          background
-          style="margin-top: 10px;float:left;margin-bottom: 10px;"
-          @size-change="processHandleSizeChange"
-          @current-change="processHandleCurrentChange"
-        />
-        <div slot="footer" class="dialog-footer">
-          <el-button size="mini" @click="closeProcessInfoVisible()">关 闭</el-button>
-        </div>
-      </el-dialog>
 
       <!-- 配置下发对话框 -->
       <el-dialog title="配置下发" :visible.sync="updateConfigVisible" width="30%">
@@ -182,7 +142,7 @@
 
 <script>
 
-import { addHostRequest, batchDeleteHost, getHosts, getProcesss, pushConfig, updateConfig } from '@/api/host/host'
+import { addHostRequest, batchDeleteHost, getHosts, pushConfig, updateConfig } from '@/api/host/host'
 import { getConfigs } from '@/api/config/config'
 import moment from 'moment/moment'
 
@@ -219,19 +179,6 @@ export default {
       // 表格多选
       multipleSelection: [],
 
-      // 进程详情弹窗
-      // 查询参数
-      processParams: {
-        hostName: '',
-        status: '',
-        pageNum: 1,
-        pageSize: 10
-      },
-      showProcessInfoVisible: false,
-      processTableData: [],
-      processTotal: 0,
-      processLoading: false,
-
       // 配置更新
       updateConfigVisible: false,
       submitConfigPushLoading: false,
@@ -262,17 +209,6 @@ export default {
         this.total = data.total
       } finally {
         this.loading = false
-      }
-    },
-
-    async getProcessTable() {
-      this.processLoading = true
-      try {
-        const { data } = await getProcesss(this.processParams)
-        this.processTableData = data.data
-        this.processTotal = data.total
-      } finally {
-        this.processLoading = false
       }
     },
 
@@ -436,11 +372,6 @@ export default {
       })
     },
 
-    // 批量更新
-    batchUpdate() {
-
-    },
-
     // 表格多选
     handleSelectionChange(val) {
       this.multipleSelection = val
@@ -453,45 +384,6 @@ export default {
     handleCurrentChange(val) {
       this.params.pageNum = val
       this.getTableData()
-    },
-
-    // process table
-    showHostAndProcessDetail(row) {
-      this.showProcessInfoVisible = true
-      this.processParams.hostName = row.hostName
-      this.getProcessTable()
-    },
-    // 分页
-    processHandleSizeChange(val) {
-      this.processParams.pageSize = val
-      this.getProcessTable()
-    },
-    processHandleCurrentChange(val) {
-      this.processParams.pageNum = val
-      this.getProcessTable()
-    },
-    // 关闭配置创建
-    closeProcessInfoVisible() {
-      this.showProcessInfoVisible = false
-      this.processParams.hostName = ''
-    },
-    getAgentStatusColor(status) {
-      if (status === 1) {
-        return 'success'
-      } else if (status === 0) {
-        return 'primary'
-      } else if (status === 2) {
-        return 'danger'
-      }
-    },
-    getAgentStatusText(status) {
-      if (status === 1) {
-        return '防护中'
-      } else if (status === 0) {
-        return '未安装'
-      } else if (status === 2) {
-        return '安装失败'
-      }
     },
     dateFormat(row, column) {
       const date = row[column.property]
