@@ -18,6 +18,9 @@ import './icons' // icon
 import './permission' // permission control
 import './utils/error-log' // error log
 
+import dayjs from 'dayjs'
+import VueDayjs from 'vue-dayjs-plugin'
+
 import * as filters from './filters' // global filters
 import JsonViewer from 'vue-json-viewer'
 import highlightPlugin from '@highlightjs/vue-plugin'
@@ -34,6 +37,7 @@ Object.keys(filters).forEach(key => {
 
 Vue.use(JsonViewer)
 Vue.use(highlightPlugin)
+Vue.use(VueDayjs, { dayjs })
 
 Vue.config.productionTip = false
 

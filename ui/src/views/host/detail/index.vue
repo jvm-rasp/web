@@ -12,12 +12,18 @@
         <el-descriptions-item label="CPU核数">{{ hostInfo.cpuCounts }}</el-descriptions-item>
         <el-descriptions-item label="可用磁盘(GB)">{{ hostInfo.freeDisk }}</el-descriptions-item>
         <el-descriptions-item label="RASP版本">{{ hostInfo.version }}</el-descriptions-item>
-        <el-descriptions-item label="接入模式">{{ hostInfo.agentMode }}</el-descriptions-item>
+        <el-descriptions-item label="接入方式">
+          <template>
+            <el-tag size="medium" disable-transitions>
+              {{ getAgentMode(hostInfo.agentMode).value }}
+            </el-tag>
+          </template>
+        </el-descriptions-item>
         <el-descriptions-item label="编译时间">{{ hostInfo.buildDateTime }}</el-descriptions-item>
         <el-descriptions-item label="编译分支">{{ hostInfo.buildGitBranch }}</el-descriptions-item>
         <el-descriptions-item label="代码commit">{{ hostInfo.buildGitCommit }}</el-descriptions-item>
         <el-descriptions-item label="心跳时间">{{ hostInfo.heartbeatTime }}</el-descriptions-item>
-        <el-descriptions-item label="配置更新时间">{{ hostInfo.agentConfigUpdateTime }}</el-descriptions-item>
+        <el-descriptions-item label="注册时间">{{ hostInfo.CreatedAt }}</el-descriptions-item>
         <el-descriptions-item label="安装目录">{{ hostInfo.installDir }}</el-descriptions-item>
         <el-descriptions-item label="可执行文件hash">{{ hostInfo.exeFileHash }}</el-descriptions-item>
       </el-descriptions>
@@ -45,7 +51,7 @@ export default {
         buildGitBranch: '',
         buildGitCommit: '',
         heartbeatTime: '',
-        agentConfigUpdateTime: '',
+        CreatedAt: '',
         installDir: '',
         exeFileHash: ''
       }
@@ -71,9 +77,24 @@ export default {
       this.hostInfo.buildGitBranch = data.data.buildGitBranch
       this.hostInfo.buildGitCommit = data.data.buildGitCommit
       this.hostInfo.heartbeatTime = data.data.heartbeatTime
-      this.hostInfo.agentConfigUpdateTime = data.data.agentConfigUpdateTime
+      // 时间格式转换
+      this.hostInfo.CreatedAt = this.$dayjs(data.data.CreatedAt).format('YYYY-MM-DD HH:mm:ss.SSS')
       this.hostInfo.installDir = data.data.installDir
       this.hostInfo.exeFileHash = data.data.exeFileHash
+    },
+    getAgentMode(mode) {
+      switch (mode) {
+        case 'static':
+          return { value: '静态', color: '' }
+        case 'dynamic':
+          return { value: '动态', color: 'success' }
+        case 'disable':
+          return { value: '禁用', color: 'info' }
+        case '':
+          return { value: '全部', color: '' }
+        default:
+          return { value: '未知', color: 'danger' }
+      }
     }
   }
 }

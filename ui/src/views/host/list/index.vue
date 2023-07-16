@@ -9,14 +9,6 @@
         <el-form-item label="实例IP">
           <el-input v-model.trim="params.ip" clearable placeholder="IP" @clear="search" />
         </el-form-item>
-        <el-form-item label="接入方式">
-          <el-select v-model.trim="params.agentMode" clearable placeholder="接入模式" @change="search" @clear="search">
-            <el-option label="动态" value="dynamic" />
-            <el-option label="静态" value="static" />
-            <el-option label="禁用" value="disable" />
-            <el-option label="全部" value="" />
-          </el-select>
-        </el-form-item>
         <el-form-item label="防护状态">
           <el-select v-model.trim="params.status" clearable placeholder="防护状态" @change="search" @clear="search">
             <el-option label="防护成功" value="1" />
@@ -60,14 +52,6 @@
         </el-table-column>
         <el-table-column show-overflow-tooltip prop="hostName" label="实例名称" align="center" />
         <el-table-column show-overflow-tooltip prop="ip" label="实例IP" align="center" />
-        <el-table-column show-overflow-tooltip prop="version" label="RASP版本" align="center" />
-        <el-table-column show-overflow-tooltip prop="agentMode" label="接入方式" align="center">
-          <template slot-scope="scope">
-            <el-tag size="medium" disable-transitions>
-              {{ getAgentMode(scope.row.agentMode).value }}
-            </el-tag>
-          </template>
-        </el-table-column>
         <el-table-column show-overflow-tooltip label="在线状态" align="center">
           <template slot-scope="scope">
             <el-tag size="medium" :type="isOnline(scope.row.heartbeatTime) === true ? 'success' : 'danger'" disable-transitions>
@@ -515,20 +499,6 @@ export default {
         return ''
       }
       return moment(date).format('YYYY-MM-DD HH:mm:ss')
-    },
-    getAgentMode(mode) {
-      switch (mode) {
-        case 'static':
-          return { value: '静态', color: '' }
-        case 'dynamic':
-          return { value: '动态', color: 'success' }
-        case 'disable':
-          return { value: '禁用', color: 'info' }
-        case '':
-          return { value: '全部', color: '' }
-        default:
-          return { value: '未知', color: 'danger' }
-      }
     },
     isOnline(d1) {
       const t1 = new Date(d1)
