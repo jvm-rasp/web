@@ -58,56 +58,40 @@
             {{ (params.pageNum - 1) * params.pageSize + scope.$index + 1 }}
           </template>
         </el-table-column>
-        <el-table-column show-overflow-tooltip sortable prop="hostName" label="实例名称" align="center" />
-        <el-table-column show-overflow-tooltip sortable prop="ip" label="实例IP" width="150" align="center" />
-        <el-table-column show-overflow-tooltip sortable prop="agentMode" label="接入方式" width="120" align="center">
+        <el-table-column show-overflow-tooltip prop="hostName" label="实例名称" align="center" />
+        <el-table-column show-overflow-tooltip prop="ip" label="实例IP" align="center" />
+        <el-table-column show-overflow-tooltip prop="version" label="RASP版本" align="center" />
+        <el-table-column show-overflow-tooltip prop="agentMode" label="接入方式" align="center">
           <template slot-scope="scope">
-            <el-tag size="medium" :type="getAgentMode(scope.row.agentMode).color" disable-transitions>
+            <el-tag size="medium" disable-transitions>
               {{ getAgentMode(scope.row.agentMode).value }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column show-overflow-tooltip sortable label="在线状态" width="120" align="center">
+        <el-table-column show-overflow-tooltip label="在线状态" align="center">
           <template slot-scope="scope">
             <el-tag size="medium" :type="isOnline(scope.row.heartbeatTime) === true ? 'success' : 'danger'" disable-transitions>
               {{ isOnline(scope.row.heartbeatTime) ? '在线' : '离线' }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column show-overflow-tooltip sortable label="防护成功" width="120" align="center">
+        <el-table-column show-overflow-tooltip label="防护状态" align="center">
           <template slot-scope="scope">
-            <el-tag size="medium" type="success" disable-transitions>
-              {{ scope.row.successInject + '个' }}
-            </el-tag>
+            {{ scope.row.successInject + ' / '+scope.row.failedInject+' / '+scope.row.notInject }}
           </template>
         </el-table-column>
-        <el-table-column show-overflow-tooltip sortable label="防护失败" width="120" align="center">
-          <template slot-scope="scope">
-            <el-tag size="medium" :type="scope.row.failedInject > 0 ? 'danger' : 'success'" disable-transitions>
-              {{ scope.row.failedInject + '个' }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column show-overflow-tooltip sortable label="未防护" width="120" align="center">
-          <template slot-scope="scope">
-            <el-tag size="medium" :type="scope.row.notInject > 0 ? 'danger' : 'success'" disable-transitions>
-              {{ scope.row.notInject + '个' }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column show-overflow-tooltip prop="version" label="RASP版本" align="center" width="100" />
-        <el-table-column show-overflow-tooltip sortable prop="configId" label="防护策略" align="center">
+        <el-table-column show-overflow-tooltip prop="configId" label="防护策略" align="center">
           <template slot-scope="scope">
             {{ getConfigNameById(scope.row.configId) }}
           </template>
         </el-table-column>
-        <el-table-column show-overflow-tooltip sortable prop="heartbeatTime" :formatter="dateFormat" label="心跳时间" width="180" align="center" />
+        <!-- <el-table-column show-overflow-tooltip sortable prop="heartbeatTime" :formatter="dateFormat" label="心跳时间" width="180" align="center" />-->
         <!--        <el-table-column show-overflow-tooltip sortable prop="CreatedAt" :formatter="dateFormat" label="注册时间" width="180" align="center" />-->
         <el-table-column fixed="right" label="操作" width="180" align="center">
           <template slot-scope="scope">
             <el-button type="text" size="medium" @click="handleDelete(scope.row)">删除</el-button>
-            <el-button type="text" size="medium" @click="showHostAndProcessDetail(scope.row)">详情</el-button>
             <el-button type="text" size="medium" @click="updateConfig(scope.row)">更新策略</el-button>
+            <el-button type="text" size="medium" @click="hostDetail(scope.row)">详情</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -571,6 +555,10 @@ export default {
       const pathname = location.pathname
       const cmd = `curl -k ${origin}${pathname}install/uninstall-agent.sh | sh`
       return cmd
+    },
+    hostDetail(row) {
+      // 进入到详情页面
+      this.$router.push({ path: '/detail', query: { hostName: row.hostName }})
     }
   }
 }

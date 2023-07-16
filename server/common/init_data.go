@@ -124,6 +124,19 @@ func InitData() {
 			Creator:   "系统",
 		},
 		{
+			Model:     gorm.Model{ID: hostId + 2},
+			Name:      "Detail",
+			Title:     "实例详情",
+			Hidden:    1,
+			Icon:      &listIcon,
+			Path:      "/detail",
+			Component: "/host/detail/index",
+			Sort:      hostId + 2,
+			ParentId:  &hostId,
+			Roles:     roles,
+			Creator:   "系统",
+		},
+		{
 			Model:     gorm.Model{ID: attackId},
 			Name:      "Attack",
 			Title:     "攻击告警",
@@ -776,6 +789,13 @@ func InitData() {
 			Path:     "/host/list",
 			Category: "host",
 			Desc:     "获取实例列表",
+			Creator:  "系统",
+		},
+		{
+			Method:   "GET",
+			Path:     "/host/detail",
+			Category: "host",
+			Desc:     "获取实例详情",
 			Creator:  "系统",
 		},
 		{

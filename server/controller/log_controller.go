@@ -247,7 +247,7 @@ func (l LogController) handleStartupLog(req vo.RaspLogRequest) {
 	}
 	host.AgentMode = detailMap["agentMode"]
 
-	if len(dbData) <= 0 {
+	if dbData == nil {
 		return
 	}
 
@@ -284,13 +284,13 @@ func (l LogController) handleHostEnvLog(req vo.RaspLogRequest) {
 	}
 
 	var host *model.RaspHost
-	if len(dbData) == 0 {
+	if dbData == nil {
 		host = &model.RaspHost{
 			HostName: req.HostName,
 			Ip:       req.Ip,
 		}
 	} else {
-		host = dbData[0]
+		host = dbData
 	}
 
 	host.InstallDir = installDir
@@ -304,13 +304,13 @@ func (l LogController) handleHostEnvLog(req vo.RaspLogRequest) {
 	host.BuildGitBranch = buildGitBranch
 	host.BuildGitBranch = buildGitCommit
 
-	if len(dbData) == 0 {
+	if host == nil {
 		return
-	} else {
-		err := l.RaspHostRepository.UpdateRaspHostByHostName(host)
-		if err != nil {
-			panic(err)
-		}
+	}
+
+	err = l.RaspHostRepository.UpdateRaspHostByHostName(host)
+	if err != nil {
+		panic(err)
 	}
 }
 
@@ -452,8 +452,8 @@ func (l LogController) handleUpdateConfigId(req vo.RaspLogRequest) {
 	if err != nil {
 		panic(err)
 	}
-	if len(dbData) > 0 {
-		dbConfigId := dbData[0].ConfigId
+	if dbData != nil {
+		dbConfigId := dbData.ConfigId
 		if dbConfigId != configId && dbConfigId > 0 {
 			global.PushConfigQueue <- &vo.PushConfigRequest{
 				ConfigId:  configId,

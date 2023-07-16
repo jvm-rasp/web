@@ -86,6 +86,31 @@ func (h RaspHostController) GetRaspHosts(c *gin.Context) {
 	}, "获取实例列表失败")
 }
 
+// GetRaspHost 获取主机 detail
+func (h RaspHostController) GetRaspHost(c *gin.Context) {
+	var req vo.RaspHostDetailRequest
+	// 参数绑定
+	if err := c.ShouldBind(&req); err != nil {
+		response.Fail(c, nil, err.Error())
+		return
+	}
+	// 参数校验
+	if err := common.Validate.Struct(&req); err != nil {
+		errStr := err.(validator.ValidationErrors)[0].Translate(common.Trans)
+		response.Fail(c, nil, errStr)
+		return
+	}
+	// 获取
+	raspHost, err := h.RaspHostRepository.QueryRaspHost(req.HostName)
+	if err != nil {
+		response.Fail(c, nil, "获取实例详情失败")
+		return
+	}
+	response.Success(c, gin.H{
+		"data": raspHost,
+	}, "获取实例详情成功")
+}
+
 // 批量删除接口
 func (h RaspHostController) BatchDeleteHostByIds(c *gin.Context) {
 	var req vo.DeleteRaspHostRequest

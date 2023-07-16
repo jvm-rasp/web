@@ -17,7 +17,7 @@ type IRaspHostRepository interface {
 	CreateRaspHost(host *model.RaspHost) (uint, error)
 	DeleteRaspHost(ids []uint) error
 	DeleteRaspHostById(id uint) error
-	QueryRaspHost(hostName string) ([]*model.RaspHost, error)
+	QueryRaspHost(hostName string) (*model.RaspHost, error)
 	UpdateRaspHostByHostName(host *model.RaspHost) error
 	UpdateRaspHost(host *model.RaspHost) error
 	GetRaspHostById(id uint) (*model.RaspHost, error)
@@ -124,18 +124,18 @@ func (h RaspHostRepository) DeleteRaspHostById(id uint) error {
 	return err
 }
 
-func (h RaspHostRepository) QueryRaspHost(hostName string) ([]*model.RaspHost, error) {
-	var list []*model.RaspHost
+func (h RaspHostRepository) QueryRaspHost(hostName string) (*model.RaspHost, error) {
+	var host *model.RaspHost
 	db := common.DB.Model(&model.RaspHost{}).Order("created_at DESC")
 	name := strings.TrimSpace(hostName)
 	if name != "" {
 		db = db.Where("host_name = ?", name)
 	}
-	err := db.Find(&list).Limit(1).Error
+	err := db.First(&host).Error
 	if err != nil {
-		return list, err
+		return nil, err
 	}
-	return list, nil
+	return host, nil
 }
 
 // UpdateRaspHostByHostName 通过id更新节点信息

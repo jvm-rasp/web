@@ -9,6 +9,10 @@ type RaspHostListRequest struct {
 	PageSize  uint   `json:"pageSize" form:"pageSize"`
 }
 
+type RaspHostDetailRequest struct {
+	HostName string `json:"hostName" form:"hostName"`
+}
+
 type DeleteRaspHostRequest struct {
 	Ids []uint `json:"ids" form:"ids" validate:"required"`
 }
