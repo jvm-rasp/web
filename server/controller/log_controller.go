@@ -302,7 +302,8 @@ func (l LogController) handleHostEnvLog(req vo.RaspLogRequest) {
 	host.FreeDisk = freeDisk
 	host.BuildDateTime = buildDateTime
 	host.BuildGitBranch = buildGitBranch
-	host.BuildGitBranch = buildGitCommit
+	// bugfix：赋值字段错误
+	host.BuildGitCommit = buildGitCommit
 
 	if host == nil {
 		return
