@@ -83,7 +83,7 @@ func (h RaspHostController) GetRaspHosts(c *gin.Context) {
 	}
 	response.Success(c, gin.H{
 		"data": raspHosts, "total": total,
-	}, "获取实例列表失败")
+	}, "获取实例列表成功")
 }
 
 // 批量删除接口
