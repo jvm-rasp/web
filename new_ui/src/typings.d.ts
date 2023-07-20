@@ -17,6 +17,7 @@ declare module 'mockjs';
 declare module 'react-fittext';
 declare module 'bizcharts-plugin-slider';
 
+// 声明变量
 // preview.pro.ant.design only do not use in your production ;
 // preview.pro.ant.design Dedicated environment variable, please do not use it in your project.
 declare let ANT_DESIGN_PRO_ONLY_DO_NOT_USE_IN_YOUR_PRODUCTION: 'site' | undefined;

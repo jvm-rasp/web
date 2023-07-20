@@ -13,6 +13,7 @@ async function getFakeCaptcha(req: Request, res: Response) {
   return res.json('captcha-xxx');
 }
 
+// 演示环境
 const { ANT_DESIGN_PRO_ONLY_DO_NOT_USE_IN_YOUR_PRODUCTION } = process.env;
 
 /**
@@ -80,6 +81,7 @@ export default {
         notifyCount: 12,
         unreadCount: 11,
         country: 'China',
+        // 最主要的字段
         access: getAccess(),
         geographic: {
           province: {

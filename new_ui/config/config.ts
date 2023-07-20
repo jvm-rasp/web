@@ -4,6 +4,7 @@ import { join } from 'path';
 import defaultSettings from './defaultSettings';
 import proxy from './proxy';
 
+// npm run start:dev
 const { REACT_APP_ENV } = process.env;
 
 export default defineConfig({

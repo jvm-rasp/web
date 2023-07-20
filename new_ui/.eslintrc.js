@@ -1,3 +1,4 @@
+// 检测代码合法性、格式化代码
 module.exports = {
   extends: [require.resolve('@umijs/fabric/dist/eslint')],
   globals: {

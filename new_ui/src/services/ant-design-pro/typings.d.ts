@@ -29,6 +29,15 @@ declare namespace API {
     currentAuthority?: string;
   };
 
+  type LoginResult2 = {
+    code?: number;
+    msg?: string;
+    data?: {
+      token?: string;
+      url?: string;
+    };
+  };
+
   type PageParams = {
     current?: number;
     pageSize?: number;

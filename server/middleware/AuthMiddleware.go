@@ -69,14 +69,14 @@ func login(c *gin.Context) (interface{}, error) {
 	}
 
 	// 密码通过RSA解密
-	decodeData, err := util.RSADecrypt([]byte(req.Password), config.Conf.System.RSAPrivateBytes)
-	if err != nil {
-		return nil, err
-	}
+	//decodeData, err := util.RSADecrypt([]byte(req.Password), config.Conf.System.RSAPrivateBytes)
+	//if err != nil {
+	//	return nil, err
+	//}
 
 	u := &model.User{
 		Username: req.Username,
-		Password: string(decodeData),
+		Password: req.Password,
 	}
 
 	// 密码校验
