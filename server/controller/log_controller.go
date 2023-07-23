@@ -302,7 +302,7 @@ func (l LogController) handleHostEnvLog(req vo.RaspLogRequest) {
 	host.FreeDisk = freeDisk
 	host.BuildDateTime = buildDateTime
 	host.BuildGitBranch = buildGitBranch
-	host.BuildGitBranch = buildGitCommit
+	host.BuildGitCommit = buildGitCommit
 
 	if len(dbData) == 0 {
 		return
@@ -678,14 +678,20 @@ func (l LogController) handleAttackLog(req vo.RaspLogRequest) {
 		detail.AttackTime = time.Unix(attackDetail.AttackTime/1000, 0)
 		detail.Level = attackDetail.Level
 		detail.MetaInfo = attackDetail.MetaInfo
+
+	} else {
+		common.Log.Errorf("attack message is empty")
+		return
 	}
 
 	err = l.RaspAttackRepository.CreateRaspAttack(&attack)
 	if err != nil {
+		common.Log.Errorf("新增攻击日志记录出错, error: %v", err)
 		return
 	}
 	err = l.RaspAttackRepository.CreateRaspAttackDetail(&detail)
 	if err != nil {
+		common.Log.Errorf("新增攻击日志详情记录出错, error: %v", err)
 		return
 	}
 }

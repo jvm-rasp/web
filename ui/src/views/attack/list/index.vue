@@ -117,7 +117,6 @@
       <el-tabs type="border-card">
         <el-tab-pane label="漏洞详情">
           <el-descriptions title="" size="medium" :column="2" border>
-            <el-descriptions-item label="应用名称">{{ selectRecord.detail.appName }}</el-descriptions-item>
             <el-descriptions-item label="受攻击IP">{{ selectRecord.record.hostIp }}</el-descriptions-item>
             <el-descriptions-item label="攻击IP">{{ selectRecord.record.remoteIp }}</el-descriptions-item>
             <el-descriptions-item label="攻击时间">{{ selectRecord.record.attackTime }}</el-descriptions-item>
@@ -135,6 +134,7 @@
             <el-descriptions-item label="检测算法">{{ selectRecord.detail.algorithm }}</el-descriptions-item>
             <el-descriptions-item label="告警详情">{{ selectRecord.detail.extend }}</el-descriptions-item>
             <el-descriptions-item label="规则版本">{{ selectRecord.detail.metaInfo }}</el-descriptions-item>
+            <el-descriptions-item label="攻击参数">{{ selectRecord.detail.payload }}</el-descriptions-item>
           </el-descriptions>
           <el-descriptions
             title=""
@@ -189,6 +189,12 @@
               <pre>{{ selectRecord.detail.context.parameters }}</pre>
             </el-descriptions-item>
           </el-descriptions>
+          <el-descriptions title="" :column="2" direction="vertical" :label-style="{'text-align': 'center'}" border>
+            <el-descriptions-item label="Body参数">
+              <el-button v-if="decodeBtnVisible" type="primary" @click="decodeBody(selectRecord.detail.context.body)">解码数据</el-button>
+              <pre>{{ selectRecord.detail.context.body }}</pre>
+            </el-descriptions-item>
+          </el-descriptions>
         </el-tab-pane>
       </el-tabs>
     </el-dialog>
@@ -237,7 +243,8 @@ export default {
           context: {}
         }
       },
-      multipleSelection: []
+      multipleSelection: [],
+      decodeBtnVisible: true
     }
   },
   mounted() {
@@ -360,6 +367,7 @@ export default {
       const { data } = await getAttackDetail({ id: record.rowGuid })
       this.selectRecord.detail = data.detail
       this.dialogDetailVisible = true
+      this.decodeBtnVisible = true
     },
 
     // 获取表格数据
@@ -422,6 +430,15 @@ export default {
       } else {
         return ''
       }
+    },
+    decodeBody(body) {
+      const asciiArray = body.split(',')
+      let str = ''
+      for (let i = 0; i < asciiArray.length; i++) {
+        str += String.fromCharCode(asciiArray[i])
+      }
+      this.selectRecord.detail.context.body = str
+      this.decodeBtnVisible = false
     }
   }
 }
@@ -431,5 +448,11 @@ export default {
 pre {
   word-wrap: break-word;
   white-space: pre-wrap;
+}
+.el-input {
+  width: 400px;
+}
+.el-select {
+  width: 400px;
 }
 </style>
