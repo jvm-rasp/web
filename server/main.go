@@ -13,6 +13,7 @@ import (
 	"server/config"
 	"server/job"
 	"server/middleware"
+	"server/queue"
 	"server/repository"
 	"server/routes"
 	"server/socket"
@@ -50,6 +51,9 @@ func main() {
 	for i := 0; i < 3; i++ {
 		go logRepository.SaveOperationLogChannel(middleware.OperationLogChan)
 	}
+
+	// 开启日志消费
+	go queue.ConsumerLog()
 
 	// 开启socket监听
 	go socket.WebsocketManager.Start()

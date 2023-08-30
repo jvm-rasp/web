@@ -29,6 +29,7 @@ type ILogController interface {
 	GetAttackDetail(c *gin.Context)
 	BatchDeleteLogByIds(c *gin.Context)
 	UpdateStatusById(c *gin.Context)
+	ReportLogFromSocket(request vo.RaspLogRequest)
 }
 
 type LogController struct {
@@ -58,6 +59,20 @@ func NewLogController() ILogController {
 	return controller
 }
 
+func (l LogController) ReportLogFromSocket(req vo.RaspLogRequest) {
+	switch req.Topic {
+	case vo.JRASP_DAEMON:
+		l.HandleDaemonLog(req)
+	case vo.JRASP_AGENT:
+	case vo.JRASP_MODULE:
+	case vo.JRASP_ATTACK:
+		l.handleAttackLog(req)
+	default:
+		panic(errors.New("unknown topic: " + req.Fields.KafkaTopic))
+	}
+	l.handleErrorLog(req.Topic, req)
+}
+
 func (l LogController) ReportLog(c *gin.Context) {
 	var req vo.RaspLogRequest
 	if err := c.ShouldBind(&req); err != nil {
@@ -66,7 +81,7 @@ func (l LogController) ReportLog(c *gin.Context) {
 	}
 	switch req.Fields.KafkaTopic {
 	case vo.JRASP_DAEMON:
-		l.handleDaemonLog(req)
+		l.HandleDaemonLog(req)
 	case vo.JRASP_AGENT:
 	case vo.JRASP_MODULE:
 	case vo.JRASP_ATTACK:
@@ -202,7 +217,7 @@ const (
 	RESOURCE_NAME_UPDATE  = 1033
 )
 
-func (l LogController) handleDaemonLog(req vo.RaspLogRequest) {
+func (l LogController) HandleDaemonLog(req vo.RaspLogRequest) {
 	// 不同logid 处理
 	switch req.LogId {
 	case DAEMON_STARTUP_LOGID:

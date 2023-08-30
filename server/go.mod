@@ -11,6 +11,7 @@ require (
 	github.com/go-playground/locales v0.14.1
 	github.com/go-playground/universal-translator v0.18.1
 	github.com/go-playground/validator/v10 v10.12.0
+	github.com/goccy/go-json v0.9.7
 	github.com/google/uuid v1.3.0
 	github.com/gookit/goutil v0.6.8
 	github.com/h2non/filetype v1.1.3
@@ -36,7 +37,6 @@ require (
 	github.com/bodgit/windows v1.0.0 // indirect
 	github.com/connesc/cipherio v0.2.1 // indirect
 	github.com/dsnet/compress v0.0.1 // indirect
-	github.com/goccy/go-json v0.9.7 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/hashicorp/errwrap v1.0.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect

@@ -1,7 +1,9 @@
 package socket
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/goccy/go-json"
 	"github.com/gorilla/websocket"
 	"net"
 	"net/http"
@@ -90,6 +92,8 @@ type BroadCastMessageData struct {
 	Message []byte
 }
 
+var LogChan = make(chan vo.RaspLogRequest, 2000)
+
 // 读信息，从 websocket 连接直接读取数据
 func (c *Client) Read() {
 	defer func() {
@@ -105,6 +109,7 @@ func (c *Client) Read() {
 		if err != nil || messageType == websocket.CloseMessage {
 			break
 		}
+		fmt.Println("daemon&agent:" + string(message))
 		// c.Message <- message
 		if messageType == websocket.TextMessage {
 			hostName := c.Id
@@ -142,6 +147,14 @@ func (c *Client) Read() {
 					common.Log.Warnf("update host [%s] heartbeat err: %s", hostName, err)
 				}
 			}
+		} else if messageType == websocket.BinaryMessage {
+			var record vo.RaspLogRequest
+			err := json.Unmarshal(message, &record)
+			if err != nil {
+				common.Log.Warnf("Unmarshal log message err: %v", err)
+				continue
+			}
+			LogChan <- record
 		}
 	}
 }
