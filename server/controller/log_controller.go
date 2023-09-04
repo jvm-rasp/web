@@ -85,7 +85,7 @@ func (l LogController) ReportLog(c *gin.Context) {
 	case vo.JRASP_AGENT:
 	case vo.JRASP_MODULE:
 	case vo.JRASP_ATTACK:
-		l.handleAttackLog(req)
+		//l.handleAgentLog(req)
 	default:
 		panic(errors.New("unknown topic: " + req.Fields.KafkaTopic))
 	}
@@ -710,6 +710,70 @@ func (l LogController) handleAttackLog(req vo.RaspLogRequest) {
 		return
 	}
 }
+
+//func (l LogController) handleAgentLog(req vo.RaspLogRequest) {
+//	level := req.Level
+//	if level == "ERROR" || level == "ERR" {
+//		// 错误日志输出
+//		common.Log.Error(req.Message)
+//		return
+//	}
+//
+//	attack := model.RaspAttack{
+//		HostName: req.HostName,
+//	}
+//	// 构件攻击详情对象
+//	detail := model.RaspAttackDetail{}
+//
+//	// 攻击json
+//	msg := maps["message"]
+//	if msg != "" {
+//		var attackDetail = &vo.AttackDetail{}
+//		err := json.Unmarshal([]byte(msg), attackDetail)
+//		if err != nil {
+//			panic(err)
+//		}
+//		guid, _ := uuid.NewUUID()
+//		attack.RowGuid = guid.String()
+//		attack.HostIp = attackDetail.Context.LocalAddr
+//		attack.RemoteIp = attackDetail.Context.RemoteHost
+//		attack.RequestUri = attackDetail.Context.RequestURI
+//		attack.IsBlocked = attackDetail.IsBlocked
+//		attack.Level = attackDetail.Level
+//		attack.HandleResult = 0
+//		attack.AttackType = attackDetail.AttackType
+//		attack.AttackTime = time.Unix(attackDetail.AttackTime/1000, 0)
+//
+//		// 构建攻击详情
+//		detail.ParentGuid = attack.RowGuid
+//		detail.Context = datatypes.JSON(util.Struct2Json(attackDetail.Context))
+//		detail.AppName = attackDetail.AppName
+//		detail.StackTrace = attackDetail.StackTrace
+//		detail.Payload = attackDetail.Payload
+//		detail.IsBlocked = attackDetail.IsBlocked
+//		detail.AttackType = attackDetail.AttackType
+//		detail.Algorithm = attackDetail.Algorithm
+//		detail.Extend = attackDetail.Extend
+//		detail.AttackTime = time.Unix(attackDetail.AttackTime/1000, 0)
+//		detail.Level = attackDetail.Level
+//		detail.MetaInfo = attackDetail.MetaInfo
+//
+//	} else {
+//		common.Log.Errorf("attack message is empty")
+//		return
+//	}
+//
+//	err := l.RaspAttackRepository.CreateRaspAttack(&attack)
+//	if err != nil {
+//		common.Log.Errorf("新增攻击日志记录出错, error: %v", err)
+//		return
+//	}
+//	err = l.RaspAttackRepository.CreateRaspAttackDetail(&detail)
+//	if err != nil {
+//		common.Log.Errorf("新增攻击日志详情记录出错, error: %v", err)
+//		return
+//	}
+//}
 
 func (l LogController) handleUpdateResourceName(req vo.RaspLogRequest) {
 	detailMap := make(map[string]interface{})

@@ -27,7 +27,9 @@ type RaspLogRequest struct {
 	Ts       string `json:"ts"`
 
 	// 1.1.3 新增
-	Topic string `json:"topic"`
+	Topic      string `json:"topic"`
+	Thread     string `json:"thread"`
+	StackTrace string `json:"stackTrace"`
 }
 
 type Host struct {
