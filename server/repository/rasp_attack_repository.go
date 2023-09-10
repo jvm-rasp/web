@@ -2,7 +2,9 @@ package repository
 
 import (
 	"fmt"
+	"gorm.io/gorm"
 	"server/common"
+	"server/config"
 	"server/model"
 	"server/vo"
 	"strconv"
@@ -18,7 +20,7 @@ type IRaspAttackRepository interface {
 	DeleteRaspAttack(guids []string) error
 	DeleteRaspDetail(guids []string) error
 	UpdateRaspAttack(attack *model.RaspAttack) error
-    DeleteAttackLogsByJob(maxSize int) error
+	DeleteAttackLogsByJob(maxSize int) error
 }
 
 type RaspAttackRepository struct {
@@ -41,8 +43,11 @@ func (a RaspAttackRepository) CreateRaspAttackDetail(detail *model.RaspAttackDet
 func (a RaspAttackRepository) GetRaspAttackDetail(parentGuid string) (*model.RaspAttackDetail, error) {
 	var detail *model.RaspAttackDetail
 	db := common.DB.Model(&model.RaspAttackDetail{}).Where("parent_guid = ?", parentGuid)
-	err := db.Find(&detail).Error
-	return detail, err
+	err := db.First(&detail).Error
+	if err == gorm.ErrRecordNotFound {
+		return nil, nil
+	}
+	return detail, nil
 }
 
 func (a RaspAttackRepository) GetRaspAttacks(req *vo.RaspAttackListRequest) ([]*model.RaspAttack, int64, error) {
@@ -95,7 +100,10 @@ func (r RaspAttackRepository) DeleteRaspDetail(guids []string) error {
 
 func (r RaspAttackRepository) GetRaspAttackById(id uint) (*model.RaspAttack, error) {
 	var record *model.RaspAttack
-	err := common.DB.Find(&record, "id = ?", id).Error
+	err := common.DB.First(&record, "id = ?", id).Error
+	if err == gorm.ErrRecordNotFound {
+		return nil, nil
+	}
 	return record, err
 }
 
@@ -103,7 +111,6 @@ func (r RaspAttackRepository) UpdateRaspAttack(attack *model.RaspAttack) error {
 	err := common.DB.Save(attack).Error
 	return err
 }
-
 
 func (r RaspAttackRepository) DeleteAttackLogsByJob(maxSize int) error {
 	var logs []model.RaspAttack
@@ -114,6 +121,22 @@ func (r RaspAttackRepository) DeleteAttackLogsByJob(maxSize int) error {
 		maxId := logs[0].ID
 		if err := common.DB.Where("id <= ?", maxId).Delete(&model.RaspAttack{}).Error; err != nil {
 			return err
+		}
+		// 删除rasp_attack_details表
+		guid := logs[0].RowGuid
+		detail, err := r.GetRaspAttackDetail(guid)
+		if err == nil && detail != nil {
+			if err = common.DB.Where("id <= ?", detail.ID).Delete(&model.RaspAttackDetail{}).Error; err != nil {
+				return err
+			}
+		}
+		// 释放空间
+		switch config.Conf.Database.Driver {
+		case "sqlite":
+			if err := common.DB.Exec("vacuum").Error; err != nil {
+				return err
+			}
+		case "mysql":
 		}
 	}
 	return nil
