@@ -54,6 +54,19 @@ func initMySQL() {
 	Log.Infof("初始化mysql数据库完成!")
 }
 
+func FreeDBSpace() {
+	// 释放空间
+	switch config.Conf.Database.Driver {
+	case "sqlite":
+		err := DB.Exec("vacuum").Error
+		if err != nil {
+			Log.Errorf("释放磁盘空间错误, error: %v", err)
+			return
+		}
+	case "mysql":
+	}
+}
+
 // 自动迁移表结构
 func dbAutoMigrate() {
 	err := DB.AutoMigrate(
@@ -76,6 +89,19 @@ func dbAutoMigrate() {
 		&model.HostResource{},
 	)
 	if err != nil {
-		return
+		Log.Errorf("初始化数据表出错, errpr: %v", err)
 	}
+
+	// 先清空apis表和casbin_rule表并进行重建
+	err = DB.Table("apis").Where("1=1").Unscoped().Delete(&model.Api{}).Error
+	if err != nil {
+		Log.Errorf("清空apis表出错, errpr: %v", err)
+	}
+	err = DB.Table("casbin_rule").Where("1=1").Unscoped().Delete(&model.Api{}).Error
+	if err != nil {
+		if err.Error() != "no such table: casbin_rule" {
+			Log.Errorf("清空casbin_rule表出错, errpr: %v", err)
+		}
+	}
+	FreeDBSpace()
 }
