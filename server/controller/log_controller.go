@@ -21,6 +21,8 @@ import (
 	"time"
 )
 
+var LogChan = make(chan vo.RaspLogRequest, 2000)
+
 // grok
 const pattern = "%{TIMESTAMP_ISO8601:time}\\s*%{LOGLEVEL:level}\\s*%{DATA:host}\\s*\\[%{DATA:thread}\\]\\s*\\[%{DATA:api}\\]\\s*%{GREEDYDATA:message}"
 
@@ -31,6 +33,7 @@ type ILogController interface {
 	BatchDeleteLogByIds(c *gin.Context)
 	UpdateStatusById(c *gin.Context)
 	ExportAttackLogs(c *gin.Context)
+	HandleLog(req vo.RaspLogRequest)
 }
 
 type LogController struct {
@@ -66,6 +69,12 @@ func (l LogController) ReportLog(c *gin.Context) {
 		response.Fail(c, nil, err.Error())
 		return
 	}
+
+	// 写入队列
+	LogChan <- req
+}
+
+func (l LogController) HandleLog(req vo.RaspLogRequest) {
 	switch req.Fields.KafkaTopic {
 	case vo.JRASP_DAEMON:
 		l.handleDaemonLog(req)
@@ -817,7 +826,7 @@ func (l LogController) ExportAttackLogs(c *gin.Context) {
 		3: "忽略",
 	}
 	for index, attack := range raspAttacks {
-		f.SetCellValue(AttackSheet, fmt.Sprintf("A%v", index+2), attack.AttackTime.Format(time.DateTime))
+		f.SetCellValue(AttackSheet, fmt.Sprintf("A%v", index+2), attack.AttackTime.Format("2006-01-02 15:04:05.000000"))
 		f.SetCellValue(AttackSheet, fmt.Sprintf("B%v", index+2), attack.HostIp)
 		f.SetCellValue(AttackSheet, fmt.Sprintf("C%v", index+2), attack.AttackType)
 		f.SetCellValue(AttackSheet, fmt.Sprintf("D%v", index+2), attack.RequestUri)

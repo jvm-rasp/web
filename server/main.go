@@ -13,6 +13,7 @@ import (
 	"server/config"
 	"server/job"
 	"server/middleware"
+	"server/queue"
 	"server/repository"
 	"server/routes"
 	"server/socket"
@@ -43,6 +44,8 @@ func main() {
 	job := job.NewTableDeleteJob()
 
 	go job.Run()
+
+	go queue.ConsumerLog()
 
 	// 操作日志中间件处理日志时没有将日志发送到rabbitmq或者kafka中, 而是发送到了channel中
 	// 这里开启3个goroutine处理channel将日志记录到数据库
