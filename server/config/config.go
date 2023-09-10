@@ -25,6 +25,7 @@ type config struct {
 	Logs      *LogsConfig      `mapstructure:"logs" json:"logs"`
 	Casbin    *CasbinConfig    `mapstructure:"casbin" json:"casbin"`
 	Jwt       *JwtConfig       `mapstructure:"jwt" json:"jwt"`
+	Cors      *CORSConfig      `mapstructure:"cors" json:"cors" yaml:"cors"`
 	RateLimit *RateLimitConfig `mapstructure:"rate-limit" json:"rateLimit"`
 	Ssl       *Ssl             `mapstructure:"ssl" json:"ssl"`
 	Env       *Env             `json:"env"`
@@ -97,6 +98,10 @@ func InitConfig() {
 	}
 	// 获取OS类型
 	Conf.Env.OsType = runtime.GOOS
+
+	Conf.Cors = &CORSConfig{
+		Enable: false,
+	}
 }
 
 type SystemConfig struct {
@@ -168,4 +173,8 @@ type TableDeleteJob struct {
 	Enable         bool   `mapstructure:"enable" json:"enable"`                 // 是否开启 `
 	CronExpression string `mapstructure:"cronExpression" json:"cronExpression"` // 执行频率
 	TableMaxSize   int    `mapstructure:"tableMaxSize" json:"tableMaxSize"`     // 最大数据 1w
+}
+
+type CORSConfig struct {
+	Enable bool `mapstructure:"enable" json:"enable" yaml:"enable"`
 }
