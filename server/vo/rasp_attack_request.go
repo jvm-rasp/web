@@ -7,6 +7,13 @@ type RaspAttackListRequest struct {
 	HandleResult string `json:"handleResult" form:"handleResult"`
 	PageNum      uint   `json:"pageNum" form:"pageNum"`
 	PageSize     uint   `json:"pageSize" form:"pageSize"`
+
+	AttackStartTime string `json:"attackStartTime" form:"attackStartTime"`
+	AttackEndTime   string `json:"attackEndTime" form:"attackEndTime"`
+	HostIp          string `json:"hostIp" form:"hostIp"`
+	AttackType      string `json:"attackType" form:"attackType"`
+	RemoteIp        string `json:"remoteIp" form:"remoteIp"`
+	Level           string `json:"level" form:"level"`
 }
 
 type RaspAttackDetailRequest struct {

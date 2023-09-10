@@ -2,10 +2,12 @@ package controller
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/vjeantet/grok"
+	"github.com/xuri/excelize/v2"
 	"gorm.io/datatypes"
 	"server/common"
 	"server/global"
@@ -28,6 +30,7 @@ type ILogController interface {
 	GetAttackDetail(c *gin.Context)
 	BatchDeleteLogByIds(c *gin.Context)
 	UpdateStatusById(c *gin.Context)
+	ExportAttackLogs(c *gin.Context)
 }
 
 type LogController struct {
@@ -756,4 +759,89 @@ func (l LogController) convertMessageToStatus(message string) int {
 		status = 2
 	}
 	return status
+}
+
+func (l LogController) ExportAttackLogs(c *gin.Context) {
+	var req vo.RaspAttackListRequest
+	// 参数绑定
+	if err := c.ShouldBind(&req); err != nil {
+		response.Fail(c, nil, err.Error())
+		return
+	}
+	// 参数校验
+	if err := common.Validate.Struct(&req); err != nil {
+		errStr := err.(validator.ValidationErrors)[0].Translate(common.Trans)
+		response.Fail(c, nil, errStr)
+		return
+	}
+	// 获取
+	raspAttacks, _, err := l.RaspAttackRepository.GetRaspAttacksAndDetailNoPage(&req)
+	if err != nil {
+		response.Fail(c, nil, "获取实例列表失败")
+		return
+	}
+	f := excelize.NewFile()
+	defer func() {
+		if err := f.Close(); err != nil {
+			fmt.Println(err)
+		}
+	}()
+	// 创建sheet页
+	const AttackSheet = "Attack"
+	index, err := f.NewSheet(AttackSheet)
+	if err != nil {
+		response.Fail(c, nil, err.Error())
+		return
+	}
+	// 设置表头标题
+	f.SetCellValue(AttackSheet, "A1", "攻击时间")
+	f.SetCellValue(AttackSheet, "B1", "实例IP")
+	f.SetCellValue(AttackSheet, "C1", "攻击类型")
+	f.SetCellValue(AttackSheet, "D1", "URL")
+	f.SetCellValue(AttackSheet, "E1", "攻击IP")
+	f.SetCellValue(AttackSheet, "F1", "风险等级")
+	f.SetCellValue(AttackSheet, "G1", "阻断状态")
+	f.SetCellValue(AttackSheet, "H1", "处理状态")
+	f.SetCellValue(AttackSheet, "I1", "请求详情")
+	f.SetCellValue(AttackSheet, "J1", "应用名称")
+	f.SetCellValue(AttackSheet, "K1", "堆栈信息")
+	f.SetCellValue(AttackSheet, "L1", "攻击payload")
+	f.SetCellValue(AttackSheet, "M1", "检测算法")
+	f.SetCellValue(AttackSheet, "N1", "告警信息")
+	f.SetCellValue(AttackSheet, "O1", "元数据信息")
+	// Set value of a cell.
+	var handleStatus = map[int]string{
+		0: "未处理",
+		1: "已确认",
+		2: "误报",
+		3: "忽略",
+	}
+	for index, attack := range raspAttacks {
+		f.SetCellValue(AttackSheet, fmt.Sprintf("A%v", index+2), attack.AttackTime.Format(time.DateTime))
+		f.SetCellValue(AttackSheet, fmt.Sprintf("B%v", index+2), attack.HostIp)
+		f.SetCellValue(AttackSheet, fmt.Sprintf("C%v", index+2), attack.AttackType)
+		f.SetCellValue(AttackSheet, fmt.Sprintf("D%v", index+2), attack.RequestUri)
+		f.SetCellValue(AttackSheet, fmt.Sprintf("E%v", index+2), attack.RemoteIp)
+		f.SetCellValue(AttackSheet, fmt.Sprintf("F%v", index+2), util.Ternary(attack.Level >= 90, "高危", "中危"))
+		f.SetCellValue(AttackSheet, fmt.Sprintf("G%v", index+2), util.Ternary(attack.IsBlocked, "阻断", "放行"))
+		f.SetCellValue(AttackSheet, fmt.Sprintf("H%v", index+2), handleStatus[attack.HandleResult])
+		f.SetCellValue(AttackSheet, fmt.Sprintf("I%v", index+2), attack.Context.String())
+		f.SetCellValue(AttackSheet, fmt.Sprintf("J%v", index+2), attack.AppName)
+		f.SetCellValue(AttackSheet, fmt.Sprintf("K%v", index+2), attack.StackTrace)
+		f.SetCellValue(AttackSheet, fmt.Sprintf("L%v", index+2), attack.Payload)
+		f.SetCellValue(AttackSheet, fmt.Sprintf("M%v", index+2), attack.Algorithm)
+		f.SetCellValue(AttackSheet, fmt.Sprintf("N%v", index+2), attack.Extend)
+		f.SetCellValue(AttackSheet, fmt.Sprintf("O%v", index+2), attack.MetaInfo)
+	}
+	// Set active sheet of the workbook.
+	f.SetActiveSheet(index)
+	// Save spreadsheet by the given path.
+	data, err := f.WriteToBuffer()
+	if err != nil {
+		response.Fail(c, nil, err.Error())
+		return
+	}
+	c.Writer.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=%s", "export_attacks.xlsx"))
+	c.Writer.Header().Add("response-type", "blob")
+	c.Data(200, "application/vnd.ms-excel;charset=utf8", data.Bytes())
 }

@@ -19,6 +19,7 @@ func InitRaspAttackRoutes(r *gin.RouterGroup, authMiddleware *jwt.GinJWTMiddlewa
 		router.GET("/detail", raspLogController.GetAttackDetail)
 		router.POST("/delete/batch", raspLogController.BatchDeleteLogByIds)
 		router.POST("/update", raspLogController.UpdateStatusById)
+		router.POST("/export", raspLogController.ExportAttackLogs)
 	}
 	return r
 }

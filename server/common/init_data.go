@@ -835,6 +835,13 @@ func InitData() {
 			Creator:  "系统",
 		},
 		{
+			Method:   "POST",
+			Path:     "/attack/export",
+			Category: "attack",
+			Desc:     "导出攻击数据",
+			Creator:  "系统",
+		},
+		{
 			Method:   "GET",
 			Path:     "/process/list",
 			Category: "process",

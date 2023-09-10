@@ -13,6 +13,7 @@ import (
 
 type IRaspAttackRepository interface {
 	GetRaspAttacks(req *vo.RaspAttackListRequest) ([]*model.RaspAttack, int64, error)
+	GetRaspAttacksAndDetailNoPage(req *vo.RaspAttackListRequest) ([]*model.RaspAttackWithDetail, int64, error)
 	GetRaspAttackById(id uint) (*model.RaspAttack, error)
 	GetRaspAttackDetail(parentGuid string) (*model.RaspAttackDetail, error)
 	CreateRaspAttack(attack *model.RaspAttack) error
@@ -91,6 +92,88 @@ func (a RaspAttackRepository) GetRaspAttacks(req *vo.RaspAttackListRequest) ([]*
 func (r RaspAttackRepository) DeleteRaspAttack(guids []string) error {
 	err := common.DB.Where("row_guid IN (?)", guids).Unscoped().Delete(&model.RaspAttack{}).Error
 	return err
+}
+func (a RaspAttackRepository) GetRaspAttacksAndDetailNoPage(req *vo.RaspAttackListRequest) ([]*model.RaspAttackWithDetail, int64, error) {
+	var list []*model.RaspAttackWithDetail
+	db := common.DB.Model(&model.RaspAttack{}).Order("rasp_attacks.created_at DESC")
+	// 攻击时间范围
+	attackStartTime := strings.TrimSpace(req.AttackStartTime)
+	if attackStartTime != "" {
+		db = db.Where("rasp_attacks.attack_time >= ?", attackStartTime)
+	}
+	attackEndTime := strings.TrimSpace(req.AttackEndTime)
+	if attackStartTime != "" {
+		db = db.Where("rasp_attacks.attack_time <= ?", attackEndTime)
+	}
+	// 主机IP
+	hostIp := strings.TrimSpace(req.HostIp)
+	if hostIp != "" {
+		db = db.Where("rasp_attacks.host_ip = ?", hostIp)
+	}
+	// 攻击类型
+	attackType := strings.TrimSpace(req.AttackType)
+	if attackType != "" {
+		db = db.Where("rasp_attacks.attack_type like ?", fmt.Sprintf("%%%s%%", attackType))
+	}
+	// 远程IP
+	remoteIp := strings.TrimSpace(req.RemoteIp)
+	if remoteIp != "" {
+		db = db.Where("rasp_attacks.remote_ip = ?", remoteIp)
+	}
+	// 安全等级
+	level := strings.TrimSpace(req.Level)
+	if level != "" {
+		if level == "2" {
+			db = db.Where("rasp_attacks.level >= ?", 90)
+		} else if level == "1" {
+			db = db.Where("rasp_attacks.level < ?", 90)
+		}
+	}
+	// url地址
+	url := strings.TrimSpace(req.Url)
+	if url != "" {
+		db = db.Where("rasp_attacks.request_uri like ?", fmt.Sprintf("%%%s%%", url))
+	}
+	// 是否拦截
+	isBlocked, err := strconv.ParseBool(req.IsBlocked)
+	if err == nil {
+		db = db.Where("rasp_attacks.is_blocked = ?", isBlocked)
+	}
+	// 处理结果
+	result, err := strconv.ParseInt(req.HandleResult, 10, 32)
+	if err == nil {
+		db = db.Where("rasp_attacks.handle_result = ?", result)
+	}
+
+	db = db.Select("rasp_attacks.created_at," +
+		"rasp_attacks.row_guid," +
+		"rasp_attacks.host_name," +
+		"rasp_attacks.host_ip," +
+		"rasp_attacks.remote_ip," +
+		"rasp_attacks.attack_type," +
+		"rasp_attacks.is_blocked," +
+		"rasp_attacks.level," +
+		"rasp_attacks.handle_result," +
+		"rasp_attacks.request_uri," +
+		"rasp_attacks.attack_time," +
+		"rasp_attack_details.parent_guid," +
+		"rasp_attack_details.context," +
+		"rasp_attack_details.app_name," +
+		"rasp_attack_details.stack_trace," +
+		"rasp_attack_details.payload," +
+		"rasp_attack_details.algorithm," +
+		"rasp_attack_details.extend," +
+		"rasp_attack_details.meta_info").
+		Joins("right join rasp_attack_details on rasp_attack_details.parent_guid=rasp_attacks.row_guid")
+
+	//记录总条数
+	var total int64
+	err = db.Count(&total).Error
+	if err != nil {
+		return list, total, err
+	}
+	err = db.Find(&list).Error
+	return list, total, err
 }
 
 func (r RaspAttackRepository) DeleteRaspDetail(guids []string) error {

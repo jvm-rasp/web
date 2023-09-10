@@ -31,3 +31,12 @@ export function updateStatus(params) {
     data: params
   })
 }
+
+export function exportAttackLog(params) {
+  return request({
+    url: '/attack/export',
+    method: 'post',
+    data: params,
+    responseType: 'blob'
+  })
+}
