@@ -2,7 +2,6 @@ package controller
 
 import (
 	"encoding/json"
-	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
@@ -72,7 +71,7 @@ func (l LogController) ReportLog(c *gin.Context) {
 	case vo.JRASP_ATTACK:
 		l.handleAttackLog(req)
 	default:
-		panic(errors.New("unknown topic: " + req.Fields.KafkaTopic))
+		common.Log.Errorf("unknown topic: %v", req.Fields.KafkaTopic)
 	}
 	l.handleErrorLog(req.Fields.KafkaTopic, req)
 }
@@ -236,14 +235,16 @@ func (l LogController) handleStartupLog(req vo.RaspLogRequest) {
 	}
 	dbData, err := l.RaspHostRepository.QueryRaspHost(host.HostName)
 	if err != nil {
-		panic(err)
+		common.Log.Errorf("查询主机信息失败, err: %v, hostName: %v", err, host.HostName)
+		return
 	}
 
 	// 获取 agentMode
 	detailMap := make(map[string]string)
 	err = json.Unmarshal([]byte(req.Detail), &detailMap)
 	if err != nil {
-		panic(err)
+		common.Log.Errorf("反序列化json失败, err: %v, json: %v", err, req.Detail)
+		return
 	}
 	host.AgentMode = detailMap["agentMode"]
 
@@ -253,7 +254,8 @@ func (l LogController) handleStartupLog(req vo.RaspLogRequest) {
 
 	err = l.RaspHostRepository.UpdateRaspHostByHostName(host)
 	if err != nil {
-		panic(err)
+		common.Log.Errorf("更新主机信息失败, err: %v, host: %v", err, host)
+		return
 	}
 }
 
@@ -261,7 +263,8 @@ func (l LogController) handleHostEnvLog(req vo.RaspLogRequest) {
 	detailMap := make(map[string]interface{})
 	err := json.Unmarshal([]byte(req.Detail), &detailMap)
 	if err != nil {
-		panic(err)
+		common.Log.Errorf("反序列化json失败, err: %v, json: %v", err, req.Detail)
+		return
 	}
 
 	installDir := detailMap["installDir"].(string)
@@ -279,7 +282,7 @@ func (l LogController) handleHostEnvLog(req vo.RaspLogRequest) {
 
 	dbData, err := l.RaspHostRepository.QueryRaspHost(req.HostName)
 	if err != nil {
-		panic(err)
+		common.Log.Errorf("查询主机信息失败, err: %v, hostName: %v", err, req.HostName)
 		return
 	}
 
@@ -309,7 +312,8 @@ func (l LogController) handleHostEnvLog(req vo.RaspLogRequest) {
 	} else {
 		err := l.RaspHostRepository.UpdateRaspHostByHostName(host)
 		if err != nil {
-			panic(err)
+			common.Log.Errorf("更新主机信息失败, err: %v, host: %v", err, host)
+			return
 		}
 	}
 }
@@ -317,7 +321,8 @@ func (l LogController) handleHostEnvLog(req vo.RaspLogRequest) {
 func (l LogController) handleHeartbeatLog(req vo.RaspLogRequest) {
 	hostInfo, err := l.RaspHostRepository.GetRaspHostByHostName(req.HostName)
 	if err != nil {
-		panic(err)
+		common.Log.Errorf("处理心跳日志错误, error: %v", err)
+		return
 	}
 
 	if hostInfo == nil {
@@ -327,7 +332,8 @@ func (l LogController) handleHeartbeatLog(req vo.RaspLogRequest) {
 		}
 		configId, err := l.RaspHostRepository.CreateRaspHost(hostInfo)
 		if err != nil {
-			panic(err)
+			common.Log.Errorf("处理心跳日志错误, error: %v", err)
+			return
 		}
 		// 推送默认配置
 		if configId != 0 {
@@ -339,21 +345,24 @@ func (l LogController) handleHeartbeatLog(req vo.RaspLogRequest) {
 	} else {
 		err = l.RaspHostRepository.UpdateRaspHostByHostName(hostInfo)
 		if err != nil {
-			panic(err)
+			common.Log.Errorf("处理心跳日志错误, error: %v", err)
+			return
 		}
 	}
 
 	// db 数据
 	dbList, err := l.JavaProcessRepository.GetAllJavaProcessInfos(req.HostName)
 	if err != nil {
-		panic(err)
+		common.Log.Errorf("处理心跳日志错误, error: %v", err)
+		return
 	}
 
 	// 上报数据
 	detailMap := make(map[string]interface{})
 	err = json.Unmarshal([]byte(req.Detail), &detailMap)
 	if err != nil {
-		panic(err)
+		common.Log.Errorf("处理心跳日志错误, error: %v", err)
+		return
 	}
 
 	for _, v := range dbList {
@@ -361,7 +370,8 @@ func (l LogController) handleHeartbeatLog(req vo.RaspLogRequest) {
 		if len(detailMap) == 0 || detailMap[strconv.Itoa(v.Pid)] == nil {
 			err := l.JavaProcessRepository.DeleteProcess(v.ID)
 			if err != nil {
-				panic(err)
+				common.Log.Errorf("处理心跳日志错误, error: %v", err)
+				return
 			}
 			continue
 		}
@@ -392,7 +402,8 @@ func (l LogController) handleHeartbeatLog(req vo.RaspLogRequest) {
 		process := &model.JavaProcessInfo{HostName: req.HostName, Pid: int(pid), StartTime: startTime, Status: l.convertMessageToStatus(message), Message: message}
 		err = l.JavaProcessRepository.SaveProcessInfo(process)
 		if err != nil {
-			panic(err)
+			common.Log.Errorf("处理心跳日志错误, error: %v", err)
+			return
 		}
 	}
 
@@ -402,7 +413,8 @@ func (l LogController) handleAgentInitAndUnloadLog(req vo.RaspLogRequest) {
 	detailMap := make(map[string]interface{})
 	err := json.Unmarshal([]byte(req.Detail), &detailMap)
 	if err != nil {
-		panic(err)
+		common.Log.Errorf("反序列化json信息失败, err: %v, json: %v", err, req.Detail)
+		return
 	}
 
 	pid := detailMap["pid"].(float64)
@@ -416,12 +428,14 @@ func (l LogController) handleAgentInitAndUnloadLog(req vo.RaspLogRequest) {
 		processInfo.StartTime = startTime
 		err = l.JavaProcessRepository.UpdateProcessInfo(processInfo)
 		if err != nil {
-			panic(err)
+			common.Log.Errorf("更新java进程信息失败, err: %v, process: %v", err, processInfo)
+			return
 		}
 	} else {
 		err = l.JavaProcessRepository.DeleteProcessByPid(req.HostName, uint(pid))
 		if err != nil {
-			panic(err)
+			common.Log.Errorf("删除java进程信息失败, err: %v, pid: %v", err, pid)
+			return
 		}
 	}
 }
@@ -433,7 +447,8 @@ func (l LogController) handleAgentConfigUpdateLog(req vo.RaspLogRequest) {
 	}
 	err := l.RaspHostRepository.UpdateRaspHostByHostName(host)
 	if err != nil {
-		panic(err)
+		common.Log.Errorf("更新主机信息失败, err: %v, host: %v", err, host)
+		return
 	}
 }
 
@@ -442,15 +457,14 @@ func (l LogController) handleUpdateConfigId(req vo.RaspLogRequest) {
 	detailMap := make(map[string]uint)
 	err := json.Unmarshal([]byte(req.Detail), &detailMap)
 	if err != nil {
-		panic(err)
+		common.Log.Errorf("反序列化json信息失败, err: %v, json: %v", err, req.Detail)
+		return
 	}
 	configId := detailMap["configId"]
-	if err != nil {
-		panic(err)
-	}
 	dbData, err := l.RaspHostRepository.QueryRaspHost(req.HostName)
 	if err != nil {
-		panic(err)
+		common.Log.Errorf("查询主机信息失败, err: %v, hostName: %v", err, req.HostName)
+		return
 	}
 	if len(dbData) > 0 {
 		dbConfigId := dbData[0].ConfigId
@@ -469,7 +483,7 @@ func (l LogController) handleFindJavaProcessLog(req vo.RaspLogRequest) {
 	detailMap := make(map[string]interface{})
 	err := json.Unmarshal([]byte(req.Detail), &detailMap)
 	if err != nil {
-		panic(err)
+		common.Log.Errorf("反序列化json信息失败, err: %v, json: %v", err, req.Detail)
 		return
 	}
 
@@ -488,7 +502,7 @@ func (l LogController) handleFindJavaProcessLog(req vo.RaspLogRequest) {
 			strV := strconv.FormatInt(int64(v), 10)
 			paramSlice = append(paramSlice, strV)
 		default:
-			panic("params type not supported")
+			common.Log.Errorf("params type not supported")
 		}
 	}
 	var appNamesStr = ""
@@ -500,7 +514,8 @@ func (l LogController) handleFindJavaProcessLog(req vo.RaspLogRequest) {
 	// 先判断表中是否有对应的pid
 	processInfo, err := l.JavaProcessRepository.GetProcessByPid(req.HostName, uint(pid))
 	if err != nil {
-		panic(err)
+		common.Log.Errorf("获取java进程信息失败, err: %v, pid: %V", err, pid)
+		return
 	}
 	// 如果库中没有则新增, 如果有则更新
 	if processInfo == nil {
@@ -515,7 +530,8 @@ func (l LogController) handleFindJavaProcessLog(req vo.RaspLogRequest) {
 		}
 		err = l.JavaProcessRepository.SaveProcessInfo(process)
 		if err != nil {
-			panic(err)
+			common.Log.Errorf("保存java进程信息失败, err: %v, process: %V", err, process)
+			return
 		}
 	} else {
 		processInfo.Status = status
@@ -523,7 +539,8 @@ func (l LogController) handleFindJavaProcessLog(req vo.RaspLogRequest) {
 		processInfo.AppNamesInfo = appNamesStr
 		err = l.JavaProcessRepository.UpdateProcessInfo(processInfo)
 		if err != nil {
-			panic(err)
+			common.Log.Errorf("更新java进程信息失败, err: %v, process: %V", err, processInfo)
+			return
 		}
 	}
 }
@@ -531,11 +548,13 @@ func (l LogController) handleFindJavaProcessLog(req vo.RaspLogRequest) {
 func (l LogController) handleRemoveJavaProcessLog(req vo.RaspLogRequest) {
 	pid, err := strconv.ParseInt(req.Detail, 10, 32)
 	if err != nil {
-		panic(err)
+		common.Log.Errorf("转换pid出错, err: %v, pid: %v", err, req.Detail)
+		return
 	}
 	err = l.JavaProcessRepository.DeleteProcessByPid(req.HostName, uint(pid))
 	if err != nil {
-		panic(err)
+		common.Log.Errorf("删除java进程失败, err: %v, pid: %v", err, pid)
+		return
 	}
 }
 
@@ -549,7 +568,7 @@ func (l LogController) handleErrorLog(topic string, req vo.RaspLogRequest) {
 		l.handleModuleErrorLog(req)
 	case vo.JRASP_ATTACK:
 	default:
-		panic(errors.New("unknown topic: " + req.Fields.KafkaTopic))
+		common.Log.Errorf("unknown topic: %v", req.Fields.KafkaTopic)
 	}
 }
 
@@ -573,7 +592,8 @@ func (l LogController) handleAgentErrorLog(req vo.RaspLogRequest) {
 	}
 	err = l.RaspErrorRepository.CreateRaspLogs(errorLogs)
 	if err != nil {
-		panic(err)
+		common.Log.Errorf("创建rasp日志出错, err: %v", err)
+		return
 	}
 
 }
@@ -585,7 +605,8 @@ func (l LogController) handleDaemonErrorLog(req vo.RaspLogRequest) {
 	var message map[string]interface{}
 	err := json.Unmarshal([]byte(req.Message), &message)
 	if err != nil {
-		panic(err)
+		common.Log.Errorf("反序列化json出错, err: %v, json: %v", err, req.Message)
+		return
 	}
 	errorLogs := &model.RaspErrorLogs{
 		Topic:    vo.JRASP_DAEMON,
@@ -596,7 +617,8 @@ func (l LogController) handleDaemonErrorLog(req vo.RaspLogRequest) {
 	}
 	err = l.RaspErrorRepository.CreateRaspLogs(errorLogs)
 	if err != nil {
-		panic(err)
+		common.Log.Errorf("创建错误日志出错, err: %v", err)
+		return
 	}
 }
 
@@ -620,7 +642,8 @@ func (l LogController) handleModuleErrorLog(req vo.RaspLogRequest) {
 	}
 	err = l.RaspErrorRepository.CreateRaspLogs(errorLogs)
 	if err != nil {
-		panic(err)
+		common.Log.Errorf("创建rasp日志出错, err: %v", err)
+		return
 	}
 }
 
@@ -652,7 +675,8 @@ func (l LogController) handleAttackLog(req vo.RaspLogRequest) {
 		var attackDetail = &vo.AttackDetail{}
 		err := json.Unmarshal([]byte(msg), attackDetail)
 		if err != nil {
-			panic(err)
+			common.Log.Errorf("反序列化json失败, error: %v, json: %v", err, msg)
+			return
 		}
 		guid, _ := uuid.NewUUID()
 		attack.RowGuid = guid.String()
@@ -700,12 +724,13 @@ func (l LogController) handleUpdateResourceName(req vo.RaspLogRequest) {
 	detailMap := make(map[string]interface{})
 	err := json.Unmarshal([]byte(req.Detail), &detailMap)
 	if err != nil {
-		panic(err)
+		common.Log.Errorf("反序列化json出错, err: %v, json: %v", err, req.Detail)
 		return
 	}
 	resourceInfo, err := l.HostResourceRepository.GetResourceByNameAndIP(detailMap["hostName"].(string), detailMap["ip"].(string))
 	if err != nil {
-		panic(err)
+		common.Log.Errorf("获取主机资源信息失败, err: %v, hostName: %v, ip: %v", err, detailMap["hostName"], detailMap["ip"])
+		return
 	}
 	if resourceInfo == nil {
 		resourceInfo = &model.HostResource{
@@ -715,7 +740,8 @@ func (l LogController) handleUpdateResourceName(req vo.RaspLogRequest) {
 		}
 		err = l.HostResourceRepository.CreateResource(resourceInfo)
 		if err != nil {
-			panic(err)
+			common.Log.Errorf("创建主机资源信息失败, err: %v", err)
+			return
 		}
 	}
 }
