@@ -223,6 +223,7 @@ func (l LogController) handleDaemonLog(req vo.RaspLogRequest) {
 	case HEART_BEAT_LOGID:
 		l.handleHeartbeatLog(req)
 	case AGENT_SUCCESS_INIT:
+		l.handleAgentInitAndUnloadLog(req)
 	case AGENT_SUCCESS_UNLOAD:
 		l.handleAgentInitAndUnloadLog(req)
 	case JAVA_PROCESS_STARTUP:
