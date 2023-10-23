@@ -45,9 +45,9 @@ cd ${SERVER_PROJECT_HOME} || exit 1
 projectpath=`pwd`
 echo "current dir:${projectpath}"
 
-# 设置阿里云代理
-export GOPROXY="https://mirrors.aliyun.com/goproxy/"
-#export GOPROXY="goproxy.cn"
+# 设置代理
+#export GOPROXY="https://mirrors.aliyun.com/goproxy/"
+export GOPROXY="goproxy.cn"
 echo "GOPROXY:"${GOPROXY}
 
 moduleName=$(go list -m)
