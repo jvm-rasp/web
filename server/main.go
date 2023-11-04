@@ -54,6 +54,9 @@ func main() {
 		go logRepository.SaveOperationLogChannel(middleware.OperationLogChan)
 	}
 
+	// 开启日志消费
+	go queue.ConsumerLog()
+
 	// 开启socket监听
 	go socket.WebsocketManager.Start()
 	// 给客户端发送消息

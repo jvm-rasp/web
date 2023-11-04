@@ -25,6 +25,10 @@ type RaspLogRequest struct {
 	Msg      string `json:"msg"`
 	Pid      int    `json:"pid"`
 	Ts       string `json:"ts"`
+
+	Topic      string `json:"topic"`
+	Thread     string `json:"thread"`
+	StackTrace string `json:"stackTrace"`
 }
 
 type Host struct {
