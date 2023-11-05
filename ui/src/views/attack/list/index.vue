@@ -449,10 +449,4 @@ pre {
   word-wrap: break-word;
   white-space: pre-wrap;
 }
-.el-input {
-  width: 400px;
-}
-.el-select {
-  width: 400px;
-}
 </style>

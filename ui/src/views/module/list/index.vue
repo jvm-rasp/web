@@ -823,8 +823,10 @@ export default {
 
     updateComponentForm() {
       this.bindModuleData.components.forEach((item, index) => {
+        // 选中的模块修改
         if (this.bindComponentData.md5 === item.md5) {
           this.bindModuleData.components[index] = this.bindComponentData
+          // 算法模块
           if (this.bindComponentData.componentType === 2) {
             this.bindModuleData.parameters.cn_map = {}
             this.bindModuleData.parameters.action = {}
