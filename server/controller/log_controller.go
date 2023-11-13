@@ -21,7 +21,7 @@ import (
 	"time"
 )
 
-var LogChan = make(chan vo.RaspLogRequest, 2000)
+//var LogChan = make(chan vo.RaspLogRequest, 2000)
 
 // grok
 const pattern = "%{TIMESTAMP_ISO8601:time}\\s*%{LOGLEVEL:level}\\s*%{DATA:host}\\s*\\[%{DATA:thread}\\]\\s*\\[%{DATA:api}\\]\\s*%{GREEDYDATA:message}"
@@ -34,6 +34,7 @@ type ILogController interface {
 	UpdateStatusById(c *gin.Context)
 	ExportAttackLogs(c *gin.Context)
 	HandleLog(req vo.RaspLogRequest)
+	HandleLogV2(req vo.RaspLogRecord)
 }
 
 type LogController struct {
@@ -71,7 +72,7 @@ func (l LogController) ReportLog(c *gin.Context) {
 	}
 
 	// 写入队列
-	LogChan <- req
+	// LogChan <- req
 }
 
 func (l LogController) HandleLog(req vo.RaspLogRequest) {
@@ -86,6 +87,20 @@ func (l LogController) HandleLog(req vo.RaspLogRequest) {
 		common.Log.Errorf("unknown topic: %v", req.Fields.KafkaTopic)
 	}
 	l.handleErrorLog(req.Fields.KafkaTopic, req)
+}
+
+func (l LogController) HandleLogV2(req vo.RaspLogRecord) {
+	switch req.Topic {
+	case vo.JRASP_DAEMON:
+		l.handleDaemonLogV2(req)
+	case vo.JRASP_AGENT:
+	case vo.JRASP_MODULE:
+	case vo.JRASP_ATTACK:
+		l.handleAttackLogV2(req)
+	default:
+		common.Log.Errorf("unknown topic: %v", req.Topic)
+	}
+	// l.handleErrorLog(req.Fields.KafkaTopic, req)
 }
 
 func (l LogController) GetAttackLogs(c *gin.Context) {
@@ -240,6 +255,33 @@ func (l LogController) handleDaemonLog(req vo.RaspLogRequest) {
 	}
 }
 
+func (l LogController) handleDaemonLogV2(req vo.RaspLogRecord) {
+	// 不同logid 处理
+	switch req.LogId {
+	case DAEMON_STARTUP_LOGID:
+		l.handleStartupLogV2(req)
+	case HOST_ENV_LOGID:
+		l.handleHostEnvLogV2(req)
+	case HEART_BEAT_LOGID:
+		l.handleHeartbeatLogV2(req)
+	case AGENT_SUCCESS_INIT:
+		l.handleAgentInitAndUnloadLogV2(req)
+	case AGENT_SUCCESS_UNLOAD:
+		l.handleAgentInitAndUnloadLogV2(req)
+	case JAVA_PROCESS_STARTUP:
+		l.handleFindJavaProcessLogV2(req)
+	case JAVA_PROCESS_SHUTDOWN:
+		l.handleRemoveJavaProcessLogV2(req)
+	case Agent_CONFIG_UPDATE:
+		l.handleAgentConfigUpdateLogV2(req)
+	case CONFIG_ID:
+		l.handleUpdateConfigIdV2(req)
+	case RESOURCE_NAME_UPDATE:
+		l.handleUpdateResourceNameV2(req)
+	default:
+	}
+}
+
 func (l LogController) handleStartupLog(req vo.RaspLogRequest) {
 	host := &model.RaspHost{
 		HostName:      req.HostName,
@@ -272,7 +314,98 @@ func (l LogController) handleStartupLog(req vo.RaspLogRequest) {
 	}
 }
 
+func (l LogController) handleStartupLogV2(req vo.RaspLogRecord) {
+	host := &model.RaspHost{
+		HostName:      req.HostName,
+		Ip:            req.Ip,
+		HeartbeatTime: time.Unix(req.Ts, 0).Format("2006-01-02 15:04:05.000"),
+	}
+	dbData, err := l.RaspHostRepository.QueryRaspHost(host.HostName)
+	if err != nil {
+		common.Log.Errorf("查询主机信息失败, err: %v, hostName: %v", err, host.HostName)
+		return
+	}
+
+	// 获取 agentMode
+	detailMap := make(map[string]string)
+	err = json.Unmarshal([]byte(req.Detail), &detailMap)
+	if err != nil {
+		common.Log.Errorf("反序列化json失败, err: %v, json: %v", err, req.Detail)
+		return
+	}
+	host.AgentMode = detailMap["agentMode"]
+
+	if len(dbData) <= 0 {
+		return
+	}
+
+	err = l.RaspHostRepository.UpdateRaspHostByHostName(host)
+	if err != nil {
+		common.Log.Errorf("更新主机信息失败, err: %v, host: %v", err, host)
+		return
+	}
+}
+
 func (l LogController) handleHostEnvLog(req vo.RaspLogRequest) {
+	detailMap := make(map[string]interface{})
+	err := json.Unmarshal([]byte(req.Detail), &detailMap)
+	if err != nil {
+		common.Log.Errorf("反序列化json失败, err: %v, json: %v", err, req.Detail)
+		return
+	}
+
+	installDir := detailMap["installDir"].(string)
+	version := detailMap["version"].(string)
+	binFileHash := detailMap["binFileHash"].(string)
+	osType := detailMap["osType"].(string)
+
+	totalMem := detailMap["totalMem"].(float64)
+	cpuCounts := detailMap["cpuCounts"].(float64)
+	freeDisk := detailMap["freeDisk"].(float64)
+
+	buildDateTime := detailMap["buildDateTime"].(string)
+	buildGitBranch := detailMap["buildGitBranch"].(string)
+	buildGitCommit := detailMap["buildGitCommit"].(string)
+
+	dbData, err := l.RaspHostRepository.QueryRaspHost(req.HostName)
+	if err != nil {
+		common.Log.Errorf("查询主机信息失败, err: %v, hostName: %v", err, req.HostName)
+		return
+	}
+
+	var host *model.RaspHost
+	if len(dbData) == 0 {
+		host = &model.RaspHost{
+			HostName: req.HostName,
+			Ip:       req.Ip,
+		}
+	} else {
+		host = dbData[0]
+	}
+
+	host.InstallDir = installDir
+	host.Version = version
+	host.ExeFileHash = binFileHash
+	host.OsType = osType
+	host.TotalMem = totalMem
+	host.CpuCounts = cpuCounts
+	host.FreeDisk = freeDisk
+	host.BuildDateTime = buildDateTime
+	host.BuildGitBranch = buildGitBranch
+	host.BuildGitCommit = buildGitCommit
+
+	if len(dbData) == 0 {
+		return
+	} else {
+		err := l.RaspHostRepository.UpdateRaspHostByHostName(host)
+		if err != nil {
+			common.Log.Errorf("更新主机信息失败, err: %v, host: %v", err, host)
+			return
+		}
+	}
+}
+
+func (l LogController) handleHostEnvLogV2(req vo.RaspLogRecord) {
 	detailMap := make(map[string]interface{})
 	err := json.Unmarshal([]byte(req.Detail), &detailMap)
 	if err != nil {
@@ -422,7 +555,129 @@ func (l LogController) handleHeartbeatLog(req vo.RaspLogRequest) {
 
 }
 
+func (l LogController) handleHeartbeatLogV2(req vo.RaspLogRecord) {
+	hostInfo, err := l.RaspHostRepository.GetRaspHostByHostName(req.HostName)
+	if err != nil {
+		common.Log.Errorf("处理心跳日志错误, error: %v", err)
+		return
+	}
+
+	if hostInfo == nil {
+		hostInfo = &model.RaspHost{
+			HostName: req.HostName,
+			Ip:       req.Ip,
+		}
+		configId, err := l.RaspHostRepository.CreateRaspHost(hostInfo)
+		if err != nil {
+			common.Log.Errorf("处理心跳日志错误, error: %v", err)
+			return
+		}
+		// 推送默认配置
+		if configId != 0 {
+			global.PushConfigQueue <- &vo.PushConfigRequest{
+				ConfigId:  configId,
+				HostNames: []string{hostInfo.HostName},
+			}
+		}
+	} else {
+		err = l.RaspHostRepository.UpdateRaspHostByHostName(hostInfo)
+		if err != nil {
+			common.Log.Errorf("处理心跳日志错误, error: %v", err)
+			return
+		}
+	}
+
+	// db 数据
+	dbList, err := l.JavaProcessRepository.GetAllJavaProcessInfos(req.HostName)
+	if err != nil {
+		common.Log.Errorf("处理心跳日志错误, error: %v", err)
+		return
+	}
+
+	// 上报数据
+	detailMap := make(map[string]interface{})
+	err = json.Unmarshal([]byte(req.Detail), &detailMap)
+	if err != nil {
+		common.Log.Errorf("处理心跳日志错误, error: %v", err)
+		return
+	}
+
+	for _, v := range dbList {
+		// db有，上报数据中没有，删除db数据
+		if len(detailMap) == 0 || detailMap[strconv.Itoa(v.Pid)] == nil {
+			err := l.JavaProcessRepository.DeleteProcess(v.ID)
+			if err != nil {
+				common.Log.Errorf("处理心跳日志错误, error: %v", err)
+				return
+			}
+			continue
+		}
+		// db有,上报数据中也有，无需处理了
+	}
+
+	// db没有，上报数据中有，新增db数据
+	for k, v := range detailMap {
+		var existed = false
+		for _, v2 := range dbList {
+			if strconv.Itoa(v2.Pid) == k {
+				existed = true
+			}
+		}
+		if existed {
+			continue
+		}
+		processDetail := v.(map[string]interface{})
+
+		// todo json 转map int ---> float
+		pidFloat := processDetail["pid"].(float64)
+		pidint64 := strconv.FormatInt(int64(int(pidFloat)), 10)
+		pid, _ := strconv.ParseInt(pidint64, 10, 32)
+
+		startTime := processDetail["startTime"].(string)
+		message := processDetail["status"].(string)
+		// 缺少命令后信息
+		process := &model.JavaProcessInfo{HostName: req.HostName, Pid: int(pid), StartTime: startTime, Status: l.convertMessageToStatus(message), Message: message}
+		err = l.JavaProcessRepository.SaveProcessInfo(process)
+		if err != nil {
+			common.Log.Errorf("处理心跳日志错误, error: %v", err)
+			return
+		}
+	}
+
+}
+
 func (l LogController) handleAgentInitAndUnloadLog(req vo.RaspLogRequest) {
+	detailMap := make(map[string]interface{})
+	err := json.Unmarshal([]byte(req.Detail), &detailMap)
+	if err != nil {
+		common.Log.Errorf("反序列化json信息失败, err: %v, json: %v", err, req.Detail)
+		return
+	}
+
+	pid := detailMap["pid"].(float64)
+	startTime := detailMap["startTime"].(string)
+	messages := detailMap["status"].(string)
+	status := l.convertMessageToStatus(messages)
+	processInfo, err := l.JavaProcessRepository.GetProcessByPid(req.HostName, uint(pid))
+	if processInfo != nil {
+		processInfo.Status = status
+		processInfo.Message = messages
+		processInfo.StartTime = startTime
+		err = l.JavaProcessRepository.UpdateProcessInfo(processInfo)
+		if err != nil {
+			common.Log.Errorf("更新java进程信息失败, err: %v, process: %v", err, processInfo)
+			return
+		}
+	} else {
+		err = l.JavaProcessRepository.DeleteProcessByPid(req.HostName, uint(pid))
+		if err != nil {
+			common.Log.Errorf("删除java进程信息失败, err: %v, pid: %v", err, pid)
+			return
+		}
+	}
+}
+
+func (l LogController) handleAgentInitAndUnloadLogV2(req vo.RaspLogRecord) {
 	detailMap := make(map[string]interface{})
 	err := json.Unmarshal([]byte(req.Detail), &detailMap)
 	if err != nil {
@@ -465,7 +720,46 @@ func (l LogController) handleAgentConfigUpdateLog(req vo.RaspLogRequest) {
 	}
 }
 
+func (l LogController) handleAgentConfigUpdateLogV2(req vo.RaspLogRecord) {
+	host := &model.RaspHost{
+		HostName:              req.HostName,
+		AgentConfigUpdateTime: time.Unix(req.Ts, 0).Format("2006-01-02 15:04:05.000"),
+	}
+	err := l.RaspHostRepository.UpdateRaspHostByHostName(host)
+	if err != nil {
+		common.Log.Errorf("更新主机信息失败, err: %v, host: %v", err, host)
+		return
+	}
+}
+
 func (l LogController) handleUpdateConfigId(req vo.RaspLogRequest) {
+	// 获取configId
+	detailMap := make(map[string]uint)
+	err := json.Unmarshal([]byte(req.Detail), &detailMap)
+	if err != nil {
+		common.Log.Errorf("反序列化json信息失败, err: %v, json: %v", err, req.Detail)
+		return
+	}
+	configId := detailMap["configId"]
+	dbData, err := l.RaspHostRepository.QueryRaspHost(req.HostName)
+	if err != nil {
+		common.Log.Errorf("查询主机信息失败, err: %v, hostName: %v", err, req.HostName)
+		return
+	}
+	if len(dbData) > 0 {
+		dbConfigId := dbData[0].ConfigId
+		if dbConfigId != configId && dbConfigId > 0 {
+			global.PushConfigQueue <- &vo.PushConfigRequest{
+				ConfigId:  configId,
+				HostNames: []string{req.HostName},
+			}
+		}
+	} else {
+		common.Log.Warnf("主机: %v 不存在, 无法推送消息", req.HostName)
+	}
+}
+
+func (l LogController) handleUpdateConfigIdV2(req vo.RaspLogRecord) {
 	// 获取configId
 	detailMap := make(map[string]uint)
 	err := json.Unmarshal([]byte(req.Detail), &detailMap)
@@ -558,7 +852,86 @@ func (l LogController) handleFindJavaProcessLog(req vo.RaspLogRequest) {
 	}
 }
 
+func (l LogController) handleFindJavaProcessLogV2(req vo.RaspLogRecord) {
+	detailMap := make(map[string]interface{})
+	err := json.Unmarshal([]byte(req.Detail), &detailMap)
+	if err != nil {
+		common.Log.Errorf("反序列化json信息失败, err: %v, json: %v", err, req.Detail)
+		return
+	}
+
+	pid := detailMap["javaPid"].(float64)
+	startTime := detailMap["startTime"].(string)
+	message := detailMap["injectedStatus"].(string)
+	status := l.convertMessageToStatus(message)
+	cmdLines := detailMap["cmdLines"].([]interface{})
+	appNames := detailMap["appNames"]
+	var paramSlice []string
+	for _, param := range cmdLines {
+		switch v := param.(type) {
+		case string:
+			paramSlice = append(paramSlice, v)
+		case int:
+			strV := strconv.FormatInt(int64(v), 10)
+			paramSlice = append(paramSlice, strV)
+		default:
+			common.Log.Errorf("params type not supported")
+		}
+	}
+	var appNamesStr = ""
+	if appNames != nil {
+		for _, item := range appNames.([]interface{}) {
+			appNamesStr += item.(string) + ";"
+		}
+	}
+	// 先判断表中是否有对应的pid
+	processInfo, err := l.JavaProcessRepository.GetProcessByPid(req.HostName, uint(pid))
+	if err != nil {
+		common.Log.Errorf("获取java进程信息失败, err: %v, pid: %V", err, pid)
+		return
+	}
+	// 如果库中没有则新增, 如果有则更新
+	if processInfo == nil {
+		process := &model.JavaProcessInfo{
+			Status:       status,
+			Message:      message,
+			Pid:          int(pid),
+			StartTime:    startTime,
+			CmdlineInfo:  strings.Join(paramSlice, ","),
+			AppNamesInfo: appNamesStr,
+			HostName:     req.HostName,
+		}
+		err = l.JavaProcessRepository.SaveProcessInfo(process)
+		if err != nil {
+			common.Log.Errorf("保存java进程信息失败, err: %v, process: %V", err, process)
+			return
+		}
+	} else {
+		processInfo.Status = status
+		processInfo.Message = message
+		processInfo.AppNamesInfo = appNamesStr
+		err = l.JavaProcessRepository.UpdateProcessInfo(processInfo)
+		if err != nil {
+			common.Log.Errorf("更新java进程信息失败, err: %v, process: %V", err, processInfo)
+			return
+		}
+	}
+}
+
 func (l LogController) handleRemoveJavaProcessLog(req vo.RaspLogRequest) {
+	pid, err := strconv.ParseInt(req.Detail, 10, 32)
+	if err != nil {
+		common.Log.Errorf("转换pid出错, err: %v, pid: %v", err, req.Detail)
+		return
+	}
+	err = l.JavaProcessRepository.DeleteProcessByPid(req.HostName, uint(pid))
+	if err != nil {
+		common.Log.Errorf("删除java进程失败, err: %v, pid: %v", err, pid)
+		return
+	}
+}
+
+func (l LogController) handleRemoveJavaProcessLogV2(req vo.RaspLogRecord) {
 	pid, err := strconv.ParseInt(req.Detail, 10, 32)
 	if err != nil {
 		common.Log.Errorf("转换pid出错, err: %v, pid: %v", err, req.Detail)
@@ -733,7 +1106,106 @@ func (l LogController) handleAttackLog(req vo.RaspLogRequest) {
 	}
 }
 
+func (l LogController) handleAttackLogV2(req vo.RaspLogRecord) {
+	//grok, _ := grok.New()
+	//maps, err := grok.Parse(pattern, req.Message)
+	//if err != nil {
+	//	// 不匹配的日志输出
+	//	common.Log.Warnf(req.Message)
+	//	return
+	//}
+	//
+	//level := maps["level"]
+	//if level == "ERROR" || level == "ERR" {
+	//	// 错误日志输出
+	//	common.Log.Error(req.Message)
+	//	return
+	//}
+	//
+	//attack := model.RaspAttack{
+	//	HostName: maps["host"],
+	//}
+	//// 构件攻击详情对象
+	//detail := model.RaspAttackDetail{}
+	//
+	//// 攻击json
+	//msg := maps["message"]
+	//if msg != "" {
+	//	var attackDetail = &vo.AttackDetail{}
+	//	err := json.Unmarshal([]byte(msg), attackDetail)
+	//	if err != nil {
+	//		common.Log.Errorf("反序列化json失败, error: %v, json: %v", err, msg)
+	//		return
+	//	}
+	//	guid, _ := uuid.NewUUID()
+	//	attack.RowGuid = guid.String()
+	//	attack.HostIp = attackDetail.Context.LocalAddr
+	//	attack.RemoteIp = attackDetail.Context.RemoteHost
+	//	attack.RequestUri = attackDetail.Context.RequestURI
+	//	attack.IsBlocked = attackDetail.IsBlocked
+	//	attack.Level = attackDetail.Level
+	//	attack.HandleResult = 0
+	//	attack.AttackType = attackDetail.AttackType
+	//	attack.AttackTime = time.Unix(attackDetail.AttackTime/1000, 0)
+	//
+	//	// 构建攻击详情
+	//	detail.ParentGuid = attack.RowGuid
+	//	detail.Context = datatypes.JSON(util.Struct2Json(attackDetail.Context))
+	//	detail.AppName = attackDetail.AppName
+	//	detail.StackTrace = attackDetail.StackTrace
+	//	detail.Payload = attackDetail.Payload
+	//	detail.IsBlocked = attackDetail.IsBlocked
+	//	detail.AttackType = attackDetail.AttackType
+	//	detail.Algorithm = attackDetail.Algorithm
+	//	detail.Extend = attackDetail.Extend
+	//	detail.AttackTime = time.Unix(attackDetail.AttackTime/1000, 0)
+	//	detail.Level = attackDetail.Level
+	//	detail.MetaInfo = attackDetail.MetaInfo
+	//
+	//} else {
+	//	common.Log.Errorf("attack message is empty")
+	//	return
+	//}
+	//
+	//err = l.RaspAttackRepository.CreateRaspAttack(&attack)
+	//if err != nil {
+	//	common.Log.Errorf("新增攻击日志记录出错, error: %v", err)
+	//	return
+	//}
+	//err = l.RaspAttackRepository.CreateRaspAttackDetail(&detail)
+	//if err != nil {
+	//	common.Log.Errorf("新增攻击日志详情记录出错, error: %v", err)
+	//	return
+	//}
+}
+
 func (l LogController) handleUpdateResourceName(req vo.RaspLogRequest) {
+	detailMap := make(map[string]interface{})
+	err := json.Unmarshal([]byte(req.Detail), &detailMap)
+	if err != nil {
+		common.Log.Errorf("反序列化json出错, err: %v, json: %v", err, req.Detail)
+		return
+	}
+	resourceInfo, err := l.HostResourceRepository.GetResourceByNameAndIP(detailMap["hostName"].(string), detailMap["ip"].(string))
+	if err != nil {
+		common.Log.Errorf("获取主机资源信息失败, err: %v, hostName: %v, ip: %v", err, detailMap["hostName"], detailMap["ip"])
+		return
+	}
+	if resourceInfo == nil {
+		resourceInfo = &model.HostResource{
+			HostName:     detailMap["hostName"].(string),
+			Ip:           detailMap["ip"].(string),
+			ResourceName: detailMap["resourceName"].(string),
+		}
+		err = l.HostResourceRepository.CreateResource(resourceInfo)
+		if err != nil {
+			common.Log.Errorf("创建主机资源信息失败, err: %v", err)
+			return
+		}
+	}
+}
+
+func (l LogController) handleUpdateResourceNameV2(req vo.RaspLogRecord) {
 	detailMap := make(map[string]interface{})
 	err := json.Unmarshal([]byte(req.Detail), &detailMap)
 	if err != nil {
@@ -854,4 +1326,32 @@ func (l LogController) ExportAttackLogs(c *gin.Context) {
 	c.Writer.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=%s", "export_attacks.xlsx"))
 	c.Writer.Header().Add("response-type", "blob")
 	c.Data(200, "application/vnd.ms-excel;charset=utf8", data.Bytes())
+}
+
+func HandleLog() {
+	logHandle := NewLogController()
+	for {
+		select {
+		case v, ok := <-common.LogChan:
+			if !ok {
+				continue
+			}
+			fmt.Println("HandleLog:" + string(v))
+			if string(v) == "" {
+				continue
+			}
+			var record vo.RaspLogRecord
+			err := json.Unmarshal([]byte(v), &record)
+			if err != nil {
+				panic(err)
+			}
+
+			if record.Topic == "jrasp-agent" {
+				fmt.Println("agent: " + v)
+			} else if record.Topic == "jrasp-daemon" {
+				fmt.Println("daemon: " + v)
+			}
+			logHandle.HandleLogV2(record)
+		}
+	}
 }
