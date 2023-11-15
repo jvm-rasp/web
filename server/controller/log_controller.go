@@ -24,7 +24,7 @@ import (
 var LogChan = make(chan vo.RaspLogRequest, 2000)
 
 // grok
-const pattern = "%{TIMESTAMP_ISO8601:time}\\s*%{LOGLEVEL:level}\\s*%{DATA:host}\\s*\\[%{DATA:thread}\\]\\s*\\[%{DATA:api}\\]\\s*%{GREEDYDATA:message}"
+const pattern = "%{TIMESTAMP_ISO8601:time}\\s*%{LOGLEVEL:level}\\s*%{DATA:host}\\s*%{IP:ip}\\s*\\[%{DATA:thread}\\]\\s*\\[%{DATA:api}\\]\\s*%{GREEDYDATA:message}"
 
 type ILogController interface {
 	ReportLog(c *gin.Context)
@@ -678,6 +678,7 @@ func (l LogController) handleAttackLog(req vo.RaspLogRequest) {
 
 	attack := model.RaspAttack{
 		HostName: maps["host"],
+		HostIp:   maps["ip"],
 	}
 	// 构件攻击详情对象
 	detail := model.RaspAttackDetail{}
@@ -693,7 +694,7 @@ func (l LogController) handleAttackLog(req vo.RaspLogRequest) {
 		}
 		guid, _ := uuid.NewUUID()
 		attack.RowGuid = guid.String()
-		attack.HostIp = attackDetail.Context.LocalAddr
+		//attack.HostIp = attackDetail.Context.LocalAddr
 		attack.RemoteIp = attackDetail.Context.RemoteHost
 		attack.RequestUri = attackDetail.Context.RequestURI
 		attack.IsBlocked = attackDetail.IsBlocked
