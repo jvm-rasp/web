@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
+	"math/rand"
 	"net"
 	"server/Interface"
 	"server/common"
@@ -192,9 +193,10 @@ func (h RaspHostController) GeneratePushConfig(configId uint) ([]byte, error) {
 
 	var moduleConfigsFields []model.RaspModule
 	var moduleConfigs []model.ModuleConfig
+	var ip = config.Conf.System.Hosts[rand.Intn(len(config.Conf.System.Hosts))]
 	var downloadPrefix = fmt.Sprintf("%v://%v:%v/%v",
 		util.Ternary(config.Conf.Ssl.Enable, "https", "http"),
-		util.GetDefaultIp(),
+		ip,
 		config.Conf.System.Port,
 		config.Conf.System.UrlPathPrefix)
 	err = json.Unmarshal(raspConfigHistory.AgentConfigs, &agentConfigsFields)
@@ -280,7 +282,7 @@ func (h RaspHostController) GeneratePushConfig(configId uint) ([]byte, error) {
 		LogPath:          raspConfigHistory.LogPath,
 		RemoteHosts: fmt.Sprintf("%v://%v:%v/%v",
 			util.Ternary(config.Conf.Ssl.Enable, "wss", "ws"),
-			util.GetDefaultIp(),
+			ip,
 			config.Conf.System.Port,
 			config.Conf.System.UrlPathPrefix),
 		EnableMdns:     true,
@@ -359,7 +361,7 @@ func (h RaspHostController) AddHost(c *gin.Context) {
 	conn, err := net.DialUDP("udp", nil, udpAddr)
 	message := fmt.Sprintf("%v://%v:%v/%v",
 		util.Ternary(config.Conf.Ssl.Enable, "wss", "ws"),
-		util.GetDefaultIp(),
+		config.Conf.System.Hosts[rand.Intn(len(config.Conf.System.Hosts))],
 		config.Conf.System.Port,
 		config.Conf.System.UrlPathPrefix)
 	pack := &socket.Package{

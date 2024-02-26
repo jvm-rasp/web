@@ -12,8 +12,11 @@ system:
   rsa-public-key: web-pub.pem
   # rsa私钥文件路径(config.yml相对路径, 也可以填绝对路径)
   rsa-private-key: web-priv.pem
-  # 公网ip或者域名，默认为空，即仅限内网可以访问
-  host:
+  # 公网ip或者域名，默认为空，即仅限内网可以访问；可以添写多个
+  hosts:
+     # - ip1
+     # - ip2
+     # - ip2
 
 database:
   # driver: mysql, sqlite
@@ -73,7 +76,6 @@ ssl:
 pprof:
   # 是否开启性能诊断
   enable: false
-
 
 job:
   # enable job start

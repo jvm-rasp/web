@@ -7,8 +7,6 @@ import (
 	"go.uber.org/zap/zapcore"
 	"gorm.io/gorm/logger"
 	"os"
-	"path/filepath"
-	"runtime"
 	"server/util"
 	"strings"
 )
@@ -28,7 +26,6 @@ type config struct {
 	Cors      *CORSConfig      `mapstructure:"cors" json:"cors" yaml:"cors"`
 	RateLimit *RateLimitConfig `mapstructure:"rate-limit" json:"rateLimit"`
 	Ssl       *Ssl             `mapstructure:"ssl" json:"ssl"`
-	Env       *Env             `json:"env"`
 	Pprof     *Pprof           `mapstructure:"pprof" json:"pprof"`
 
 	TableDeleteJob *TableDeleteJob `mapstructure:"job" json:"job"`
@@ -75,29 +72,10 @@ func InitConfig() {
 	} else {
 		Conf.System.UrlPathPrefix = strings.Trim(Conf.System.UrlPathPrefix, "/")
 	}
-	// 读取全局环境变量
-	Conf.Env = &Env{}
-	Conf.Env.WorkDir = workDir
-	Conf.Env.Ip = util.GetDefaultIp()
-	Conf.Env.HostName, _ = os.Hostname()
 
-	// 可执行文件路径
-	execPath, err := filepath.Abs(os.Args[0])
-	if err != nil {
-		panic(fmt.Errorf("获取可执行文件路径失败, error: %v", err))
-	} else {
-		// md5 值
-		md5Str, err := util.GetFileMd5(execPath)
-		if err != nil {
-			panic(fmt.Errorf("获取可执行文件md5失败, error: %v", err))
-		}
-		Conf.Env.BinFileHash = md5Str
-		// 可执行文件名
-		execName := filepath.Base(execPath)
-		Conf.Env.BinFileName = execName
+	if Conf.System.Hosts == nil {
+		Conf.System.Hosts = []string{util.GetDefaultIp()}
 	}
-	// 获取OS类型
-	Conf.Env.OsType = runtime.GOOS
 
 	Conf.Cors = &CORSConfig{
 		Enable: false,
@@ -105,15 +83,15 @@ func InitConfig() {
 }
 
 type SystemConfig struct {
-	Mode            string `mapstructure:"mode" json:"mode"`
-	UrlPathPrefix   string `mapstructure:"url-path-prefix" json:"urlPathPrefix"`
-	Port            int    `mapstructure:"port" json:"port"`
-	InitData        bool   `mapstructure:"init-data" json:"initData"`
-	RSAPublicKey    string `mapstructure:"rsa-public-key" json:"rsaPublicKey"`
-	RSAPrivateKey   string `mapstructure:"rsa-private-key" json:"rsaPrivateKey"`
-	RSAPublicBytes  []byte `mapstructure:"-" json:"-"`
-	RSAPrivateBytes []byte `mapstructure:"-" json:"-"`
-	Host            string `mapstructure:"host" json:"host"`
+	Mode            string   `mapstructure:"mode" json:"mode"`
+	UrlPathPrefix   string   `mapstructure:"url-path-prefix" json:"urlPathPrefix"`
+	Port            int      `mapstructure:"port" json:"port"`
+	InitData        bool     `mapstructure:"init-data" json:"initData"`
+	RSAPublicKey    string   `mapstructure:"rsa-public-key" json:"rsaPublicKey"`
+	RSAPrivateKey   string   `mapstructure:"rsa-private-key" json:"rsaPrivateKey"`
+	RSAPublicBytes  []byte   `mapstructure:"-" json:"-"`
+	RSAPrivateBytes []byte   `mapstructure:"-" json:"-"`
+	Hosts           []string `mapstructure:"hosts" json:"hosts"`
 }
 
 type LogsConfig struct {
@@ -146,15 +124,6 @@ type Ssl struct {
 	Enable   bool
 	KeyFile  string
 	CertFile string
-}
-
-type Env struct {
-	Ip          string
-	HostName    string
-	WorkDir     string
-	BinFileName string
-	BinFileHash string
-	OsType      string
 }
 
 type DatabaseConfig struct {
