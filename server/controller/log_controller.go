@@ -24,7 +24,8 @@ import (
 var LogChan = make(chan vo.RaspLogRequest, 2000)
 
 // grok
-const pattern = "%{TIMESTAMP_ISO8601:time}\\s*%{LOGLEVEL:level}\\s*%{DATA:host}\\s*\\[%{DATA:thread}\\]\\s*\\[%{DATA:api}\\]\\s*%{GREEDYDATA:message}"
+const pattern =
+	"%{TIMESTAMP_ISO8601:time}\\s*%{LOGLEVEL:level}\\s* %{DATA:host}\\s*%{IP:ip}\\s*\\[%{DATA:thread}\\]\\s*\\[%{DATA:api}\\]\\s*%{GREEDYDATA:message}"
 
 type ILogController interface {
 	ReportLog(c *gin.Context)

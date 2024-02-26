@@ -8,7 +8,7 @@ import (
 )
 
 func Test_splitContent(t *testing.T) {
-	message := "2023-06-15 23:08:14.963 INFO MacBook-Pro.local [Attach Listener] [com.jrasp.agent.core.server.socket.SocketServer.process] server socket start init..."
+	message := "2023-06-15 23:08:14.963 INFO MacBook-Pro.local 11.39.240.212 [Attach Listener] [com.jrasp.agent.core.server.socket.SocketServer.process] server socket start init..."
 	Grok, _ := grok.New()
 	maps, err := Grok.Parse(pattern, message)
 	if err != nil {
@@ -16,6 +16,9 @@ func Test_splitContent(t *testing.T) {
 	}
 	if maps["host"] != "MacBook-Pro.local" {
 		log.Fatalf("grok message error")
+	}
+	if maps["ip"] != "11.39.240.212" {
+		log.Fatalf("grok ip error")
 	}
 	if maps["message"] != "server socket start init..." {
 		log.Fatalf("grok message error")
