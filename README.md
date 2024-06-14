@@ -9,28 +9,9 @@ web是jrasp的管理端工程，负责配置策略和日志消费。前端由vue
 https://www.server.jrasp.com:8088/rasp-admin
 账号和密码： admin 123456
 
-## 编译工具
+## 开发/编译
 
-npm 版本 >= 8.5.0
-
-golang 版本 >= 1.19.6 (强制)
-
-## 一键打包
-
-进入到 build 目录下执行
-
-+ linux
-```
-bash build.sh
-```
-
-+ windows
-```
-（待补充）
-```
-
-输出文件在`target`目录下
-
+由于本产品安装数量较多，基于产品安全考虑，不再公开源码，合作伙伴可提供jrasp基础框架源码
 
 ### 运行
 
